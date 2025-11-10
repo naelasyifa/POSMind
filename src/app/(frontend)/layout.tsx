@@ -11,7 +11,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en">
-      <body>
+      <body className="bg-posmint min-h-screen text-poswhite">
         <main>{children}</main>
       </body>
     </html>
