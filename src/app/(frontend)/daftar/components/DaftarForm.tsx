@@ -111,27 +111,27 @@ export default function RegisterPage() {
               )}
             </div>
           </div>
-
-          {/* Tombol Lanjutkan */}
-          <div className="flex justify-end">
-            <Link
-              href="/daftarBisnis"
-              className="w-12 h-12 flex items-center justify-center rounded-xl font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-              style={{ backgroundColor: '#4DB8C4' }}
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          {/* Submit Button */}
+            <div className="flex justify-end">
+              <Link
+                href="/daftarBisnis"
+                className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                style={{ backgroundColor: '#4DB8C4' }}
               >
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </Link>
+                <svg 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="inline-block"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
           </div>
         </div>
 
