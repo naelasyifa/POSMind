@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +26,7 @@ export default function RegisterPage() {
     });
   };
 
-  return (
+   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-200 p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
@@ -127,8 +128,8 @@ export default function RegisterPage() {
 
             {/* Submit Button */}
             <div className="flex justify-end">
-              <button
-                onClick={handleSubmit}
+              <Link
+                href="/daftarBisnis"
                 className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                 style={{ backgroundColor: '#4DB8C4' }}
               >
@@ -145,7 +146,7 @@ export default function RegisterPage() {
                 >
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
