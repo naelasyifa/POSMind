@@ -148,9 +148,7 @@ export default function RegisterPage() {
               )}
             </div>
           </div>
-        </div>
-
-            {/* Submit Button */}
+          {/* Submit Button */}
             <div className="flex justify-end">
               <Link
                 href="/daftarBisnis"
@@ -172,6 +170,7 @@ export default function RegisterPage() {
                 </svg>
               </Link>
           </div>
+        </div>
         </div>
 
         {/* CSS untuk hilangkan ikon bawaan browser */}
