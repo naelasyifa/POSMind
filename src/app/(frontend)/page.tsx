@@ -55,7 +55,7 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row items-center justify-between px-8 md:px-16 py-20 max-w-[1400px] mx-auto">
           {/* Teks di kiri */}
           <div className="max-w-xl text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800 leading-snug">
+            <h1 className="text-200px md:text-5xl font-bold mb-4 text-gray-800 leading-snug">
               Kelola Bisnis Lebih Mudah dengan <span style={{ color: '#52bfbe' }}>POSMind</span>
             </h1>
             <p className="text-gray-700 mb-6 text-lg">
