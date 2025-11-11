@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 /* @tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities; */
 
 .textInput {
   @apply bg-black text-white border border-white/50 rounded p-2;

@@ -1,6 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -145,45 +148,45 @@ export default function RegisterPage() {
               )}
             </div>
           </div>
-
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={handleSubmit}
-              className="w-12 h-12 rounded-xl font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center"
-              style={{ backgroundColor: '#4DB8C4' }}
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <div className="flex justify-end">
+              <Link
+                href="/daftarBisnis"
+                className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                style={{ backgroundColor: '#4DB8C4' }}
               >
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
+                <svg 
+                  width="24" 
+                  height="24" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="inline-block"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* CSS untuk hilangkan ikon bawaan browser */}
-      <style jsx>{`
-        input::-ms-reveal,
-        input::-ms-clear {
-          display: none;
-        }
-        input::-webkit-credentials-auto-fill-button {
-          visibility: hidden;
-          display: none !important;
-        }
-        input::-webkit-password-toggle {
-          display: none !important;
-        }
-      `}</style>
-    </div>
+        {/* CSS untuk hilangkan ikon bawaan browser */}
+        <style jsx>{`
+          input::-ms-reveal,
+          input::-ms-clear {
+            display: none;
+          }
+          input::-webkit-credentials-auto-fill-button {
+            visibility: hidden;
+            display: none !important;
+          }
+          input::-webkit-password-toggle {
+            display: none !important;
+          }
+        `}</style>
+      </div>
   )
 }
