@@ -6,9 +6,14 @@ import { Bell, UserCircle, ChevronLeft } from 'lucide-react'
 interface HeaderAdminProps {
   title: string
   showBack?: boolean
+  notifications?: number // jumlah notifikasi
 }
 
-export default function HeaderAdmin({ title, showBack = true }: HeaderAdminProps) {
+export default function HeaderAdmin({
+  title,
+  showBack = true,
+  notifications = 0,
+}: HeaderAdminProps) {
   const headerHeight = 48
 
   return (
@@ -36,7 +41,13 @@ export default function HeaderAdmin({ title, showBack = true }: HeaderAdminProps
             className="relative p-2 rounded-full hover:bg-white/10 transition"
           >
             <Bell className="w-5 h-5 text-white" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+
+            {/* Lingkaran merah dan jumlah notifikasi hanya muncul jika ada */}
+            {notifications > 0 && (
+              <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-500 text-xs text-white font-bold rounded-full">
+                {notifications > 99 ? '99+' : notifications}
+              </span>
+            )}
           </Link>
 
           <div className="w-px h-6 bg-white/50"></div>
