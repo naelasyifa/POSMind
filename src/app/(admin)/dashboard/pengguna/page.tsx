@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 import AddUser from './adduser'
 import EditUser from './edituser'
 import HapusUser from './hapus'
@@ -184,7 +184,7 @@ export default function PenggunaPage() {
                             onClick={() => handleEditClick(user, userIndex)}
                             className="p-2 bg-gray-100 hover:bg-[#3ABAB4] hover:text-white text-gray-700 rounded transition-all"
                           >
-                            <Pencil size={16} />
+                            <Edit size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(user, userIndex)}
