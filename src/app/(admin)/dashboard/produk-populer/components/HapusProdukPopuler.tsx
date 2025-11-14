@@ -1,18 +1,18 @@
 'use client'
 
-interface HapusProdukTerlarisProps {
+interface HapusProdukPopulerProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
   produkName: string
 }
 
-export default function HapusProdukTerlaris({
+export default function HapusProdukPopuler({
   isOpen,
   onClose,
   onConfirm,
   produkName,
-}: HapusProdukTerlarisProps) {
+}: HapusProdukPopulerProps) {
   if (!isOpen) return null
 
   const handleConfirm = () => {
