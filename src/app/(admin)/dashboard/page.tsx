@@ -5,6 +5,15 @@ import HeaderAdmin from '@/components/HeaderAdmin'
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
+import { Download } from "lucide-react"
+
+// UNTUK DOWNLOAD CHART
+import { downloadPDF } from "@/utils/downloadPDF";
+
+// UNTUK DOWNLOAD DATA (TABEL)
+import { downloadDataPDF } from "@/utils/downloadDataPDF";
+
 
 const data = [
   { name: 'JAN', penjualan: 4000, pendapatan: 2400 },
@@ -21,17 +30,28 @@ const data = [
   { name: 'DEC', penjualan: 4800, pendapatan: 4600 },
 ]
 
+const dataMingguan = [
+  { name: 'Senin', penjualan: 120, pendapatan: 80 },
+  { name: 'Selasa', penjualan: 150, pendapatan: 110 },
+  { name: 'Rabu', penjualan: 180, pendapatan: 130 },
+  { name: 'Kamis', penjualan: 200, pendapatan: 160 },
+  { name: 'Jumat', penjualan: 260, pendapatan: 190 },
+  { name: 'Sabtu', penjualan: 300, pendapatan: 220 },
+  { name: 'Minggu', penjualan: 240, pendapatan: 170 },
+]
+
 export default function DashboardPage() {
+  const [mode, setMode] = useState<'bulanan' | 'mingguan'>('bulanan')
+
+  const chartData = mode === 'bulanan' ? data : dataMingguan
+
   return (
     <div className="flex min-h-screen bg-[#52BFBE]">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Konten utama */}
       <div className="flex-1 flex flex-col ml-28">
         <HeaderAdmin title="Dashboard" showBack={false} />
 
-        {/* ====== MAIN CONTENT ====== */}
         <div className="p-6 space-y-6">
 
           {/* === STAT CARDS === */}
@@ -41,11 +61,13 @@ export default function DashboardPage() {
               <p className="text-2xl font-bold">Rp500.000,00</p>
               <p className="text-xs mt-2 opacity-90">9 Februari 2024</p>
             </div>
+
             <div className="bg-white text-gray-800 rounded-xl shadow-lg p-5">
               <h3 className="text-sm mb-2 opacity-90">Pendapatan Bulanan</h3>
               <p className="text-2xl font-bold">Rp13.000.000,00</p>
               <p className="text-xs mt-2 opacity-90">1 Jan - 1 Feb</p>
             </div>
+
             <div className="bg-white text-gray-800 rounded-xl shadow-lg p-5">
               <h3 className="text-sm mb-2 opacity-90">Jumlah Transaksi</h3>
               <p className="text-2xl font-bold">25 Transaksi</p>
@@ -54,6 +76,7 @@ export default function DashboardPage() {
 
           {/* === PRODUK TERLARIS & POPULER === */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
             {/* Produk Terlaris */}
             <div className="bg-white rounded-xl shadow p-5">
               <div className="flex justify-between items-center mb-4">
@@ -73,6 +96,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-gray-500">Dalam Proses: 01 person</p>
                       </div>
                     </div>
+
                     <span className={`text-sm font-semibold ${i === 3 ? 'text-red-500' : 'text-[#52BFBE]'}`}>
                       {i === 3 ? 'Habis' : 'Tersedia'}
                     </span>
@@ -100,6 +124,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-gray-500">Pesan {i} kali</p>
                       </div>
                     </div>
+
                     <span className="text-sm font-semibold text-[#52BFBE]">Tersedia</span>
                   </div>
                 ))}
@@ -111,17 +136,63 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl shadow p-5">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-[#3FA3A2]">Overview</h3>
+
               <div className="flex gap-2 items-center">
-                <button className="bg-[#52BFBE] text-white text-sm px-3 py-1 rounded-md">Bulanan</button>
-                <button className="text-gray-600 text-sm px-3 py-1 rounded-md">Harian</button>
-                <button className="text-gray-600 text-sm px-3 py-1 rounded-md">Mingguan</button>
-                <button className="border text-gray-600 text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9]">⬇ Unduh</button>
+
+                {/* BULANAN */}
+                <button
+                  onClick={() => setMode('bulanan')}
+                  className={`text-sm px-3 py-1 rounded-md ${
+                    mode === 'bulanan'
+                      ? 'bg-[#52BFBE] text-white'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  Bulanan
+                </button>
+
+                {/* MINGGUAN */}
+                <button
+                  onClick={() => setMode('mingguan')}
+                  className={`text-sm px-3 py-1 rounded-md ${
+                    mode === 'mingguan'
+                      ? 'bg-[#52BFBE] text-white'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  Mingguan
+                </button>
+
+                {/* UNDUH CHART */}
+                <button
+                  onClick={() =>
+                    downloadPDF(
+                      "chart_overview",
+                      mode === "bulanan" ? "laporan-bulanan" : "laporan-mingguan"
+                    )
+                  }
+                  className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition"
+                >
+                  <Download size={18} />
+                  Unduh Chart
+                </button>
+
+                {/* UNDUH DATA (TABEL) */}
+                <button
+                  onClick={() => downloadDataPDF(mode, chartData)}
+                  className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition"
+                >
+                  <Download size={18} />
+                  Unduh Data
+                </button>
+
               </div>
             </div>
 
-            <div className="w-full h-72">
+            {/* CHART WRAPPER */}
+            <div id="chart_overview" className="w-full h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
+                <LineChart data={chartData}>
                   <CartesianGrid stroke="#ccc" strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -131,6 +202,7 @@ export default function DashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+
           </div>
         </div>
       </div>
