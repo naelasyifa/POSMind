@@ -19,7 +19,7 @@ export default function HeaderAdmin({
   return (
     <>
       <header
-        className="fixed top-0 left-28 right-0 z-50 bg-[#52bfbe] shadow px-4 flex items-center justify-between"
+        className="fixed top-0 left-28 right-0 z-40 bg-[#52bfbe] shadow px-4 flex items-center justify-between"
         style={{ height: `${headerHeight}px` }}
       >
         <div className="flex items-center gap-2">

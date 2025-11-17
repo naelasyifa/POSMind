@@ -2,94 +2,171 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Edit, Trash, X } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
+import AddProduct from './tambahProduk'
+import EditProduct from './editProduct'
+import HapusProduct from './hapus'
 
-export default function ListProduct() {
-  const [showDrawer, setShowDrawer] = useState(false)
+type Product = {
+  id: number
+  name: string
+  stock: number
+  status: string
+  category: string
+  price: number
+  image: string
+}
 
-  const products = [
+type ListProductProps = {
+  onModalChange: (open: boolean) => void
+}
+
+export default function ListProduct({ onModalChange }: ListProductProps) {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null)
+
+  const initialProducts: Product[] = [
     {
       id: 1,
-      name: "Chicken Parmesan",
+      name: 'Chicken Parmesan',
       stock: 10,
-      status: "Aktif",
-      category: "Chicken",
+      status: 'Aktif',
+      category: 'Chicken',
       price: 55.0,
-      image: "/food1.jpg",
+      image: '/food1.jpg',
     },
     {
       id: 2,
-      name: "Beef Burger",
+      name: 'Beef Burger',
       stock: 8,
-      status: "Aktif",
-      category: "Beef",
+      status: 'Aktif',
+      category: 'Beef',
       price: 45.0,
-      image: "/food2.jpg",
+      image: '/food2.jpg',
     },
     {
       id: 3,
-      name: "Fried Rice",
+      name: 'Fried Rice',
       stock: 15,
-      status: "Aktif",
-      category: "Rice",
+      status: 'Aktif',
+      category: 'Rice',
       price: 30.0,
-      image: "/food3.jpg",
+      image: '/food3.jpg',
     },
     {
       id: 4,
-      name: "Spaghetti Carbonara",
+      name: 'Spaghetti Carbonara',
       stock: 5,
-      status: "Aktif",
-      category: "Pasta",
+      status: 'Aktif',
+      category: 'Pasta',
       price: 50.0,
-      image: "/food4.jpg",
+      image: '/food4.jpg',
     },
     {
       id: 5,
-      name: "Chicken Curry",
+      name: 'Chicken Curry',
       stock: 12,
-      status: "Aktif",
-      category: "Chicken",
+      status: 'Aktif',
+      category: 'Chicken',
       price: 60.0,
-      image: "/food5.jpg",
+      image: '/food5.jpg',
     },
     {
       id: 6,
-      name: "Vegetable Salad",
+      name: 'Vegetable Salad',
       stock: 20,
-      status: "Aktif",
-      category: "Veggie",
+      status: 'Aktif',
+      category: 'Veggie',
       price: 25.0,
-      image: "/food6.jpg",
+      image: '/food6.jpg',
     },
   ]
 
+  const [product, setProduct] = useState<Product[]>(initialProducts)
+
+  // ADD PRODUCT
+  const handleAddProduct = (newProductInput: Omit<Product, 'status' | 'id'>) => {
+    const newProduct: Product = {
+      id: product.length + 1,
+      name: newProductInput.name,
+      category: newProductInput.category,
+      stock: newProductInput.stock,
+      price: newProductInput.price,
+      status: 'Aktif',
+      image: newProductInput.image || '/default.jpg',
+    }
+
+    setProduct((prev) => [...prev, newProduct])
+    setIsAddModalOpen(false)
+  }
+
+  // EDIT PRODUCT
+  const handleEditClick = (product: Product, index: number) => {
+    setSelectedProduct(product)
+    setSelectedProductIndex(index)
+    setIsEditModalOpen(true)
+    onModalChange(true)
+  }
+
+  const handleSaveEdit = (updatedProduct: Product) => {
+    if (selectedProductIndex !== null) {
+      setProduct((prev) => prev.map((p, i) => (i === selectedProductIndex ? updatedProduct : p)))
+    }
+
+    setSelectedProduct(null)
+    setSelectedProductIndex(null)
+    setIsEditModalOpen(false)
+  }
+
+  // DELETE PRODUCT
+  const handleDeleteClick = (product: Product, index: number) => {
+    setSelectedProduct(product)
+    setSelectedProductIndex(index)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (selectedProductIndex !== null) {
+      setProduct((prev) => prev.filter((_, i) => i !== selectedProductIndex))
+    }
+
+    setSelectedProduct(null)
+    setSelectedProductIndex(null)
+    setIsDeleteModalOpen(false)
+  }
+
   return (
     <div className="flex-1 relative">
-      {/* Main Table Card */}
       <div className="bg-white rounded-xl shadow p-5 flex flex-col h-[600px]">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
           <h3 className="font-semibold text-lg">Daftar Produk</h3>
           <button
-            onClick={() => setShowDrawer(true)}
+            onClick={() => {
+              setIsAddModalOpen(true)
+              onModalChange(true)
+            }}
             className="bg-[#52BFBE] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#43a9a8] transition"
           >
             Tambah Produk
           </button>
         </div>
 
-        {/* Scrollable List */}
+        {/* List */}
         <div className="overflow-y-auto flex-1 pr-1">
-          {products.map((product, index) => (
+          {product.map((product, index) => (
             <div
               key={product.id}
               className={`flex items-center justify-between py-3 px-2 rounded-lg ${
-                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                index % 2 === 0 ? 'bg-white' : 'bg-gray-100'
               }`}
             >
               {/* Image + Info */}
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-1 w-50 min-w-0">
                 <div className="relative w-14 h-14 flex-shrink-0">
                   <Image
                     src={product.image}
@@ -101,36 +178,42 @@ export default function ListProduct() {
                 <div>
                   <p className="font-semibold text-sm truncate">{product.name}</p>
                   <p className="text-xs text-gray-500">Stok Produk</p>
-                  <p className="text-xs text-[#52BFBE] font-medium">
-                    {product.stock} Tersedia
-                  </p>
+                  <p className="text-xs text-[#52BFBE] font-medium">{product.stock} Tersedia</p>
                 </div>
               </div>
 
               {/* Status */}
-              <div className="text-sm text-gray-700 w-28 text-center">
+              <div className="text-sm text-gray-700 w-30 text-center">
                 <p className="font-medium">Status</p>
                 <p>{product.status}</p>
               </div>
 
               {/* Category */}
-              <div className="text-sm text-gray-700 w-28 text-center">
+              <div className="text-sm text-gray-700 w-30 text-center">
                 <p className="font-medium">Kategori</p>
                 <p>{product.category}</p>
               </div>
 
               {/* Price + Actions */}
-              <div className="flex items-center gap-3 w-32 justify-end">
+              <div className="flex items-center gap-6 w-45 justify-end">
                 <div className="text-sm text-right">
-                  <p className="font-medium">Harga Satuan</p>
+                  <p className="font-medium">Harga</p>
                   <p className="font-semibold">Rp {product.price.toFixed(2)}</p>
                 </div>
+
                 <div className="flex gap-2">
-                  <button className="text-gray-600 hover:text-[#52BFBE]">
+                  <button
+                    onClick={() => handleEditClick(product, index)}
+                    className="p-2 bg-gray-100 hover:bg-[#3ABAB4] hover:text-white rounded transition-all"
+                  >
                     <Edit size={16} />
                   </button>
-                  <button className="text-red-500 hover:text-red-600">
-                    <Trash size={16} />
+
+                  <button
+                    onClick={() => handleDeleteClick(product, index)}
+                    className="p-2 bg-gray-100 hover:bg-red-500 hover:text-white text-red-500 rounded transition-all"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -139,59 +222,37 @@ export default function ListProduct() {
         </div>
       </div>
 
-      {/* Side Drawer */}
-      {showDrawer && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 flex justify-end"
-          onClick={() => setShowDrawer(false)}
-        >
-          <div
-            className="bg-white w-[400px] h-full shadow-lg p-6 transform transition-transform duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h2 className="text-lg font-semibold">Tambah Produk</h2>
-              <button
-                onClick={() => setShowDrawer(false)}
-                className="text-gray-500 hover:text-red-500"
-              >
-                <X size={20} />
-              </button>
-            </div>
+      {/* Add */}
+      <AddProduct
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false)
+          onModalChange(false)
+        }}
+        onAdd={handleAddProduct}
+      />
 
-            {/* Form content */}
-            <form className="flex flex-col gap-3">
-              <input
-                type="text"
-                placeholder="Nama Produk"
-                className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-              />
-              <input
-                type="number"
-                placeholder="Harga"
-                className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-              />
-              <input
-                type="number"
-                placeholder="Stok"
-                className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-              />
-              <select className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]">
-                <option value="">Pilih Kategori</option>
-                <option value="Chicken">Chicken</option>
-                <option value="Beef">Beef</option>
-                <option value="Rice">Rice</option>
-              </select>
-              <button
-                type="submit"
-                className="mt-2 bg-[#52BFBE] text-white font-medium py-2 rounded-lg hover:bg-[#43a9a8] transition"
-              >
-                Simpan Produk
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Edit */}
+      <EditProduct
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          onModalChange(false)
+        }}
+        productData={selectedProduct}
+        onSave={handleSaveEdit}
+      />
+
+      {/* Delete */}
+      <HapusProduct
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          onModalChange(false)
+        }}
+        productName={selectedProduct?.name || ''}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }

@@ -1,21 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-interface AddProductProps {
+interface EditProductProps {
   isOpen: boolean
   onClose: () => void
-  onAdd: (newProduct: {
+  productData: {
     id: number
     name: string
-    category: string
     stock: number
+    status: string
+    category: string
+    price: number
+    image: string
+  } | null
+  onSave: (updatedProduct: {
+    id: number
+    name: string
+    stock: number
+    status: string
+    category: string
     price: number
     image: string
   }) => void
 }
 
-export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps) {
+
+export default function EditProduk({ isOpen, onClose, productData, onSave }: EditProductProps) {
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
   const [harga, setHarga] = useState('')
@@ -23,6 +34,17 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const [selectedKategori, setSelectedKategori] = useState('')
   const [newKategori, setNewKategori] = useState('')
   const [gambar, setGambar] = useState<string | null>(null)
+
+  useEffect(() => {
+  if (productData) {
+    setNama(productData.name)
+    setKuantitas(productData.stock.toString())
+    setHarga(productData.price.toString())
+    setSelectedKategori(productData.category)
+    setGambar(productData.image)
+  }
+}, [productData])
+
 
   const handleAddCategory = () => {
     if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
@@ -43,24 +65,20 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   }
 
   const handleSubmit = () => {
-    if (nama && selectedKategori && harga) {
-      onAdd({
-        id: Date.now(),
-        name: nama,
-        category: selectedKategori,
-        stock: Number(kuantitas),
-        price: Number(harga),
-        image: gambar || '',
-      })
+  if (nama && selectedKategori && kuantitas && harga && productData) {
+    onSave({
+      id: productData.id,
+      name: nama,
+      stock: Number(kuantitas),
+      status: productData.status,
+      category: selectedKategori,
+      price: Number(harga),
+      image: gambar || productData.image,
+    })
 
-      setNama('')
-      setKuantitas('')
-      setHarga('')
-      setSelectedKategori('')
-      setGambar(null)
-      onClose()
-    }
+    onClose()
   }
+}
 
   return (
     <>
@@ -79,7 +97,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
         }`}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Tambah Produk</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Edit Produk</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-800 transition-all text-lg font-bold"
@@ -189,7 +207,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
               onClick={handleSubmit}
               className="w-full bg-[#3ABAB4] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
             >
-              Tambah
+              Simpan
             </button>
           </div>
         </div>
