@@ -3,48 +3,48 @@
 import { useState } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
-import { Trash2, Star } from 'lucide-react'
-import HapusProdukPopuler from './components/HapusProdukPopuler'
+import { Trash2, Flame } from 'lucide-react'
+import HapusProdukTerlaris from './components/HapusProdukTerlaris'
 
-type ProdukPopuler = {
+type ProdukTerlaris = {
   id: number
   nama: string
   deskripsi: string
-  pesan: number
+  terjual: number
   tanggal: string
-  ikon: 'populer'
+  ikon: 'terlaris'
 }
 
-export default function ProdukPopulerPage() {
-  const [data, setData] = useState<ProdukPopuler[]>([
+export default function ProdukTerlarisPage() {
+  const [data, setData] = useState<ProdukTerlaris[]>([
     {
       id: 1,
-      nama: 'Cheeseburger Deluxe',
-      deskripsi: 'Menu favorit pelanggan, paling sering dipesan setiap hari.',
-      pesan: 120,
+      nama: 'Beef Steak Premium',
+      deskripsi: 'Menu juara dengan tingkat penjualan paling tinggi.',
+      terjual: 230,
       tanggal: '07/04/24',
-      ikon: 'populer',
+      ikon: 'terlaris',
     },
     {
       id: 2,
-      nama: 'Cappuccino Premium',
-      deskripsi: 'Minuman kopi yang paling populer sepanjang hari.',
-      pesan: 95,
+      nama: 'Chicken Crispy Deluxe',
+      deskripsi: 'Sering dibeli terutama saat jam makan siang.',
+      terjual: 185,
       tanggal: '07/04/24',
-      ikon: 'populer',
+      ikon: 'terlaris',
     },
     {
       id: 3,
-      nama: 'Veggie Salad Bowl',
-      deskripsi: 'Menu sehat yang menjadi pilihan pelanggan terpopuler.',
-      pesan: 75,
+      nama: 'Matcha Latte Premium',
+      deskripsi: 'Minuman terlaris sepanjang minggu ini.',
+      terjual: 162,
       tanggal: '07/04/24',
-      ikon: 'populer',
+      ikon: 'terlaris',
     },
   ])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedProduk, setSelectedProduk] = useState<ProdukPopuler | null>(null)
+  const [selectedProduk, setSelectedProduk] = useState<ProdukTerlaris | null>(null)
 
   const handleDelete = (id: number) => {
     setData(data.filter((p) => p.id !== id))
@@ -57,23 +57,23 @@ export default function ProdukPopulerPage() {
     }
   }
 
-  const getIcon = () => <Star className="text-yellow-500" size={18} />
+  const getIcon = () => <Flame className="text-red-500" size={18} />
 
   return (
     <div className="flex min-h-screen bg-[#52BFBE]">
       <Sidebar />
 
       <div className="flex-1 flex flex-col ml-28">
-        <HeaderAdmin title="Produk Populer" showBack={true} />
+        <HeaderAdmin title="Produk Terlaris" showBack={true} />
 
         <div className="p-6">
           <div className="bg-white rounded-xl shadow p-6">
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-black">Produk Populer</h2>
+                <h2 className="text-lg font-semibold text-black">Produk Terlaris</h2>
                 <p className="text-sm text-gray-700">
-                  Total {data.length} produk paling banyak dipesan
+                  Total {data.length} produk dengan penjualan tertinggi
                 </p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function ProdukPopulerPage() {
                       <h3 className="text-sm font-semibold text-gray-800">{p.nama}</h3>
                       <p className="text-sm text-gray-600">{p.deskripsi}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Dipesan: <span className="font-bold">{p.pesan}</span> kali
+                        Terjual: <span className="font-bold">{p.terjual}</span> kali
                       </p>
                     </div>
                   </div>
@@ -117,7 +117,7 @@ export default function ProdukPopulerPage() {
       </div>
 
       {/* Modal Hapus */}
-      <HapusProdukPopuler
+      <HapusProdukTerlaris
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmDelete}
