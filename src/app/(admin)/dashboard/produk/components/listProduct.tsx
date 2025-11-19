@@ -37,7 +37,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Chicken',
       price: 55.0,
-      image: '/food1.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
     {
       id: 2,
@@ -46,7 +46,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Beef',
       price: 45.0,
-      image: '/food2.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
     {
       id: 3,
@@ -55,7 +55,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Rice',
       price: 30.0,
-      image: '/food3.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
     {
       id: 4,
@@ -64,7 +64,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Pasta',
       price: 50.0,
-      image: '/food4.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
     {
       id: 5,
@@ -73,7 +73,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Chicken',
       price: 60.0,
-      image: '/food5.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
     {
       id: 6,
@@ -82,7 +82,7 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
       status: 'Aktif',
       category: 'Veggie',
       price: 25.0,
-      image: '/food6.jpg',
+      image: '/images/chicken_parmesan.jpg',
     },
   ]
 
@@ -182,21 +182,27 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
                 </div>
               </div>
 
+              <div className="flex items-center gap-4 justify-end">
+              {/* Id */}
+              <div className="text-sm text-gray-700 w-15">
+                <p className="font-medium">Id</p>
+                <p>{product.id}</p>
+              </div>
+
               {/* Status */}
-              <div className="text-sm text-gray-700 w-30 text-center">
+              <div className="text-sm text-gray-700 w-15">
                 <p className="font-medium">Status</p>
                 <p>{product.status}</p>
               </div>
 
               {/* Category */}
-              <div className="text-sm text-gray-700 w-30 text-center">
+              <div className="text-sm text-gray-700 w-18">
                 <p className="font-medium">Kategori</p>
                 <p>{product.category}</p>
               </div>
 
               {/* Price + Actions */}
-              <div className="flex items-center gap-6 w-45 justify-end">
-                <div className="text-sm text-right">
+                <div className="text-sm w-15">
                   <p className="font-medium">Harga</p>
                   <p className="font-semibold">Rp {product.price.toFixed(2)}</p>
                 </div>

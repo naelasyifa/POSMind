@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface AddProductProps {
   isOpen: boolean
@@ -16,6 +16,8 @@ interface AddProductProps {
 }
 
 export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps) {
+  const [useAutoId, setUseAutoId] = useState(true)
+  const [productId, setProductId] = useState('')
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
   const [harga, setHarga] = useState('')
@@ -23,6 +25,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const [selectedKategori, setSelectedKategori] = useState('')
   const [newKategori, setNewKategori] = useState('')
   const [gambar, setGambar] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleAddCategory = () => {
     if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
@@ -45,7 +48,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const handleSubmit = () => {
     if (nama && selectedKategori && harga) {
       onAdd({
-        id: Date.now(),
+        id: useAutoId ? Date.now() : Number(productId),
         name: nama,
         category: selectedKategori,
         stock: Number(kuantitas),
@@ -93,21 +96,77 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
           {/* Gambar Produk */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Gambar Produk</label>
+
+            {/* Hidden file input */}
             <input
               type="file"
               accept="image/*"
+              id="gambarInput"
               onChange={handleImageChange}
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+              className="hidden"
             />
-            {gambar && (
-              <div className="mt-3">
-                <img
-                  src={gambar}
-                  alt="Preview"
-                  className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                />
-              </div>
-            )}
+
+            {/* Clickable text that opens file explorer */}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              id="gambarInput"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+
+            {/* Default image OR preview */}
+            <div className="mt-3">
+              <img
+                src={gambar || '/images/image-placeholder.png'} // ⬅ put your default image here
+                alt="no image"
+                className="w-24 h-24 object-cover rounded-lg border border-gray-300"
+              />
+            </div>
+            <p
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[#52BFBE] text-sm text-center cursor-pointer underline w-24"
+            >
+              Pilih Gambar
+            </p>
+          </div>
+
+          {/* Product ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product ID</label>
+
+            <div className="flex items-center gap-3">
+              {/* ID Input */}
+              <input
+                type="number"
+                value={useAutoId ? '' : productId}
+                onChange={(e) => setProductId(e.target.value)}
+                placeholder={useAutoId ? 'Auto Generated' : 'Enter Product ID'}
+                disabled={useAutoId}
+                className={`flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] ${
+                  useAutoId ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+              />
+
+              {/* Toggle Button */}
+              <button
+                onClick={() => {
+                  setUseAutoId(!useAutoId)
+                  if (!useAutoId === true) {
+                    setProductId('') // reset when switching back to auto
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition
+                ${useAutoId ? 'bg-[#52BFBE] text-white' : 'bg-gray-200 text-gray-700'}
+                `}
+              >
+                {useAutoId ? 'Auto' : 'Manual'}
+              </button>
+            </div>
+
+            {useAutoId && <p className="text-xs text-gray-500 mt-1">ID will be auto-generated</p>}
           </div>
 
           {/* Nama */}
@@ -124,7 +183,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
 
           {/* Kategori */}
           <div>
-            <p className="font-semibold mb-2">Kategori</p>
+            <p className="block text-sm font-medium text-gray-700 mb-1">Kategori</p>
             <select
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
               value={selectedKategori}
@@ -187,7 +246,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
           <div className="pt-6">
             <button
               onClick={handleSubmit}
-              className="w-full bg-[#3ABAB4] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
+              className="w-full bg-[#52BFBE] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
             >
               Tambah
             </button>

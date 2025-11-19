@@ -6,7 +6,7 @@ export default function FilterProduct() {
   const [status, setStatus] = useState("Semua")
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 w-[380px]">
+    <div className="bg-white rounded-xl shadow p-5 w-[320px]">
       {/* Status Produk */}
       <div>
         <p className="font-semibold mb-3">Status Produk</p>

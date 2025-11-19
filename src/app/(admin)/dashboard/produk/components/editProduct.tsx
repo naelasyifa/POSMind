@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface EditProductProps {
   isOpen: boolean
@@ -25,7 +25,6 @@ interface EditProductProps {
   }) => void
 }
 
-
 export default function EditProduk({ isOpen, onClose, productData, onSave }: EditProductProps) {
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
@@ -34,17 +33,21 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
   const [selectedKategori, setSelectedKategori] = useState('')
   const [newKategori, setNewKategori] = useState('')
   const [gambar, setGambar] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [useAutoId, setUseAutoId] = useState(false)
+  const [manualId, setManualId] = useState('')
 
   useEffect(() => {
-  if (productData) {
-    setNama(productData.name)
-    setKuantitas(productData.stock.toString())
-    setHarga(productData.price.toString())
-    setSelectedKategori(productData.category)
-    setGambar(productData.image)
-  }
-}, [productData])
-
+    if (productData) {
+      setNama(productData.name)
+      setKuantitas(productData.stock.toString())
+      setHarga(productData.price.toString())
+      setSelectedKategori(productData.category)
+      setGambar(productData.image)
+      setManualId(productData.id.toString()) // <-- load existing ID
+      setUseAutoId(false) // <-- default: manual is enabled
+    }
+  }, [productData])
 
   const handleAddCategory = () => {
     if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
@@ -65,20 +68,19 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
   }
 
   const handleSubmit = () => {
-  if (nama && selectedKategori && kuantitas && harga && productData) {
-    onSave({
-      id: productData.id,
-      name: nama,
-      stock: Number(kuantitas),
-      status: productData.status,
-      category: selectedKategori,
-      price: Number(harga),
-      image: gambar || productData.image,
-    })
-
-    onClose()
+    if (nama && selectedKategori && kuantitas && harga && productData) {
+      onSave({
+        id: useAutoId ? Date.now() : Number(manualId),
+        name: nama,
+        stock: Number(kuantitas),
+        status: productData.status,
+        category: selectedKategori,
+        price: Number(harga),
+        image: gambar || productData.image,
+      })
+      onClose()
+    }
   }
-}
 
   return (
     <>
@@ -108,23 +110,88 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
         <div className="border-b border-gray-400 mb-6"></div>
 
         <div className="space-y-4">
-          {/* Gambar Produk */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Gambar Produk</label>
+
+            {/* Hidden file input */}
             <input
               type="file"
               accept="image/*"
+              id="gambarInput"
               onChange={handleImageChange}
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+              className="hidden"
             />
-            {gambar && (
-              <div className="mt-3">
-                <img
-                  src={gambar}
-                  alt="Preview"
-                  className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                />
-              </div>
+
+            {/* Clickable text that opens file explorer */}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              id="gambarInput"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+
+            {/* Default image OR preview */}
+            <div className="mt-3">
+              <img
+                src={gambar || '/images/image-placeholder.png'} // ⬅ put your default image here
+                alt="no image"
+                className="w-24 h-24 object-cover rounded-lg border border-gray-300"
+              />
+            </div>
+            <p
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[#52BFBE] text-sm text-center cursor-pointer underline w-24"
+            >
+              Pilih Gambar
+            </p>
+          </div>
+
+          {/* Product ID */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product ID</label>
+
+            <div className="flex items-center gap-3">
+              {/* ID Input */}
+              <input
+                type="number"
+                value={useAutoId ? '' : manualId}
+                onChange={(e) => setManualId(e.target.value)}
+                placeholder={useAutoId ? 'Auto Generated' : 'Enter Product ID'}
+                disabled={useAutoId}
+                className={`flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] ${
+                  useAutoId ? 'bg-gray-100 cursor-not-allowed' : ''
+                }`}
+              />
+
+              {/* Toggle Button */}
+              <button
+                onClick={() => {
+                  const newState = !useAutoId
+                  setUseAutoId(newState)
+
+                  if (newState) {
+                    // Switched to auto → clear manual
+                    setManualId('')
+                  } else {
+                    // Switched back to manual → load existing ID
+                    if (productData?.id) setManualId(productData.id.toString())
+                  }
+                }}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  useAutoId ? 'bg-[#52BFBE] text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {useAutoId ? 'Auto' : 'Manual'}
+              </button>
+            </div>
+
+            {useAutoId && (
+              <p className="text-xs text-gray-500 mt-1">
+                Auto ID will be generated: <strong>{Date.now()}</strong>
+              </p>
             )}
           </div>
 
@@ -205,7 +272,7 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
           <div className="pt-6">
             <button
               onClick={handleSubmit}
-              className="w-full bg-[#3ABAB4] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
+              className="w-full bg-[#52BFBE] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
             >
               Simpan
             </button>
