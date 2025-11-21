@@ -1,0 +1,239 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Search, Plus } from 'lucide-react'
+import SidebarKasir from '@/components/SidebarKasir'
+import HeaderKasir from '@/components/HeaderKasir'
+
+interface ItemPesanan {
+  nama: string
+  harga: number
+  qty: number
+  note?: string
+}
+
+interface Pesanan {
+  id: number
+  noPesanan: string
+  nama: string
+  waktu: string
+  items: ItemPesanan[]
+  subtotal: number
+  pajak: number
+  discount: number
+  total: number
+  status: 'selesai' | 'batal' | 'proses'
+  metode: 'Cash' | 'E-Wallet'
+  bayar?: number
+  kembalian?: number
+}
+
+export default function PesananDetailPage() {
+  const router = useRouter()
+  const [pesananList, setPesananList] = useState<Pesanan[]>([
+    {
+      id: 1,
+      noPesanan: '#001',
+      nama: 'Andi',
+      waktu: 'Kamis, 13 Nov 2025 | 10:20',
+      items: [
+        { nama: 'Nasi Goreng', harga: 15000, qty: 2 },
+        { nama: 'Es Teh', harga: 5000, qty: 1 },
+      ],
+      subtotal: 35000,
+      pajak: 3500,
+      discount: 0,
+      total: 38500,
+      status: 'selesai',
+      metode: 'Cash',
+      bayar: 40000,
+      kembalian: 1500,
+    },
+    {
+      id: 2,
+      noPesanan: '#002',
+      nama: 'Beno',
+      waktu: 'Kamis, 13 Nov 2025 | 10:45',
+      items: [{ nama: 'Mie Ayam', harga: 15000, qty: 1 }],
+      subtotal: 15000,
+      pajak: 1500,
+      discount: 0,
+      total: 16500,
+      status: 'batal',
+      metode: 'E-Wallet',
+    },
+    {
+      id: 3,
+      noPesanan: '#003',
+      nama: 'Rina',
+      waktu: 'Kamis, 13 Nov 2025 | 11:10',
+      items: [
+        { nama: 'Ayam Geprek', harga: 20000, qty: 1 },
+        { nama: 'Lemon Tea', harga: 8000, qty: 1 },
+      ],
+      subtotal: 28000,
+      pajak: 2800,
+      discount: 0,
+      total: 30800,
+      status: 'proses',
+      metode: 'Cash',
+    },
+  ])
+
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<'semua' | 'selesai' | 'batal' | 'proses'>('semua')
+
+  const filteredPesanan = pesananList.filter((p) => {
+    const matchFilter = filter === 'semua' ? true : p.status === filter
+    const matchSearch =
+      p.nama.toLowerCase().includes(search.toLowerCase()) ||
+      p.noPesanan.toLowerCase().includes(search.toLowerCase())
+    return matchFilter && matchSearch
+  })
+
+  // Handle selesaikan pesanan proses
+  // Ganti fungsi lama:
+  const handleSelesaikan = (pesanan: Pesanan) => {
+    // simpan sementara ke sessionStorage
+    sessionStorage.setItem('currentPesanan', JSON.stringify(pesanan))
+    router.push(`/dashboardKasir/pesanan/detail/${pesanan.id}`)
+  }
+
+  return (
+    <div className="flex min-h-screen bg-[#52bfbe] text-gray-800">
+      <SidebarKasir />
+      <div className="flex-1 flex flex-col" style={{ marginLeft: '7rem' }}>
+        <HeaderKasir
+          title="Riwayat Transaksi"
+          showBack
+          onBack={() => router.push('/dashboardKasir/pesanan')}
+        />
+
+        {/* Filter dan Kontrol */}
+        <div className="flex flex-col md:flex-row justify-between gap-4 p-4">
+          <div className="flex gap-2">
+            {['semua', 'proses', 'selesai', 'batal'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f as any)}
+                className={`px-4 py-1 rounded-full font-medium text-sm ${
+                  filter === f ? 'bg-[#737373] text-white' : 'bg-white text-black'
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Cari"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-gray-300 rounded-md pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#737373] bg-white text-gray-700"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Daftar Pesanan */}
+        <div className="p-4 flex-1 overflow-y-auto">
+          {filteredPesanan.length === 0 && (
+            <p className="text-white italic mb-4">Belum ada pesanan.</p>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPesanan.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-xl shadow p-4 flex flex-col hover:shadow-md"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <div className="bg-[#1E90FF] text-white px-3 py-1 rounded font-bold">
+                    {p.noPesanan}
+                  </div>
+                  <span
+                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      p.status === 'selesai'
+                        ? 'bg-green-200 text-green-700'
+                        : p.status === 'batal'
+                          ? 'bg-red-200 text-red-700'
+                          : 'bg-yellow-200 text-yellow-700'
+                    }`}
+                  >
+                    {p.status}
+                  </span>
+                </div>
+
+                <p className="font-semibold">{p.nama || '-'}</p>
+                <p className="text-xs text-gray-500 border-b border-gray-300 pb-1">{p.waktu}</p>
+
+                {/* Items */}
+                <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-0.5">
+                  {p.items.map((item, idx) => (
+                    <li key={idx} className="flex justify-between">
+                      <span>
+                        {item.nama} x{item.qty}
+                      </span>
+                      <span>Rp{(item.harga * item.qty).toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex justify-between items-center mt-3 font-semibold">
+                  <span>Subtotal</span>
+                  <span>Rp{p.subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Pajak 10%</span>
+                  <span>Rp{p.pajak.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Diskon</span>
+                  <span>-Rp{p.discount.toLocaleString()}</span>
+                </div>
+                <div className="border-t border-dashed pt-2 flex justify-between font-bold text-base">
+                  <span>Total</span>
+                  <span>Rp{p.total.toLocaleString()}</span>
+                </div>
+
+                <div className="mt-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Metode</span>
+                    <span>{p.metode}</span>
+                  </div>
+                  {p.status === 'selesai' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Bayar</span>
+                        <span>Rp{p.bayar?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Kembalian</span>
+                        <span>Rp{p.kembalian?.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Tombol selesaikan hanya untuk proses */}
+                {p.status === 'proses' && (
+                  <button
+                    onClick={() => handleSelesaikan(p)} // kirim objek pesanan
+                    className="mt-3 px-3 py-2 rounded bg-[#52bfbe] text-white hover:bg-[#44a9a9]"
+                  >
+                    Selesaikan Pesanan
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

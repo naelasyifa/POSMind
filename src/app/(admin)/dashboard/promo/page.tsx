@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { Search, Edit, Trash2, ChevronUp, ChevronDown, Plus } from 'lucide-react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
 import DeletePromo from './components/DeletePromo'
 import EditPromo from './editPromo'
 import TambahPromo from './tambahPromo'
+import DetailPromo from './components/DetailPromo' // import modal detail
 import { promoData as initialData, deletePromo as deletePromoData } from './data'
 
 type SortKey = 'id' | 'kuota' | 'mulai' | null
@@ -18,6 +19,7 @@ export default function PromoPage() {
   const [selectedPromo, setSelectedPromo] = useState<any>(null)
   const [editPromoId, setEditPromoId] = useState<number | null>(null)
   const [tambahOpen, setTambahOpen] = useState(false)
+  const [detailPromo, setDetailPromo] = useState<any>(null) // state untuk modal detail
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({
     key: null,
     direction: 'asc',
@@ -50,7 +52,7 @@ export default function PromoPage() {
     })
   }
 
-  // Delete
+  //Delete
   const handleDelete = (id: number) => {
     deletePromoData(id)
     setData(data.filter((p) => p.id !== id))
@@ -112,6 +114,12 @@ export default function PromoPage() {
       }
     })
 
+  const renderDiskon = (promo: any) => {
+    if (promo.tipeDiskon === 'percent') return `${promo.nilaiDiskon}%`
+    if (promo.tipeDiskon === 'nominal') return `Rp ${promo.nilaiDiskon.toLocaleString()}`
+    return '-'
+  }
+
   return (
     <div className="flex h-screen bg-[#52bfbe] overflow-auto">
       <Sidebar />
@@ -137,8 +145,9 @@ export default function PromoPage() {
 
               <button
                 onClick={() => setTambahOpen(true)}
-                className="bg-[#52bfbe] text-white px-4 py-2 rounded-md hover:bg-[#44a9a9] transition"
+                className="flex items-center gap-2 bg-[#52BFBE] text-white px-4 py-2 rounded-md hover:bg-[#44a9a9] transition"
               >
+                <Plus size={16} />
                 Tambah Promo
               </button>
             </div>
@@ -153,7 +162,7 @@ export default function PromoPage() {
                     <th className="py-3 px-2">Nama Promo</th>
                     <th className="py-3 px-2">Kode</th>
                     <th className="py-3 px-2 cursor-pointer" onClick={() => handleSort('mulai')}>
-                      Tanggal Promo {renderSortIcon('mulai')}
+                      Periode {renderSortIcon('mulai')}
                     </th>
                     <th className="py-3 px-2">Diskon</th>
                     <th className="py-3 px-2 cursor-pointer" onClick={() => handleSort('kuota')}>
@@ -163,12 +172,17 @@ export default function PromoPage() {
                     <th className="py-3 px-2">Aksi</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {sortedData.length > 0 ? (
                     sortedData.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-gray-200 hover:bg-gray-50 text-center"
+                        className="border-b border-gray-200 hover:bg-gray-50 text-center cursor-pointer"
+                        onClick={(e) => {
+                          if ((e.target as HTMLElement).closest('button')) return
+                          setDetailPromo(item)
+                        }}
                       >
                         <td className="py-3 px-2">{item.id}</td>
                         <td className="py-3 px-2">{item.nama}</td>
@@ -176,7 +190,7 @@ export default function PromoPage() {
                         <td className="py-3 px-2">
                           {formatDateTime(item.mulai)} - {formatDateTime(item.akhir)}
                         </td>
-                        <td className="py-3 px-2">{item.diskon}</td>
+                        <td className="py-3 px-2">{renderDiskon(item)}</td>
                         <td className="py-3 px-2">{item.kuota}</td>
                         <td className="py-3 px-2">
                           <span
@@ -219,7 +233,7 @@ export default function PromoPage() {
         </main>
       </div>
 
-      {/* Popup Hapus */}
+      {/* Modal Delete */}
       {selectedPromo && (
         <DeletePromo
           promo={selectedPromo}
@@ -228,18 +242,21 @@ export default function PromoPage() {
         />
       )}
 
-      {/* Popup Tambah */}
+      {/* Modal Tambah */}
       {tambahOpen && <TambahPromo onClose={() => setTambahOpen(false)} onSave={handleAddPromo} />}
 
-      {/* Popup Edit */}
+      {/* Modal Edit */}
       {editPromoId && (
         <EditPromo
           id={editPromoId}
           onClose={() => setEditPromoId(null)}
           onUpdate={handleUpdatePromo}
-          promoData={data} // ✅ wajib dikirim
+          promoData={data}
         />
       )}
+
+      {/* Modal Detail */}
+      {detailPromo && <DetailPromo promo={detailPromo} onClose={() => setDetailPromo(null)} />}
     </div>
   )
 }

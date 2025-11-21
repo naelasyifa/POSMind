@@ -1,10 +1,13 @@
+// data.ts
 export interface Promo {
   id: number
   nama: string
   kode: string
   mulai: string
   akhir: string
-  diskon: string
+  kategori: string // misal: 'diskon', 'bundle', 'freebie'
+  tipeDiskon: 'percent' | 'nominal'
+  nilaiDiskon: number // 10% atau Rp 10000
   kuota: number
   status: string
 }
@@ -17,7 +20,9 @@ export let promoData: Promo[] = [
     kode: '123awalbulan',
     mulai: '01 Aug 2025 14:00:01',
     akhir: '03 Aug 2025 20:00:00',
-    diskon: '20%',
+    kategori: 'diskon',
+    tipeDiskon: 'percent',
+    nilaiDiskon: 20,
     kuota: 25,
     status: 'Aktif',
   },
@@ -27,7 +32,9 @@ export let promoData: Promo[] = [
     kode: '17Agustus',
     mulai: '17 Aug 2025 10:00:01',
     akhir: '17 Aug 2025 14:00:00',
-    diskon: '17%',
+    kategori: 'diskon',
+    tipeDiskon: 'percent',
+    nilaiDiskon: 17,
     kuota: 45,
     status: 'Aktif',
   },

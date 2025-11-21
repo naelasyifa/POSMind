@@ -27,20 +27,14 @@ export default function LoginPage() {
         {/* Logo POSMind */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-2">
-            <img
-              src="/logo-posmind.png"
-              alt="POSMind Logo"
-              className="w-20 h-20 object-contain"
-            />
+            <img src="/logo-posmind.png" alt="POSMind Logo" className="w-20 h-20 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-[#4DB8C4]">POSMind</h1>
         </div>
 
         {/* Kartu Form Login */}
         <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">
-            Masuk
-          </h2>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">Masuk</h2>
           <p className="text-center text-gray-600 text-sm mb-8">
             Silakan login untuk melanjutkan ke dashboard Anda
           </p>
@@ -48,9 +42,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit}>
             {/* Input Email */}
             <div className="mb-5">
-              <label className="block text-gray-800 text-sm font-semibold mb-2">
-                Email
-              </label>
+              <label className="block text-gray-800 text-sm font-semibold mb-2">Email</label>
               <input
                 type="email"
                 name="email"
@@ -64,9 +56,7 @@ export default function LoginPage() {
 
             {/* Input Password */}
             <div className="mb-8">
-              <label className="block text-gray-800 text-sm font-semibold mb-2">
-                Password
-              </label>
+              <label className="block text-gray-800 text-sm font-semibold mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
