@@ -16,7 +16,7 @@ export default function ProdukPage() {
       <div style={{ marginLeft: '7rem' }}>
         <HeaderAdmin title="Produk" />
       </div>
-      <div className="flex flex-1 gap-4 pt-16 pb-6">
+      <div className="flex flex-1 gap-4 px-4 pt-16 pb-6">
         <FilterProduct />
         {/* ✅ Pass prop correctly */}
         <ListProduct onModalChange={setIsModalOpen} />

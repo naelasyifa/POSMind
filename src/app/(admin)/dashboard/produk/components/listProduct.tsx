@@ -141,10 +141,19 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
 
   return (
     <div className="flex-1 relative">
-      <div className="bg-white rounded-xl shadow p-5 flex flex-col h-[600px]">
+      <div className="bg-white rounded-xl shadow p-5 flex flex-col h-[653px]">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
           <h3 className="font-semibold text-lg">Daftar Produk</h3>
+          <button
+            onClick={() => {
+              setIsAddModalOpen(true)
+              onModalChange(true)
+            }}
+            className="bg-[#52BFBE] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#43a9a8] transition"
+          >
+            Tambah Kategori
+          </button>
           <button
             onClick={() => {
               setIsAddModalOpen(true)

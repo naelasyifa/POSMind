@@ -1,6 +1,20 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import {
+  Pizza,
+  Beef,
+  Drumstick,
+  Sandwich,
+  CupSoda,
+  Coffee,
+  IceCream,
+  Fish,
+  Utensils,
+  Croissant,
+  FlaskConical,
+  Package,
+} from 'lucide-react'
 
 interface AddProductProps {
   isOpen: boolean
@@ -15,6 +29,21 @@ interface AddProductProps {
   }) => void
 }
 
+const ICON_OPTIONS = [
+  { name: 'Package', icon: Package },
+  { name: 'Pizza', icon: Pizza },
+  { name: 'Burger', icon: Beef },
+  { name: 'Ayam', icon: Drumstick },
+  { name: 'Roti', icon: Sandwich },
+  { name: 'Minuman', icon: CupSoda },
+  { name: 'Kopi', icon: Coffee },
+  { name: 'Dessert', icon: IceCream },
+  { name: 'Seafood', icon: Fish },
+  { name: 'Makanan Berat', icon: Utensils },
+  { name: 'Sarapan', icon: Croissant },
+  { name: 'Saus', icon: FlaskConical },
+]
+
 export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps) {
   const [useAutoId, setUseAutoId] = useState(true)
   const [productId, setProductId] = useState('')
@@ -24,6 +53,8 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const [kategori, setKategori] = useState<string[]>([])
   const [selectedKategori, setSelectedKategori] = useState('')
   const [newKategori, setNewKategori] = useState('')
+  const [selectedIcon, setSelectedIcon] = useState('Package')
+  const [showIconPicker, setShowIconPicker] = useState(false)
   const [gambar, setGambar] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -97,15 +128,6 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Gambar Produk</label>
 
-            {/* Hidden file input */}
-            <input
-              type="file"
-              accept="image/*"
-              id="gambarInput"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-
             {/* Clickable text that opens file explorer */}
 
             <input
@@ -132,7 +154,6 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
               Pilih Gambar
             </p>
           </div>
-
           {/* Product ID */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product ID</label>
@@ -214,6 +235,19 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
                 +
               </button>
             </div>
+
+            {/* Icon Picker Trigger */}
+            <div
+              onClick={() => setShowIconPicker(true)}
+              className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#52BFBE]"
+            >
+              {/* Preview Selected Icon */}
+              {(() => {
+                const Icon = ICON_OPTIONS.find(ic => ic.name === selectedIcon)?.icon || Package;
+                return <Icon size={18} className="text-[#52BFBE]" />;
+              })()}
+              <span>Pilih Icon</span>
+            </div>
           </div>
 
           {/* Kuantitas */}
@@ -228,7 +262,6 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
             />
           </div>
-
           {/* Harga */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Harga</label>
@@ -241,7 +274,6 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
             />
           </div>
-
           {/* Submit */}
           <div className="pt-6">
             <button
@@ -252,6 +284,41 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
             </button>
           </div>
         </div>
+        {/* Icon Picker Modal */}
+        {showIconPicker && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999]">
+            <div className="bg-white p-5 rounded-xl shadow-xl w-[300px]">
+              <h3 className="font-semibold mb-3">Pilih Icon</h3>
+
+              <div className="grid grid-cols-4 gap-3">
+                {ICON_OPTIONS.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        setSelectedIcon(item.name)
+                        setShowIconPicker(false)
+                      }}
+                      className={`p-3 border rounded-lg hover:border-[#52BFBE] transition ${
+                        selectedIcon === item.name ? 'border-[#52BFBE] bg-[#ECFDFC]' : ''
+                      }`}
+                    >
+                      <Icon size={22} className="mx-auto text-gray-700" />
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => setShowIconPicker(false)}
+                className="mt-4 w-full py-2 bg-gray-200 rounded-lg text-sm"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
