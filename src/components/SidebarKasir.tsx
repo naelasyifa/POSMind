@@ -7,8 +7,8 @@ export default function SidebarKasir() {
 
   const menuItems = [
     { href: '/dashboardKasir', label: 'Dashboard', icon: 'LayoutDashboard' },
+    { href: '/dashboardKasir/pesanan', label: 'Transaksi', icon: 'BankNote' },
     { href: '/dashboardKasir/menu', label: 'Menu', icon: 'Package' },
-    { href: '/dashboardKasir/pesanan', label: 'Pesanan', icon: 'ClipboardList' },
     { href: '/dashboardKasir/laporan', label: 'Laporan', icon: 'FileText' },
   ]
 
@@ -51,7 +51,7 @@ export default function SidebarKasir() {
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           </svg>
         )
-      case 'ClipboardList':
+      case 'BankNote':
         return (
           <svg
             className={className}
@@ -59,13 +59,13 @@ export default function SidebarKasir() {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <rect x="9" y="2" width="6" height="4" rx="1" ry="1"></rect>
-            <path d="M9 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-4"></path>
-            <line x1="9" y1="10" x2="9" y2="10"></line>
-            <line x1="9" y1="14" x2="9" y2="14"></line>
-            <line x1="15" y1="10" x2="15" y2="10"></line>
-            <line x1="15" y1="14" x2="15" y2="14"></line>
+            <rect x="2" y="6" width="20" height="12" rx="2" ry="2" />
+            <circle cx="12" cy="12" r="3" />
+            <path d="M6 9v0" />
+            <path d="M18 15v0" />
           </svg>
         )
       case 'FileText':
