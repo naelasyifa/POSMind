@@ -7,10 +7,10 @@ export default function SidebarKasir() {
 
   const menuItems = [
     { href: '/dashboardKasir', label: 'Dashboard', icon: 'LayoutDashboard' },
-    { href: '/dashboardKasir/pesanan', label: 'Transaksi', icon: 'BankNote' },
+    { href: '/dashboardKasir/transaksi', label: 'Transaksi', icon: 'BankNote' },
     { href: '/dashboardKasir/menu', label: 'Menu', icon: 'Package' },
     { href: '/dashboardKasir/laporan', label: 'Laporan', icon: 'FileText' },
-    { href: '/dashboardKasir/laporan', label: 'Reservasi', icon: 'Calendar' }
+    { href: '/dashboardKasir/reservasi', label: 'Reservasi', icon: 'Calendar' }
   ]
 
   const activeMenu = menuItems.reduce<string | null>((acc, item) => {

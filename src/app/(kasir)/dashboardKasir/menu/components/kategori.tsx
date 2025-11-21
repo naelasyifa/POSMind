@@ -49,7 +49,7 @@ export default function CategoryList() {
             <div className="w-full flex justify-end">
               <cat.icon
                 size={28}
-                className={`${active === cat.name ? 'text-white' : 'text-[#737373]'}`}
+                className={`${active === cat.name ? 'text-white' : 'text-inherit'}`}
               />
             </div>
 
