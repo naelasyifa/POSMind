@@ -7,9 +7,10 @@ export default function SidebarKasir() {
 
   const menuItems = [
     { href: '/dashboardKasir', label: 'Dashboard', icon: 'LayoutDashboard' },
+    { href: '/dashboardKasir/pesanan', label: 'Transaksi', icon: 'BankNote' },
     { href: '/dashboardKasir/menu', label: 'Menu', icon: 'Package' },
-    { href: '/dashboardKasir/pesanan', label: 'Pesanan', icon: 'ClipboardList' },
     { href: '/dashboardKasir/laporan', label: 'Laporan', icon: 'FileText' },
+    { href: '/dashboardKasir/laporan', label: 'Reservasi', icon: 'Calendar' }
   ]
 
   const activeMenu = menuItems.reduce<string | null>((acc, item) => {
@@ -51,7 +52,7 @@ export default function SidebarKasir() {
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           </svg>
         )
-      case 'ClipboardList':
+      case 'BankNote':
         return (
           <svg
             className={className}
@@ -59,13 +60,13 @@ export default function SidebarKasir() {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <rect x="9" y="2" width="6" height="4" rx="1" ry="1"></rect>
-            <path d="M9 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-4"></path>
-            <line x1="9" y1="10" x2="9" y2="10"></line>
-            <line x1="9" y1="14" x2="9" y2="14"></line>
-            <line x1="15" y1="10" x2="15" y2="10"></line>
-            <line x1="15" y1="14" x2="15" y2="14"></line>
+            <rect x="2" y="6" width="20" height="12" rx="2" ry="2" />
+            <circle cx="12" cy="12" r="3" />
+            <path d="M6 9v0" />
+            <path d="M18 15v0" />
           </svg>
         )
       case 'FileText':
@@ -83,13 +84,32 @@ export default function SidebarKasir() {
             <line x1="16" y1="17" x2="8" y2="17" />
           </svg>
         )
+      case 'Calendar':
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <polyline points="9 15 11 17 15 13" />
+    </svg>
+  )
+
       default:
         return null
     }
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-28 bg-white flex flex-col items-center py-2 border-r border-gray-200 shadow-sm">
+    <aside className="fixed left-0 top-0 h-full w-30 bg-white flex flex-col items-center py-2 border-r border-gray-200 shadow-sm">
       {/* Logo */}
       <div className="mt-4 mb-8 flex flex-col items-center">
         <img src="/logo-posmind.png" alt="POSMind Logo" className="w-10 h-auto" />
@@ -97,7 +117,7 @@ export default function SidebarKasir() {
       </div>
 
       {/* Menu */}
-      <nav className="flex flex-col items-center w-full gap-2 flex-1">
+      <nav className="flex flex-col items-center w-full gap-0 flex-1">
         {menuItems.map((item, idx) => {
           const isActive = item.href === activeMenu
           return (
