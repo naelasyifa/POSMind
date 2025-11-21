@@ -10,6 +10,7 @@ export default function Sidebar() {
     { href: '/dashboard/pengguna', label: 'Pengguna', icon: 'Users' },
     { href: '/dashboard/metode-pembayaran', label: 'Metode Pembayaran', icon: 'CreditCard' },
     { href: '/dashboard/laporan', label: 'Laporan', icon: 'FileText' },
+    { href: '/dashboard/pengaturan', label: 'Settings', icon: 'Settings' },
   ]
 
   const pathname = usePathname()
@@ -127,13 +128,29 @@ export default function Sidebar() {
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
         )
+      case 'Settings':
+        return (
+          <svg
+            className={className}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 5a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09c0 .7.4 1.34 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.7.17 1.34.81 1.51 1.51H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        )
+
       default:
         return null
     }
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-28 bg-white flex flex-col items-center py-2 border-r border-gray-200 overflow-y-auto">
+    <aside className="fixed left-0 top-0 h-full w-30 z-50 bg-white flex flex-col items-center py-2 border-r border-gray-200 overflow-y-auto">
       {/* Logo */}
       <div className="mt-4 mb-8 flex flex-col items-center flex-shrink-0">
         <img src="/logo-posmind.png" alt="POSMind Logo" className="w-10 h-8,5" />
@@ -141,7 +158,7 @@ export default function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex flex-col items-center w-full gap-2 flex-1">
+      <nav className="flex flex-col items-center w-full gap-0 flex-1">
         {menuItems.map((item, idx) => {
           const isActive = item.href === activeMenu
 
@@ -177,7 +194,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="mt-10 mb-2 flex-shrink-0">
+      <div className="mt-16 mb-2 flex-shrink-0">
         <button className="flex flex-col items-center justify-center gap-0.5 text-gray-600 hover:text-red-500 transition">
           <div className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition">
             <svg

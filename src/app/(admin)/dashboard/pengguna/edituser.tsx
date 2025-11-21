@@ -22,6 +22,7 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [akses, setAkses] = useState([false, false, false, false, false])
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
 
   const columns = ['Dashboard', 'Laporan', 'Inventory', 'Pengguna', 'Settings']
 
@@ -40,6 +41,20 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
     setAkses((prev) => prev.map((val, i) => (i === index ? !val : val)))
   }
 
+  const handleRoleSelect = (selectedRole: string) => {
+    setRole(selectedRole)
+    setIsRoleDropdownOpen(false)
+  }
+
+  const getRoleLabel = () => {
+    if (role.toLowerCase() === 'admin') return 'Admin'
+    if (role.toLowerCase() === 'kasir') return 'Kasir'
+    if (role === 'Admin') return 'Admin'
+    if (role === 'Kasir') return 'Kasir'
+    if (role === 'Sub admin') return 'Sub admin'
+    return role || 'Pilih Role'
+  }
+
   const handleSubmit = () => {
     if (nama && email && role) {
       const updatedUser = { nama, email, role, akses }
@@ -48,9 +63,6 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
     }
   }
 
-  // Jangan render apa-apa kalau userData null
-  //   if (!userData) return null
-
   return (
     <>
       {/* Overlay transparan */}
@@ -58,7 +70,10 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
         className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
         }`}
-        onClick={onClose}
+        onClick={() => {
+          onClose()
+          setIsRoleDropdownOpen(false)
+        }}
       />
 
       {/* Panel kanan */}
@@ -103,15 +118,59 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
             />
           </div>
 
-          {/* Role - SUDAH TERISI */}
+          {/* Role (custom dropdown) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
-            />
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] bg-white text-left ${role ? 'text-gray-900' : 'text-gray-500'}`}
+              >
+                {getRoleLabel()}
+              </button>
+
+              {/* custom arrow (SVG) */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className={`transition-transform duration-200 ${isRoleDropdownOpen ? 'rotate-180' : ''}`}
+                >
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              {/* Dropdown options */}
+              {isRoleDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSelect('admin')}
+                    className="w-full px-3 py-2.5 text-left text-gray-900 hover:bg-[#E0F7F6] transition-colors"
+                  >
+                    Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSelect('kasir')}
+                    className="w-full px-3 py-2.5 text-left text-gray-900 hover:bg-[#E0F7F6] transition-colors"
+                  >
+                    Kasir
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Password - OPSIONAL (KOSONG) */}
@@ -133,11 +192,23 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               )}
             </div>
           </div>
+
+          {/* CSS untuk hide native password reveal button */}
+          <style jsx>{`
+            input[type="password"]::-ms-reveal,
+            input[type="password"]::-ms-clear {
+              display: none;
+            }
+            input[type="password"]::-webkit-credentials-auto-fill-button,
+            input[type="password"]::-webkit-password-toggle {
+              display: none !important;
+            }
+          `}</style>
 
           {/* Kontrol Akses - SUDAH TERISI SESUAI DATA USER */}
           <div className="pt-4">
@@ -169,21 +240,6 @@ export default function EditUser({ isOpen, onClose, userData, onSave }: EditUser
             </button>
           </div>
         </div>
-
-        {/* Hilangkan ikon mata bawaan browser */}
-        <style jsx>{`
-          input::-ms-reveal,
-          input::-ms-clear {
-            display: none;
-          }
-          input::-webkit-credentials-auto-fill-button {
-            visibility: hidden;
-            display: none !important;
-          }
-          input::-webkit-password-toggle {
-            display: none !important;
-          }
-        `}</style>
       </div>
     </>
   )

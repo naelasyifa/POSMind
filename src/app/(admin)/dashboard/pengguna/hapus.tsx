@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 interface HapusUserProps {
   isOpen: boolean
   onClose: () => void
@@ -7,13 +9,21 @@ interface HapusUserProps {
   userName: string
 }
 
-export default function HapusUser({
-  isOpen,
-  onClose,
-  onConfirm,
-  userName,
-}: HapusUserProps) {
-  if (!isOpen) return null
+export default function HapusUser({ isOpen, onClose, onConfirm, userName }: HapusUserProps) {
+  const [mounted, setMounted] = useState(false) // modal muncul di DOM
+  const [animate, setAnimate] = useState(false) // animasi masuk/keluar
+
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true) // tampilkan komponen dulu
+      setTimeout(() => setAnimate(true), 10) // => animasi masuk
+    } else {
+      setAnimate(false) // animasi keluar
+      setTimeout(() => setMounted(false), 200) // hapus setelah animasi selesai
+    }
+  }, [isOpen])
+
+  if (!mounted) return null
 
   const handleConfirm = () => {
     onConfirm()
@@ -22,12 +32,18 @@ export default function HapusUser({
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+      className={`
+        fixed inset-0 z-50 flex items-center justify-center px-4
+        transition-all duration-200
+        ${animate ? 'bg-black/40 backdrop-blur-sm' : 'bg-black/0 backdrop-blur-0'}
+      `}
       onClick={onClose}
     >
-      {/* Kotak Modal */}
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all"
+        className={`
+          bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-200
+          ${animate ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}
+        `}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Icon Warning */}
@@ -49,17 +65,15 @@ export default function HapusUser({
           </div>
         </div>
 
-        {/* Judul */}
         <h2 className="text-xl font-bold text-center text-gray-800 mb-3">
           Apakah Anda yakin ingin menghapus pengguna ini?
         </h2>
 
-        {/* Nama Pengguna */}
         <p className="text-sm text-center text-gray-600 mb-6">
-          Pengguna <span className="font-semibold text-gray-800">{userName}</span> akan dihapus secara permanen.
+          Pengguna <span className="font-semibold text-gray-800">{userName}</span> akan dihapus
+          secara permanen.
         </p>
 
-        {/* Tombol Aksi */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -67,6 +81,7 @@ export default function HapusUser({
           >
             Tidak
           </button>
+
           <button
             onClick={handleConfirm}
             className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-lg transition-all"

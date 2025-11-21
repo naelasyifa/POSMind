@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 interface AddUserProps {
@@ -12,15 +12,27 @@ interface AddUserProps {
 export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
   const [nama, setNama] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState('')
+  const [role, setRole] = useState('') // '' | 'admin' | 'kasir'
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [akses, setAkses] = useState([false, false, false, false, false])
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
 
   const columns = ['Dashboard', 'Laporan', 'Inventory', 'Pengguna', 'Settings']
 
   const toggleAkses = (index: number) => {
     setAkses((prev) => prev.map((val, i) => (i === index ? !val : val)))
+  }
+
+  const handleRoleSelect = (selectedRole: string) => {
+    setRole(selectedRole)
+    setIsRoleDropdownOpen(false)
+  }
+
+  const getRoleLabel = () => {
+    if (role === 'admin') return 'Admin'
+    if (role === 'kasir') return 'Kasir'
+    return 'Pilih Role'
   }
 
   const handleSubmit = () => {
@@ -40,17 +52,16 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
     <>
       {/* Overlay transparan */}
       <div
-        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
-        onClick={onClose}
+        className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        onClick={() => {
+          onClose()
+          setIsRoleDropdownOpen(false)
+        }}
       />
 
       {/* Panel kanan */}
       <div
-        className={`fixed top-0 right-0 h-full w-[430px] bg-white shadow-2xl rounded-l-2xl z-50 p-8 transition-transform duration-500 ease-in-out overflow-y-auto ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 h-full w-[430px] bg-white shadow-2xl rounded-l-2xl z-50 p-8 transition-transform duration-500 ease-in-out overflow-y-auto ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Tambah Pengguna</h2>
@@ -62,7 +73,6 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
           </button>
         </div>
 
-        {/* Garis pemisah tipis */}
         <hr className="border-gray-300 mb-6" />
 
         <div className="space-y-4">
@@ -90,16 +100,59 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
             />
           </div>
 
-          {/* Role */}
+          {/* Role (custom dropdown) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Role Pengguna"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
-            />
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] bg-white text-left ${role ? 'text-gray-900' : 'text-gray-500'}`}
+              >
+                {getRoleLabel()}
+              </button>
+
+              {/* custom arrow (SVG) */}
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className={`transition-transform duration-200 ${isRoleDropdownOpen ? 'rotate-180' : ''}`}
+                >
+                  <path
+                    d="M6 9l6 6 6-6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              {/* Dropdown options */}
+              {isRoleDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSelect('admin')}
+                    className="w-full px-3 py-2.5 text-left text-gray-900 hover:bg-[#E0F7F6] transition-colors"
+                  >
+                    Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleSelect('kasir')}
+                    className="w-full px-3 py-2.5 text-left text-gray-900 hover:bg-[#E0F7F6] transition-colors"
+                  >
+                    Kasir
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Password */}
@@ -111,7 +164,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password login pengguna"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
               />
               {password !== '' && (
                 <button
@@ -119,11 +172,23 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               )}
             </div>
           </div>
+
+          {/* CSS untuk hide native password reveal button */}
+          <style jsx>{`
+            input[type='password']::-ms-reveal,
+            input[type='password']::-ms-clear {
+              display: none;
+            }
+            input[type='password']::-webkit-credentials-auto-fill-button,
+            input[type='password']::-webkit-password-toggle {
+              display: none !important;
+            }
+          `}</style>
 
           {/* Kontrol Akses */}
           <div className="pt-4">
@@ -135,11 +200,9 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
                   <button
                     type="button"
                     onClick={() => toggleAkses(index)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all ${
-                      akses[index] ? 'border-[#3ABAB4] bg-[#3ABAB4]' : 'border-gray-400 bg-gray-200'
-                    }`}
+                    className={`w-7 h-7 rounded-full border-2 transition-all ${akses[index] ? 'border-[#3ABAB4] bg-[#3ABAB4]' : 'border-gray-400 bg-gray-200'}`}
                     title={col}
-                  ></button>
+                  />
                 </div>
               ))}
             </div>
@@ -155,21 +218,6 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
             </button>
           </div>
         </div>
-
-        {/* Hilangkan ikon mata bawaan browser */}
-        <style jsx>{`
-          input::-ms-reveal,
-          input::-ms-clear {
-            display: none;
-          }
-          input::-webkit-credentials-auto-fill-button {
-            visibility: hidden;
-            display: none !important;
-          }
-          input::-webkit-password-toggle {
-            display: none !important;
-          }
-        `}</style>
       </div>
     </>
   )

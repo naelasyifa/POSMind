@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, UserPlus } from 'lucide-react'
 import AddUser from './adduser'
 import EditUser from './edituser'
 import HapusUser from './hapus'
@@ -26,37 +26,37 @@ export default function PenggunaPage() {
     {
       nama: 'Anees Ansari',
       email: 'anees@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
     {
       nama: 'Lorem Ipsum',
       email: 'lorem1@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
     {
       nama: 'Lorem Ipsum',
       email: 'lorem2@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
     {
       nama: 'Lorem Ipsum',
       email: 'lorem3@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
     {
       nama: 'Lorem Ipsum',
       email: 'lorem4@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
     {
       nama: 'Lorem Ipsum',
       email: 'lorem5@email.com',
-      role: 'Sub admin',
+      role: 'Kasir',
       akses: [true, true, true, false, false],
     },
   ])
@@ -68,6 +68,17 @@ export default function PenggunaPage() {
   const [selectedUserIndex, setSelectedUserIndex] = useState<number | null>(null)
 
   const columns = ['Dashboard', 'Laporan', 'Inventory', 'Pengguna', 'Settings']
+
+  // Fungsi untuk format role dengan kapitalisasi yang benar
+  const formatRole = (role: string) => {
+    if (!role) return role
+    const lowerRole = role.toLowerCase()
+    if (lowerRole === 'admin') return 'Admin'
+    if (lowerRole === 'sub admin') return 'Sub admin'
+    if (lowerRole === 'kasir') return 'Kasir'
+    // Jika sudah benar kapitalisasinya, return as is
+    return role
+  }
 
   const toggleAkses = (userIndex: number, aksesIndex: number) => {
     setData((prevData) =>
@@ -102,13 +113,23 @@ export default function PenggunaPage() {
   }
 
   const handleAddUser = (newUser: User) => {
-    setData((prevData) => [...prevData, newUser])
+    // Pastikan role ter-format dengan benar saat menambah user
+    const formattedUser = {
+      ...newUser,
+      role: formatRole(newUser.role),
+    }
+    setData((prevData) => [...prevData, formattedUser])
   }
 
   const handleSaveEdit = (updatedUser: User) => {
     if (selectedUserIndex !== null) {
+      // Pastikan role ter-format dengan benar saat edit user
+      const formattedUser = {
+        ...updatedUser,
+        role: formatRole(updatedUser.role),
+      }
       setData((prevData) =>
-        prevData.map((user, i) => (i === selectedUserIndex ? updatedUser : user)),
+        prevData.map((user, i) => (i === selectedUserIndex ? formattedUser : user)),
       )
     }
     setSelectedUser(null)
@@ -127,11 +148,12 @@ export default function PenggunaPage() {
         <div className="flex-1 p-3">
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-semibold text-gray-800">Daftar Pengguna</h2>
+              <h2 className="text-xl font-semibold text-sm">Daftar Pengguna</h2>
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#3ABAB4] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all"
+                className="bg-[#3ABAB4] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
               >
+                <UserPlus size={18} />
                 Tambah Pengguna
               </button>
             </div>
@@ -139,7 +161,7 @@ export default function PenggunaPage() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b-2 border-gray-300 text-left text-gray-600">
+                  <tr className="border-b-2 border-gray-300 text-left text-sm">
                     <th className="pb-3 pt-2">Nama</th>
                     <th className="pb-3 pt-2">Role</th>
                     {columns.map((col) => (
@@ -160,10 +182,10 @@ export default function PenggunaPage() {
                       <td className="py-4">
                         <span
                           className={`px-3 py-1 rounded-md text-white text-sm font-medium ${
-                            user.role === 'Admin' ? 'bg-[#3ABAB4]' : 'bg-[#66C7C2]'
+                            formatRole(user.role) === 'Admin' ? 'bg-[#3ABAB4]' : 'bg-[#66C7C2]'
                           }`}
                         >
-                          {user.role}
+                          {formatRole(user.role)}
                         </span>
                       </td>
 
@@ -182,13 +204,13 @@ export default function PenggunaPage() {
                         <div className="flex justify-center items-center space-x-2">
                           <button
                             onClick={() => handleEditClick(user, userIndex)}
-                            className="p-2 bg-gray-100 hover:bg-[#3ABAB4] hover:text-white text-gray-700 rounded transition-all"
+                            className="p-2 bg-white border-2 border-gray-300 hover:border-[#3ABAB4] hover:bg-[#3ABAB4] hover:text-white text-gray-700 rounded-lg transition-all"
                           >
                             <Edit size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(user, userIndex)}
-                            className="p-2 bg-gray-100 hover:bg-red-500 hover:text-white text-red-500 rounded transition-all"
+                            className="p-2 bg-white border-2 border-gray-300 hover:border-red-500 hover:bg-red-500 hover:text-white text-red-500 rounded-lg transition-all"
                           >
                             <Trash2 size={16} />
                           </button>
