@@ -7,12 +7,14 @@ interface HeaderKasirProps {
   title: string
   showBack?: boolean
   notifications?: number
+  onBack?: () => void
 }
 
 export default function HeaderKasir({
   title,
   showBack = false,
   notifications = 0,
+  onBack,
 }: HeaderKasirProps) {
   const headerHeight = 48
 
@@ -25,13 +27,25 @@ export default function HeaderKasir({
         {/* Kiri - Judul halaman */}
         <div className="flex items-center gap-2">
           {showBack && (
-            <Link
-              href="/dashboardKasir"
-              className="w-6 h-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition"
-            >
-              <ChevronLeft className="w-3.5 h-3.5 text-gray-700" />
-            </Link>
+            <>
+              {onBack ? (
+                <button
+                  onClick={onBack}
+                  className="w-6 h-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-gray-700" />
+                </button>
+              ) : (
+                <Link
+                  href="/dashboardKasir"
+                  className="w-6 h-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-gray-700" />
+                </Link>
+              )}
+            </>
           )}
+
           <h1 className="text-lg font-semibold text-white">{title}</h1>
         </div>
 
