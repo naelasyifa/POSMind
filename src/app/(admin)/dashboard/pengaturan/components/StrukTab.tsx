@@ -2,7 +2,7 @@
 
 export default function StrukTab() {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border w-full">
+    <div className="bg-white p-6 rounded-xl shadow-sm w-full">
       <h3 className="font-semibold text-lg border-b pb-2 mb-4">Pengaturan Struk</h3>
       <input type="text" placeholder="Header Struk" className="border p-2 rounded w-full mb-2" />
       <input type="text" placeholder="Footer Struk" className="border p-2 rounded w-full mb-2" />

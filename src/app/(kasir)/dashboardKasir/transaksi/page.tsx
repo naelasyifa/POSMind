@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import SidebarKasir from '@/components/SidebarKasir'
 import HeaderKasir from '@/components/HeaderKasir'
-import PesananList from '../pesanan/components/pesananList'
-import DetailPesanan from '../pesanan/components/DetailPesanan'
-import ProdukModal from '../pesanan/components/ProdukModal'
-import PelangganModal from '../pesanan/components/PelangganModal' // ✅ import modal
+import PesananList from './components/pesananList'
+import DetailPesanan from './components/DetailPesanan'
+import ProdukModal from './components/ProdukModal'
+import PelangganModal from './components/PelangganModal' // ✅ import modal
 
 export default function PesananPage() {
   const router = useRouter()

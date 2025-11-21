@@ -36,7 +36,7 @@ export default function PajakTab() {
   return (
     <div className="flex gap-6">
       {/* Pajak & Service Charge */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border w-1/3 flex flex-col gap-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm w-1/3 flex flex-col gap-6">
         <h3 className="font-semibold text-lg border-b pb-2 mb-2">Pajak & Service Charge</h3>
 
         {/* Service Charge */}
@@ -109,7 +109,7 @@ export default function PajakTab() {
       </div>
 
       {/* Jam Buka */}
-      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm border overflow-x-auto">
+      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm overflow-x-auto">
         <h2 className="font-semibold mb-4 text-lg border-b pb-2">Jam Buka Toko</h2>
         <table className="w-full text-sm border-collapse">
           <thead>
@@ -156,7 +156,7 @@ export default function PajakTab() {
                     value={jam.jamBuka}
                     onChange={(e) => handleJamChange(index, 'jamBuka', e.target.value)}
                     disabled={!jam.buka || jam.fullDay}
-                    className="border p-1 rounded mt-2 mb-2 items-center"
+                    className="border border-gray-300 p-1 rounded mt-2 mb-2 items-center"
                   />
                 </td>
                 <td className="text-center">
@@ -165,7 +165,7 @@ export default function PajakTab() {
                     value={jam.jamTutup}
                     onChange={(e) => handleJamChange(index, 'jamTutup', e.target.value)}
                     disabled={!jam.buka || jam.fullDay}
-                    className="border p-1 rounded mt-2 mb-2 items-center"
+                    className="border border-gray-300 p-1 rounded mt-2 mb-2 items-center"
                   />
                 </td>
               </tr>
