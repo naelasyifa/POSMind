@@ -72,6 +72,7 @@ export interface Config {
     media: Media;
     promos: Promo;
     products: Product;
+    transactions: Transaction;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     promos: PromosSelect<false> | PromosSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -222,6 +224,28 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: number;
+  tenant: number | Tenant;
+  items?:
+    | {
+        product: number | Product;
+        qty: number;
+        price: number;
+        subtotal: number;
+        id?: string | null;
+      }[]
+    | null;
+  total: number;
+  kasir?: (number | null) | User;
+  status?: ('paid' | 'unpaid') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -263,6 +287,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: number | Transaction;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -395,6 +423,27 @@ export interface ProductsSelect<T extends boolean = true> {
   stok?: T;
   gambar?: T;
   deskripsi?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  tenant?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        qty?: T;
+        price?: T;
+        subtotal?: T;
+        id?: T;
+      };
+  total?: T;
+  kasir?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;
