@@ -1,10 +1,20 @@
-import type { CollectionConfig } from 'payload'
+import { CollectionConfig } from 'payload'
 
 export const Media: CollectionConfig = {
   slug: 'media',
+
   access: {
     read: () => true,
   },
+
+  upload: {
+    mimeTypes: ['image/*'],
+    
+    adminThumbnail: ({ doc }) => {
+      return typeof doc.url === 'string' ? doc.url : '';
+    },
+  },
+
   fields: [
     {
       name: 'alt',
@@ -12,5 +22,4 @@ export const Media: CollectionConfig = {
       required: true,
     },
   ],
-  upload: true,
 }

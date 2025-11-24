@@ -97,7 +97,7 @@ export default function PesananDetailPage() {
   const handleSelesaikan = (pesanan: Pesanan) => {
     // simpan sementara ke sessionStorage
     sessionStorage.setItem('currentPesanan', JSON.stringify(pesanan))
-    router.push(`/dashboardKasir/pesanan/detail/${pesanan.id}`)
+    router.push(`/dashboardKasir/transaksi/detail/${pesanan.id}`)
   }
 
   return (
@@ -107,7 +107,7 @@ export default function PesananDetailPage() {
         <HeaderKasir
           title="Riwayat Transaksi"
           showBack
-          onBack={() => router.push('/dashboardKasir/pesanan')}
+          onBack={() => router.push('/dashboardKasir/transaksi')}
         />
 
         {/* Filter dan Kontrol */}

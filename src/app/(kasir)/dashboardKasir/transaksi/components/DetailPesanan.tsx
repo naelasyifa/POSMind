@@ -61,19 +61,19 @@ export default function DetailPesanan({
 
   const handleCancelPayment = () => {
     if (confirm('Batalkan proses pembayaran?')) {
-      router.push('/dashboardKasir/pesanan')
+      router.push('/dashboardKasir/transaksi')
     }
   }
 
   const handleCancelOrder = () => {
     if (confirm('Batalkan pesanan ini?')) {
-      router.push('/dashboardKasir/pesanan')
+      router.push('/dashboardKasir/transaksi')
     }
   }
 
   const handlePrintReceipt = () => {
     alert('Struk dicetak (simulasi)')
-    router.push('/dashboardKasir/pesanan')
+    router.push('/dashboardKasir/transaksi')
   }
 
   return (
