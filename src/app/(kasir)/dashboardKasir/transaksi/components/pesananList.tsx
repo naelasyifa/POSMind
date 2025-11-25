@@ -58,7 +58,7 @@ export default function PesananList({ products = [], onSelect }: Props) {
 
         {/* Tombol Riwayat Transaksi */}
         <button
-          onClick={() => (window.location.href = '/dashboardKasir/pesanan/riwayat')}
+          onClick={() => (window.location.href = '/dashboardKasir/transaksi/riwayat')}
           className="px-4 py-2 rounded-lg whitespace-nowrap bg-[#737373] text-white hover:bg-[#5f5f5f] transition-colors"
         >
           Riwayat Transaksi
