@@ -1,14 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import Sidebar from '@/components/SidebarKasir'
 import HeaderKasir from '@/components/HeaderKasir'
 import CategoryList from './components/kategori'
 import MenuTabs from './components/menuTabs'
 import SearchBar from './components/searchBar'
 import ProductTable from './components/productTable'
+import ProductList from './components/listProduct'
 
 export default function MenuPage() {
   const headerHeight = 48
+  const handleModalChange = (open: boolean) => {
+    console.log('Modal status:', open)
+    setIsModalOpen(open)
+  }
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
     <div className="flex min-h-screen bg-[ffffff]">
@@ -24,18 +31,17 @@ export default function MenuPage() {
             </button>
           </div>
           <CategoryList />
-          <h2 className="text-lg font-semibold mt-10 mb-2">Special menu all items</h2>
 
-          <div className="flex justify-between items-center mb-6">
-            <MenuTabs />
-            <button className="bg-[#737373] text-white px-4 py-2 rounded-lg">
+          <div className="flex justify-between items-center mt-8 mb-2">
+            <SearchBar />
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#737373] text-white px-4 py-2 rounded-lg"
+            >
               + Tambah Produk
             </button>
           </div>
-
-          <SearchBar />
-
-          <ProductTable />
+          <ProductList onModalChange={handleModalChange} />
         </div>
       </div>
     </div>

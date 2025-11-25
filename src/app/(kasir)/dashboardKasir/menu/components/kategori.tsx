@@ -57,7 +57,7 @@ export default function CategoryList() {
             <div className="flex flex-col items-start">
               <div className="text-sm font-semibold">{cat.name}</div>
               <div
-                className={`text-xs ${active === cat.name ? 'text-white/80' : 'text-[#737373]'}`}
+                className={`text-xs ${active === cat.name ? 'text-white/80' : 'text-inherit'}`}
               >
                 {cat.count}
               </div>

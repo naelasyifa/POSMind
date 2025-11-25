@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProductRow from "./productRow";
+import SearchBar from './searchBar'
 
 type Product = {
   id: number
@@ -86,10 +87,11 @@ export default function ProductTable() {
         </thead>
 
         <tbody>
-          {initialProducts.map((initialProducts, i) => (
-            <ProductRow key={i} data={initialProducts} />
-          ))}
-        </tbody>
+  {initialProducts.map((p, i) => (
+    <ProductRow key={i} data={p} index={i} />
+  ))}
+</tbody>
+
       </table>
     </div>
   );
