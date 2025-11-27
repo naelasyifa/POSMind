@@ -4,9 +4,9 @@ import { useState } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
 import { Edit, Trash2, UserPlus } from 'lucide-react'
-import AddUser from './adduser'
-import EditUser from './edituser'
-import HapusUser from './hapus'
+import AddUser from './components/adduser'
+import EditUser from './components/edituser'
+import HapusUser from './components/hapus'
 
 interface User {
   nama: string
