@@ -19,6 +19,10 @@ export default function PesananPage() {
 
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
   const [showPelangganModal, setShowPelangganModal] = useState(false) // ✅ state modal
+  const [alertStok, setAlertStok] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: '',
+  })
 
   // ============================================================
   // =============== FETCH PRODUK & PROMO =======================
@@ -39,7 +43,17 @@ export default function PesananPage() {
   // ============================================================
   // =============== MODAL PRODUK ==============================
   // ============================================================
-  const openModal = (product: any) => setSelectedProduct(product)
+  const openModal = (product: any) => {
+    if (!product.stok || product.stok <= 0) {
+      setAlertStok({
+        show: true,
+        message: `Produk "${product.nama}" tidak dapat ditambahkan karena stok sudah habis.`,
+      })
+      return
+    }
+
+    setSelectedProduct(product)
+  }
   const closeModal = () => setSelectedProduct(null)
 
   // ============================================================
@@ -187,6 +201,27 @@ export default function PesananPage() {
             setShowPelangganModal(false)
           }}
         />
+      )}
+      {alertStok.show && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[999] flex items-center justify-center"
+          onClick={() => setAlertStok({ show: false, message: '' })}
+        >
+          <div
+            className="bg-white p-5 rounded-lg shadow-lg w-[320px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-lg mb-2">Stok Tidak Cukup</h3>
+            <p className="text-gray-600 mb-4">{alertStok.message}</p>
+
+            <button
+              onClick={() => setAlertStok({ show: false, message: '' })}
+              className="w-full py-2 bg-[#52bfbe] text-white rounded-lg"
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
