@@ -36,11 +36,6 @@ export default function CetakTab() {
     namaMeja: true,
   })
 
-  const toggle = (key: OptionKey) => {
-    if (readOnly) return
-    setOptions((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
   const toggleList: [OptionKey, string][] = [
     ['noTransaksi', 'No. Transaksi'],
     ['tanggalTransaksi', 'Tanggal Transaksi'],
@@ -53,80 +48,105 @@ export default function CetakTab() {
     ['namaMeja', 'Nama Meja'],
   ]
 
-  // -----------------------------------------
-  // SIMPAN & CANCEL
-  // -----------------------------------------
+  const toggle = (key: OptionKey) => {
+    if (readOnly) return
+    setOptions((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
   const handleSave = () => {
     setIsFirstTime(false)
     setIsEditing(false)
     console.log('SAVED', { options })
   }
 
-  const handleCancel = () => {
-    setIsEditing(false)
-  }
+  const handleCancel = () => setIsEditing(false)
 
   return (
     <div className="flex gap-6 w-full">
-      {/* LEFT SIDE: TOGGLE */}
-      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm">
-        <div className="flex justify-between mb-4">
-          <h3 className="font-semibold text-xl">Pengaturan Cetakan Dapur</h3>
+      {/* LEFT SETTINGS — SCROLLABLE */}
+      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
+        <h3 className="font-semibold text-xl mb-6">Pengaturan Cetakan Dapur</h3>
 
-          {isEditing ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                className="bg-[#52bfbe] text-white px-4 py-2 rounded hover:bg-[#43a9a8]"
-              >
-                Simpan
-              </button>
-              {!isFirstTime && (
+        <div className="grid grid-cols-1 gap-6">
+          {/* TOGGLES (MATCH STRUKTAB STYLE) */}
+          <div>
+            <p className="font-medium mb-2">Elemen yang Ditampilkan</p>
+
+            <div className="grid grid-cols-1 gap-4">
+              {toggleList.map(([key, label]) => (
+                <div key={key} className="flex justify-between items-center">
+                  <span>{label}</span>
+
+                  {/* Toggle + text */}
+                  <div className="flex items-center gap-3 min-w-[160px] justify-end">
+                    {/* TOGGLE */}
+                    <label
+                      className={`${
+                        readOnly ? 'opacity-50' : 'cursor-pointer'
+                      } relative inline-flex items-center`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={options[key]}
+                        disabled={readOnly}
+                        onChange={() => toggle(key)}
+                        className="sr-only peer"
+                      />
+
+                      <div className="w-11 h-5 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
+                      <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white border rounded-full peer-checked:translate-x-6 transition"></div>
+                    </label>
+
+                    {/* Text tampilkan/sembunyikan */}
+                    <span
+                      className={`text-xs inline-block text-left w-[80px] ${
+                        options[key] ? 'text-green-600' : 'text-gray-400'
+                      }`}
+                    >
+                      {options[key] ? 'Tampilkan' : 'Sembunyikan'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* BUTTONS — CENTERED LIKE STRUKTAB */}
+          <div className="flex justify-center gap-4 mt-4">
+            {isEditing ? (
+              <>
                 <button
-                  onClick={handleCancel}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
+                  onClick={handleSave}
+                  className="bg-[#52bfbe] text-white py-2 rounded hover:bg-[#43a9a8]"
+                  style={{ width: '200px' }}
                 >
-                  Batal
+                  Simpan
                 </button>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-[#52bfbe] text-white px-4 py-2 rounded hover:bg-[#43a9a8]"
-            >
-              Edit
-            </button>
-          )}
-        </div>
 
-        {/* Toggles */}
-        <div className="space-y-3">
-          {toggleList.map(([key, label]) => (
-            <div key={key} className="flex justify-between items-center">
-              <span>{label}</span>
-
-              <label
-                className={`${
-                  readOnly ? 'opacity-50' : 'cursor-pointer relative inline-flex items-center'
-                }`}
+                {!isFirstTime && (
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
+                    style={{ width: '200px' }}
+                  >
+                    Batal
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-[#52bfbe] text-white py-2 rounded hover:bg-[#43a9a8]"
+                style={{ width: '200px' }}
               >
-                <input
-                  type="checkbox"
-                  checked={options[key]}
-                  onChange={() => toggle(key)}
-                  disabled={readOnly}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-5 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
-                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full border peer-checked:translate-x-6 transition"></div>
-              </label>
-            </div>
-          ))}
+                Edit
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* RIGHT SIDE: PREVIEW */}
+      {/* RIGHT PREVIEW SAME AS BEFORE */}
       <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm">
         <h3 className="font-semibold text-lg mb-4">Tampilan Cetakan Dapur</h3>
 

@@ -1,5 +1,5 @@
+/* --- SAME IMPORTS --- */
 'use client'
-
 import { useState } from 'react'
 
 type OptionKey =
@@ -23,20 +23,12 @@ type OptionKey =
   | 'powered'
 
 export default function StrukTab() {
-  // -----------------------------------------
-  // MODE STATE
-  // -----------------------------------------
-
-  const [isFirstTime, setIsFirstTime] = useState(true) // nanti diganti dari DB
+  const [isFirstTime, setIsFirstTime] = useState(true)
   const [isEditing, setIsEditing] = useState(isFirstTime)
-
-  // -----------------------------------------
-  // MAIN DATA
-  // -----------------------------------------
 
   const [header, setHeader] = useState('')
   const [footer, setFooter] = useState('')
-  const [paperSize, setPaperSize] = useState<58 | 80>(58)
+  const [paperSize, setPaperSize] = useState<58 | 80>(80)
   const [logo, setLogo] = useState<string | null>(null)
 
   const [options, setOptions] = useState<Record<OptionKey, boolean>>({
@@ -59,10 +51,6 @@ export default function StrukTab() {
     wifi: false,
     powered: true,
   })
-
-  // -----------------------------------------
-  // HANDLER
-  // -----------------------------------------
 
   const readOnly = !isEditing
 
@@ -101,142 +89,198 @@ export default function StrukTab() {
     ['powered', 'Powered by POSMind'],
   ]
 
-  // -----------------------------------------
-  // SIMPAN
-  // -----------------------------------------
-
   const handleSave = () => {
     setIsFirstTime(false)
     setIsEditing(false)
-
-    // Nanti disini fetch ke backend
-    console.log('SAVED')
   }
 
-  const handleCancel = () => {
-    setIsEditing(false)
-  }
+  const handleCancel = () => setIsEditing(false)
 
   return (
     <div className="w-full flex gap-6">
-      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm">
-        <div className="flex justify-between mb-4">
-          <h3 className="font-semibold text-xl">Pengaturan Cetakan Nota</h3>
+      {/* LEFT SETTINGS SCROLLABLE */}
+      <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
+        <h3 className="font-semibold text-xl mb-6">Pengaturan Cetakan Nota</h3>
 
-          {/* BUTTONS */}
-          {isEditing ? (
-            <div className="flex gap-2">
-              <button
-                onClick={handleSave}
-                className="bg-[#52bfbe] text-white px-4 py-2 rounded hover:bg-[#43a9a8]"
-              >
-                Simpan
-              </button>
+        <div className="grid grid-cols-1 gap-6">
+          {/* LOGO */}
+          <div className="grid grid-cols-2 gap-4 items-start">
+            <div>
+              <p className="font-medium">Logo Nota</p>
+              <p className="text-sm text-gray-500 mt-1">Ukuran rekomendasi 1:1</p>
+            </div>
 
-              {!isFirstTime && (
-                <button
-                  onClick={handleCancel}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
-                >
-                  Batal
-                </button>
+            <div className="border rounded-lg h-40 w-full flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden text-center p-3">
+              {logo ? (
+                <img src={logo} className="h-full object-contain rounded" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-500">
+                  <div className="w-14 h-16 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-6 h-6 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 16.5V5.25A2.25 2.25 0 015.25 3h9L21 9.75v6.75A2.25 2.25 0 0118.75 18H5.25A2.25 2.25 0 013 16.5z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8.25 14.25l2.25-2.25 1.5 1.5 3-3"
+                      />
+                    </svg>
+                  </div>
+
+                  <p className="text-xs leading-tight">
+                    Unggah file gambar dengan cara <br />
+                    <span className="font-medium text-gray-600">seret & lepas</span> atau{' '}
+                    <span className="font-medium text-gray-600">cari file</span> di sini
+                  </p>
+                </div>
               )}
+
+              <input
+                type="file"
+                accept="image/*"
+                disabled={readOnly}
+                onChange={uploadLogo}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
             </div>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-[#52bfbe] text-white px-4 py-2 rounded hover:bg-[#43a9a8]"
+          </div>
+
+          {/* HEADER */}
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <p className="font-medium">Header Struk</p>
+            <input
+              type="text"
+              value={header}
+              readOnly={readOnly}
+              onChange={(e) => setHeader(e.target.value)}
+              className={`border p-2 rounded ${readOnly ? 'bg-gray-100' : ''}`}
+              placeholder="Masukkan Header"
+            />
+          </div>
+
+          {/* PAPER SIZE */}
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <p className="font-medium">Ukuran Kertas</p>
+            <select
+              value={paperSize}
+              disabled={readOnly}
+              onChange={(e) => setPaperSize(Number(e.target.value) as 58 | 80)}
+              className={`border p-2 rounded ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             >
-              Edit
-            </button>
-          )}
-        </div>
+              <option value={58}>Thermal 58mm</option>
+              <option value={80}>Thermal 80mm</option>
+            </select>
+          </div>
 
-        {/* Upload Logo */}
-        <div className="border rounded-lg h-40 flex items-center justify-center bg-gray-50 mb-4 relative overflow-hidden">
-          {logo ? (
-            <img src={logo} className="h-full object-cover" />
-          ) : (
-            <p className="text-gray-400 text-sm text-center">Masukkan gambar logo ukuran 2:1</p>
-          )}
+          {/* TOGGLES —— PERFECT ALIGNMENT */}
+          <div>
+            <p className="font-medium mb-2">Elemen yang Ditampilkan</p>
 
-          {/* Disable file input when read-only */}
-          <input
-            type="file"
-            accept="image/*"
-            disabled={readOnly}
-            onChange={uploadLogo}
-            className={`absolute inset-0 ${readOnly ? 'opacity-0 cursor-not-allowed' : 'opacity-0 cursor-pointer'}`}
-          />
-        </div>
+            <div className="grid grid-cols-1 gap-4">
+              {toggleList.map(([key, label]) => (
+                <div key={key} className="flex justify-between items-center">
+                  {/* Label kiri */}
+                  <span>{label}</span>
 
-        {/* Header */}
-        <p className="font-medium mb-1">Header</p>
-        <input
-          type="text"
-          value={header}
-          readOnly={readOnly}
-          onChange={(e) => setHeader(e.target.value)}
-          placeholder="Header Struk"
-          className={`border p-2 rounded w-full mb-4 ${readOnly ? 'bg-gray-100' : ''}`}
-        />
+                  {/* Toggle + teks kanan */}
+                  <div className="flex items-center gap-3 min-w-[160px] justify-end">
+                    {/* Toggle */}
+                    <label
+                      className={`${
+                        readOnly ? 'opacity-50' : 'cursor-pointer'
+                      } relative inline-flex items-center`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={options[key]}
+                        disabled={readOnly}
+                        onChange={() => toggle(key)}
+                        className="sr-only peer"
+                      />
 
-        {/* Paper Size */}
-        <div className="mb-4">
-          <label className="font-medium">Ukuran Kertas</label>
-          <select
-            value={paperSize}
-            disabled={readOnly}
-            onChange={(e) => setPaperSize(Number(e.target.value) as 58 | 80)}
-            className={`border p-2 rounded ml-3 ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-          >
-            <option value={58}>Thermal 58mm</option>
-            <option value={80}>Thermal 80mm</option>
-          </select>
-        </div>
+                      <div className="w-11 h-5 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
+                      <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white border rounded-full peer-checked:translate-x-6 transition"></div>
+                    </label>
 
-        {/* Toggles */}
-        <div className="space-y-3">
-          {toggleList.map(([key, label]) => (
-            <div key={key} className="flex justify-between items-center">
-              <span>{label}</span>
-
-              <label
-                className={`${readOnly ? 'opacity-50' : 'cursor-pointer relative inline-flex items-center'}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={options[key]}
-                  onChange={() => toggle(key)}
-                  disabled={readOnly}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-5 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
-                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full border peer-checked:translate-x-6 transition"></div>
-              </label>
+                    {/* Teks tampilkan / sembunyikan – selalu lurus */}
+                    <span
+                      className={`text-xs ${
+                        options[key] ? 'text-green-600' : 'text-gray-400'
+                      } inline-block text-left w-[80px]`}
+                    >
+                      {options[key] ? 'Tampilkan' : 'Sembunyikan'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Footer */}
-        <p className="font-medium mt-5 mb-1">Footer</p>
-        <textarea
-          value={footer}
-          readOnly={readOnly}
-          onChange={(e) => setFooter(e.target.value)}
-          placeholder="Footer Struk"
-          className={`border p-2 rounded w-full h-16 ${readOnly ? 'bg-gray-100' : ''}`}
-        />
+          {/* FOOTER */}
+          <div className="grid grid-cols-2 gap-4 items-start">
+            <p className="font-medium">Footer Struk</p>
+            <textarea
+              value={footer}
+              readOnly={readOnly}
+              onChange={(e) => setFooter(e.target.value)}
+              className={`border p-2 rounded w-full h-20 ${readOnly ? 'bg-gray-100' : ''}`}
+            />
+          </div>
+
+          {/* BUTTONS CENTERED */}
+          <div className="flex justify-center gap-4 mt-4">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  className="bg-[#52bfbe] text-white py-2 rounded hover:bg-[#43a9a8]"
+                  style={{ width: '200px' }}
+                >
+                  Simpan
+                </button>
+
+                {!isFirstTime && (
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300"
+                    style={{ width: '200px' }}
+                  >
+                    Batal
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-[#52bfbe] text-white py-2 rounded hover:bg-[#43a9a8]"
+                style={{ width: '200px' }}
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* RIGHT PREVIEW */}
-      <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm">
+      <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
         <h3 className="font-semibold text-lg mb-4">Tampilan Cetakan Nota</h3>
 
         <div
           className="border rounded-lg p-4 text-sm"
           style={{ width: paperSize === 58 ? 230 : 300 }}
         >
+          {/* PREVIEW CONTENT — SAME AS BEFORE */}
           {options.infoToko && (
             <div className="text-center mb-3">
               {logo ? (
@@ -247,7 +291,7 @@ export default function StrukTab() {
             </div>
           )}
 
-          {header && <p className="text-center mb-2 font-semibold">{header}</p>}
+          {header && <p className="text-center mb-6 font-semibold">{header}</p>}
 
           {options.noNota && <p>Nota: 280390283203</p>}
           {options.noTransaksi && <p>Transaksi: INV-12892</p>}
@@ -265,26 +309,19 @@ export default function StrukTab() {
           <hr className="my-2" />
 
           <div className="mt-2 space-y-3">
-            {/* ITEM 1 */}
             <div>
               <p className="font-medium">Nasi Goreng</p>
-
               <div className="flex justify-between text-xs text-gray-600">
-                {/* LEFT SIDE: qty + price (kasih gap) */}
                 <div className="flex gap-4">
                   <span>2x</span>
                   <span>20.000</span>
                 </div>
-
-                {/* RIGHT SIDE: total */}
                 <span>40.000</span>
               </div>
             </div>
 
-            {/* ITEM 2 */}
             <div>
               <p className="font-medium">Es Teh</p>
-
               <div className="flex justify-between text-xs text-gray-600">
                 <div className="flex gap-4">
                   <span>1x</span>
