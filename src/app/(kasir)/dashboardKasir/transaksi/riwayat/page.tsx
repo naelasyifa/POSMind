@@ -32,55 +32,8 @@ interface Pesanan {
 export default function RiwayatPage() {
   const router = useRouter()
 
-  const [pesananList, setPesananList] = useState<Pesanan[]>([
-    {
-      id: 1,
-      noPesanan: '#001',
-      nama: 'Andi',
-      waktu: 'Kamis, 13 Nov 2025 | 10:20',
-      items: [
-        { nama: 'Nasi Goreng', harga: 15000, qty: 2 },
-        { nama: 'Es Teh', harga: 5000, qty: 1 },
-      ],
-      subtotal: 35000,
-      pajak: 3500,
-      discount: 0,
-      total: 38500,
-      status: 'selesai',
-      metode: 'Cash',
-      bayar: 40000,
-      kembalian: 1500,
-    },
-    {
-      id: 2,
-      noPesanan: '#002',
-      nama: 'Beno',
-      waktu: 'Kamis, 13 Nov 2025 | 10:45',
-      items: [{ nama: 'Mie Ayam', harga: 15000, qty: 1 }],
-      subtotal: 15000,
-      pajak: 1500,
-      discount: 0,
-      total: 16500,
-      status: 'batal',
-      metode: 'E-Wallet',
-    },
-    {
-      id: 3,
-      noPesanan: '#003',
-      nama: 'Rina',
-      waktu: 'Kamis, 13 Nov 2025 | 11:10',
-      items: [
-        { nama: 'Ayam Geprek', harga: 20000, qty: 1 },
-        { nama: 'Lemon Tea', harga: 8000, qty: 1 },
-      ],
-      subtotal: 28000,
-      pajak: 2800,
-      discount: 0,
-      total: 30800,
-      status: 'proses',
-      metode: 'Cash',
-    },
-  ])
+  const [pesananList, setPesananList] = useState<Pesanan[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'semua' | 'selesai' | 'batal' | 'proses'>('semua')
@@ -108,11 +61,17 @@ export default function RiwayatPage() {
   }
 
   const filteredPesanan = pesananList.filter((p) => {
-    const matchFilter = filter === 'semua' ? true : p.status === filter
-    const matchSearch =
-      p.nama.toLowerCase().includes(search.toLowerCase()) ||
-      p.noPesanan.toLowerCase().includes(search.toLowerCase())
-    return matchFilter && matchSearch
+    // filter status
+    if (filter !== 'semua' && p.status !== filter) return false
+
+    // filter search
+    const keyword = search.toLowerCase()
+    return (
+      p.noPesanan.toLowerCase().includes(keyword) ||
+      p.nama.toLowerCase().includes(keyword) ||
+      p.status.toLowerCase().includes(keyword) ||
+      p.metode.toLowerCase().includes(keyword)
+    )
   })
 
   // buka detail (slide dari kanan)
@@ -134,6 +93,40 @@ export default function RiwayatPage() {
       setChange(0)
     }
   }, [amountPaid, paymentMethod, selectedOrder])
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch('/api/get-transactions')
+      const data = await res.json()
+      // mapping nama pelanggan dari database ke field 'nama'
+      const mappedData = data.map((p: any, idx: number) => ({
+        id: idx + 1, // atau p.id kalau ada di database
+        noPesanan: p.noPesanan,
+        nama: p.namaPelanggan || '-', // pastikan field database sesuai
+        waktu: new Date(p.createdAt).toLocaleString('id-ID', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        items: p.items || [],
+        subtotal: p.subtotal || 0,
+        pajak: p.pajak || 0,
+        discount: p.discount || 0,
+        total: p.total || 0,
+        status: p.status || 'proses',
+        metode: p.metode || 'Cash',
+        bayar: p.bayar,
+        kembalian: p.kembalian,
+      }))
+
+      setPesananList(mappedData)
+    } 
+
+    load()
+  }, [])
 
   // konfirmasi pembayaran: update pesananList -> status selesai, simpan bayar & kembalian
   const handleConfirmPayment = () => {
@@ -263,7 +256,7 @@ export default function RiwayatPage() {
                     ))}
                   </ul>
 
-                  <div className="flex justify-between items-center mt-3 font-semibold">
+                  <div className="border-t border-dashed pt-2 flex justify-between items-center mt-3 font-semibold">
                     <span>Subtotal</span>
                     <span>Rp{p.subtotal.toLocaleString()}</span>
                   </div>
@@ -271,7 +264,7 @@ export default function RiwayatPage() {
                     <span>Pajak 10%</span>
                     <span>Rp{p.pajak.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm mb-4">
                     <span>Diskon</span>
                     <span>-Rp{p.discount.toLocaleString()}</span>
                   </div>
