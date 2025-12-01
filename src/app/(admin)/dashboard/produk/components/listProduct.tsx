@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Edit, Trash2 } from 'lucide-react'
-import AddProduct from './tambahProduk'
+import AddProduct from './tambahProduk copy'
 import EditProduct from './editProduct'
 import HapusProduct from './hapus'
 
@@ -141,29 +141,20 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
 
   return (
     <div className="flex-1 relative">
-      <div className="bg-white rounded-xl shadow p-5 flex flex-col h-[653px]">
+      <div className="bg-white rounded-xl shadow p-5 flex flex-col h-[500px]">
         {/* Header */}
         <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 pb-2 border-b">
           <h3 className="font-semibold text-lg">Daftar Produk</h3>
           <div className="flex gap-2 justify-end">
-          <button
-            onClick={() => {
-              setIsAddModalOpen(true)
-              onModalChange(true)
-            }}
-            className="bg-[#52BFBE] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#43a9a8] transition"
-          >
-            + Tambah Kategori
-          </button>
-          <button
-            onClick={() => {
-              setIsAddModalOpen(true)
-              onModalChange(true)
-            }}
-            className="bg-[#52BFBE] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#43a9a8] transition"
-          >
-            + Tambah Produk
-          </button>
+            <button
+              onClick={() => {
+                setIsAddModalOpen(true)
+                onModalChange(true)
+              }}
+              className="bg-[#52BFBE] text-white font-medium py-2 px-4 rounded-lg hover:bg-[#43a9a8] transition"
+            >
+              + Tambah Produk
+            </button>
           </div>
         </div>
 
@@ -194,41 +185,41 @@ export default function ListProduct({ onModalChange }: ListProductProps) {
               </div>
 
               <div className="flex items-center gap-4 justify-end">
-              {/* Id */}
-              <div className="text-sm text-gray-700 w-15">
-                <p className="font-medium">Id</p>
-                <p>{product.id}</p>
-              </div>
+                {/* Id */}
+                <div className="text-sm text-gray-700 w-15">
+                  <p className="font-medium">Id</p>
+                  <p>{product.id}</p>
+                </div>
 
-              {/* Status */}
-              <div className="text-sm text-gray-700 w-15">
-                <p className="font-medium">Status</p>
-                <p>{product.status}</p>
-              </div>
+                {/* Status */}
+                <div className="text-sm text-gray-700 w-15">
+                  <p className="font-medium">Status</p>
+                  <p>{product.status}</p>
+                </div>
 
-              {/* Category */}
-              <div className="text-sm text-gray-700 w-18">
-                <p className="font-medium">Kategori</p>
-                <p>{product.category}</p>
-              </div>
+                {/* Category */}
+                <div className="text-sm text-gray-700 w-18">
+                  <p className="font-medium">Kategori</p>
+                  <p>{product.category}</p>
+                </div>
 
-              {/* Price + Actions */}
-                <div className="text-sm w-15">
+                {/* Price + Actions */}
+                <div className="text-sm w-20">
                   <p className="font-medium">Harga</p>
-                  <p className="font-semibold">Rp {product.price.toFixed(2)}</p>
+                  <p className="font-semibold">Rp {product.price.toFixed(3)}</p>
                 </div>
 
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEditClick(product, index)}
-                    className="p-2 bg-gray-100 hover:bg-[#3ABAB4] hover:text-white rounded transition-all"
+                    className="p-2 bg-white border border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white rounded transition-all"
                   >
                     <Edit size={16} />
                   </button>
 
                   <button
                     onClick={() => handleDeleteClick(product, index)}
-                    className="p-2 bg-gray-100 hover:bg-red-500 hover:text-white text-red-500 rounded transition-all"
+                    className="p-2 bg-white border border-red-500 hover:bg-red-500 hover:text-white text-red-500 rounded transition-all"
                   >
                     <Trash2 size={16} />
                   </button>

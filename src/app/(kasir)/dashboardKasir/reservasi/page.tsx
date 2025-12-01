@@ -10,7 +10,7 @@ export default function MetodePembayaranPage() {
     <div className="flex min-h-screen bg-[ffffff]">
       <Sidebar />
       <div className="flex-1 flex flex-col" style={{ marginLeft: '7rem' }}>
-        <HeaderKasir title="Laporan" showBack={true} />
+        <HeaderKasir title="Reservasi" showBack={true} />
         {/* konten area */}
       </div>
     </div>

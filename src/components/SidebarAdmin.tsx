@@ -150,7 +150,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-30 z-50 bg-white flex flex-col items-center py-2 border-r border-gray-200 overflow-y-auto">
+    <aside className="fixed left-0 top-0 h-full w-30 z-40 bg-white flex flex-col items-center py-2 border-r border-gray-200 overflow-y-auto">
       {/* Logo */}
       <div className="mt-4 mb-8 flex flex-col items-center flex-shrink-0">
         <img src="/logo-posmind.png" alt="POSMind Logo" className="w-10 h-8,5" />

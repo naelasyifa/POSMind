@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const chartData = mode === 'bulanan' ? data : dataMingguan
 
   return (
-    <div className="flex min-h-screen bg-[#52BFBE]">
+    <div className="flex min-h-screen bg-[#52BFBE] z-50">
       <Sidebar />
 
       <div className="flex-1 flex flex-col ml-28">
