@@ -86,7 +86,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
             {menuOpen === cat.name && (
               <div
                 ref={menuRef}
-                className="absolute right-0 top-0 mt-10 mr-2 bg-white border shadow-md rounded-md z-50"
+                className="absolute right-0 top-0 mt-10 mr-2 bg-white shadow-md rounded-md z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button

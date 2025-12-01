@@ -19,8 +19,8 @@ export default function MenuTabs() {
   className={`px-4 py-2 transition cursor-pointer flex flex-col
     ${
       active === i
-        ? 'rounded-lg bg-[#737373] text-white scale-105 shadow-md'
-        : 'rounded-lg bg-[#52bfbe] text-white hover:bg-[#737373]/70'
+        ? 'rounded-t-lg bg-[#737373] text-white scale-105 shadow-md'
+        : 'rounded-t-lg bg-[#52bfbe] text-white hover:bg-[#737373]/70'
     }`}
 >
   {t}
