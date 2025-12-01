@@ -70,7 +70,7 @@ export default function LoginPage() {
                 name="email"
                 onChange={handleChange}
                 placeholder="Masukkan Email"
-                className="w-full px-4 py-3 border rounded-xl"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
                 required
               />
             </div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
                   name="password"
                   onChange={handleChange}
                   placeholder="Masukkan Kata Sandi"
-                  className="w-full px-4 py-3 border rounded-xl pr-12"
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
                   required
                 />
 
@@ -124,6 +124,22 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* INGAT SAYA & LUPA PASSWORD */}
+            <div className="flex justify-between items-center text-sm mb-8">
+              <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-[#4DB8C4]"
+                  onChange={(e) => console.log('ingat saya:', e.target.checked)}
+                />
+                Ingat Saya
+              </label>
+
+              <Link href="/lupaPassword" className="text-[#4DB8C4] hover:underline font-medium">
+                Lupa Password?
+              </Link>
             </div>
 
             {/* BUTTON LOGIN */}

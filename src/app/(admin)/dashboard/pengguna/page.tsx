@@ -225,9 +225,9 @@ export default function PenggunaPage() {
         </div>
       </div>
 
-      {/* Overlay Blur ketika modal open */}
-      {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+      {/* Overlay FIX — Menutupi Sidebar & Konten */}
+      {(isAddModalOpen || isEditModalOpen || isDeleteModalOpen) && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"></div>
       )}
 
       {/* Popup Add User */}

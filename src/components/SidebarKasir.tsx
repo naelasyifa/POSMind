@@ -1,9 +1,27 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useCallback } from 'react'
 
 export default function SidebarKasir() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      localStorage.removeItem('token')
+      document.cookie = 'token=; Max-Age=0; path=/'
+
+      router.push('/')
+    } catch (error) {
+      console.error('Logout gagal:', error)
+    }
+  }, [router])
 
   const menuItems = [
     { href: '/dashboardKasir', label: 'Dashboard', icon: 'LayoutDashboard' },
@@ -149,7 +167,10 @@ export default function SidebarKasir() {
 
       {/* Logout */}
       <div className="mt-10 mb-2 flex-shrink-0">
-        <button className="flex flex-col items-center justify-center gap-0.5 text-gray-600 hover:text-red-500 transition">
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center gap-0.5 text-gray-600 hover:text-red-500 transition"
+        >
           <div className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition">
             <svg
               className="w-4 h-4"
