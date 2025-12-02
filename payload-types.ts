@@ -149,6 +149,15 @@ export interface User {
   id: number;
   role?: ('superadmin' | 'admintoko' | 'kasir') | null;
   tenant?: (number | null) | Tenant;
+  emailVerified?: boolean | null;
+  verificationCode?: string | null;
+  otp?: string | null;
+  otpExpiration?: string | null;
+  adminName?: string | null;
+  businessField?: string | null;
+  businessType?: string | null;
+  address?: string | null;
+  isBusinessUser?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -406,6 +415,15 @@ export interface TenantsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
   tenant?: T;
+  emailVerified?: T;
+  verificationCode?: T;
+  otp?: T;
+  otpExpiration?: T;
+  adminName?: T;
+  businessField?: T;
+  businessType?: T;
+  address?: T;
+  isBusinessUser?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

@@ -5,6 +5,9 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
+import type { Endpoint } from 'payload'
+
 
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
@@ -27,6 +30,51 @@ console.log('Collections Loaded:', [
   Transactions.slug,
 ])
 
+const sendOtpEndpoint: any = {
+  path: '/auth/send-otp',
+  method: 'post',
+  handler: async (context: any) => {
+    const { req, payload, data } = context
+    const email = req.body.email;
+    if (!email) return Response.json({ error: 'Email kosong' }, { status: 400 });
+
+    const existing = await req.payload.find({
+      collection: 'users',
+      where: { email: { equals: email } },
+      limit: 1,
+    });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    if (existing.totalDocs === 0) {
+      await req.payload.create({
+        collection: 'users',
+        data: {
+          email,
+          otp,
+          otpExpiration: new Date(Date.now() + 5*60*1000),
+          isBusinessUser: true,
+        },
+      });
+    } else {
+      await req.payload.update({
+        collection: 'users',
+        id: existing.docs[0].id,
+        data: { otp, otpExpiration: new Date(Date.now() + 5*60*1000) },
+      });
+    }
+
+    await req.payload.sendEmail({
+      to: email,
+      subject: 'Kode OTP POS Mind',
+      html: `<p>Kode OTP kamu adalah: <strong>${otp}</strong></p>`,
+    });
+
+    return Response.json({ success: true });
+  },
+};
+
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -46,6 +94,20 @@ export default buildConfig({
     Notifications,
     Reservations,
   ],
+
+  email: nodemailerAdapter({
+    defaultFromAddress: 'no-reply@pos-mind.com',
+    defaultFromName: 'POS Mind',
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false, // kalau pakai TLS ubah jadi true
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    },
+  }),
 
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

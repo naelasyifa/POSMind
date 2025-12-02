@@ -17,6 +17,9 @@ importers:
       '@payloadcms/db-postgres':
         specifier: 3.62.1
         version: 3.62.1(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
+      '@payloadcms/email-nodemailer':
+        specifier: ^3.65.0
+        version: 3.65.0(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
       '@payloadcms/next':
         specifier: 3.62.1
         version: 3.62.1(@types/react@19.1.8)(graphql@16.12.0)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)
@@ -65,6 +68,9 @@ importers:
       next:
         specifier: 15.4.4
         version: 15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4)
+      nodemailer:
+        specifier: ^7.0.11
+        version: 7.0.11
       payload:
         specifier: 3.62.1
         version: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
@@ -83,6 +89,9 @@ importers:
       sharp:
         specifier: 0.34.2
         version: 0.34.2
+      tailwind-merge:
+        specifier: ^3.4.0
+        version: 3.4.0
     devDependencies:
       '@playwright/test':
         specifier: 1.54.1
@@ -1468,6 +1477,12 @@ packages:
     engines: {node: ^18.20.2 || >=20.9.0}
     peerDependencies:
       payload: 3.62.1
+
+  '@payloadcms/email-nodemailer@3.65.0':
+    resolution: {integrity: sha512-VJUWNWj1yUPss1eDt1J+rfZDJKmDOYMx5cbgoib87XWFoJ02g6jfGYucomJGGfp76X8anxRYIzrX753KxivCbQ==}
+    engines: {node: ^18.20.2 || >=20.9.0}
+    peerDependencies:
+      payload: 3.65.0
 
   '@payloadcms/graphql@3.62.1':
     resolution: {integrity: sha512-3M2yUwfgELPDKb/15rXe2Q1q/LZg8qQYSHFekg++vH/Gj2gMfM/9Tn5xK25ecoArmlznaxOwpxaYVXn9qQoKSw==}
@@ -4103,6 +4118,10 @@ packages:
   node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
 
+  nodemailer@7.0.11:
+    resolution: {integrity: sha512-gnXhNRE0FNhD7wPSCGhdNh46Hs6nm+uTyg+Kq0cZukNQiYdnCsoQjodNP9BQVG9XrcK/v6/MgpAPBUFyzh9pvw==}
+    engines: {node: '>=6.0.0'}
+
   nodemailer@7.0.9:
     resolution: {integrity: sha512-9/Qm0qXIByEP8lEV2qOqcAW7bRpL8CR9jcTwk3NBnHJNmP9fIJ86g2fgmIXqHY+nj55ZEMwWqYAT2QTDpRUYiQ==}
     engines: {node: '>=6.0.0'}
@@ -4829,6 +4848,9 @@ packages:
 
   tabbable@6.3.0:
     resolution: {integrity: sha512-EIHvdY5bPLuWForiR/AN2Bxngzpuwn1is4asboytXtpTgsArc+WmSJKVLlhdh71u7jFcryDqB2A8lQvj78MkyQ==}
+
+  tailwind-merge@3.4.0:
+    resolution: {integrity: sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==}
 
   tailwindcss@4.1.17:
     resolution: {integrity: sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q==}
@@ -7151,6 +7173,11 @@ snapshots:
       - sqlite3
 
   '@payloadcms/email-nodemailer@3.62.1(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))':
+    dependencies:
+      nodemailer: 7.0.9
+      payload: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
+
+  '@payloadcms/email-nodemailer@3.65.0(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))':
     dependencies:
       nodemailer: 7.0.9
       payload: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
@@ -10287,6 +10314,8 @@ snapshots:
 
   node-releases@2.0.27: {}
 
+  nodemailer@7.0.11: {}
+
   nodemailer@7.0.9: {}
 
   normalize-path@3.0.0: {}
@@ -11157,6 +11186,8 @@ snapshots:
   symbol-tree@3.2.4: {}
 
   tabbable@6.3.0: {}
+
+  tailwind-merge@3.4.0: {}
 
   tailwindcss@4.1.17: {}
 
