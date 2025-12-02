@@ -208,8 +208,8 @@ export default function StrukTab() {
                         className="sr-only peer"
                       />
 
-                      <div className="w-11 h-5 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
-                      <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white border rounded-full peer-checked:translate-x-6 transition"></div>
+                      <div className="w-11 h-6 bg-gray-300 peer-checked:bg-[#52bfbe] rounded-full transition"></div>
+                      <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full peer-checked:translate-x-5 transition"></div>
                     </label>
 
                     {/* Teks tampilkan / sembunyikan – selalu lurus */}
