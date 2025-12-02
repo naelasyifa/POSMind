@@ -6,7 +6,7 @@ export default function FilterProduct() {
   const [status, setStatus] = useState('Semua')
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 w-[320px]">
+    <div className="bg-white rounded-xl shadow p-5 w-[320px] h-[500px]">
       {/* Search Produk */}
       <div className="mb-4">
         <p className="font-semibold mb-1">Cari Produk</p>
@@ -39,13 +39,13 @@ export default function FilterProduct() {
 
       {/* Status Produk */}
       <div>
-        <p className="font-semibold mb-1">Status Produk</p>
+        <p className="font-semibold mb-1">Status</p>
         <div className="grid grid-cols-2 gap-3">
           {[
             { label: 'Semua', count: 150 },
-            { label: 'Tersedia', count: 120 },
-            { label: 'Habis', count: 10 },
+            { label: 'Aktif', count: 120 },
             { label: 'Draft', count: 10 },
+            { label: 'Non-Aktif', count: 10 },
           ].map((item) => (
             <button
               key={item.label}
@@ -63,17 +63,6 @@ export default function FilterProduct() {
         </div>
       </div>
 
-      {/* Kategori */}
-      <div className="mt-4">
-        <p className="font-semibold mb-1 text-base">Kategori</p>
-        <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]">
-          <option>All</option>
-          <option>Elektronik</option>
-          <option>Pakaian</option>
-          <option>Makanan</option>
-        </select>
-      </div>
-
       {/* Stok */}
       <div className="mt-4">
         <p className="font-semibold mb-2">Stok</p>
@@ -81,16 +70,6 @@ export default function FilterProduct() {
           <option>Tersedia</option>
           <option>Habis</option>
         </select>
-      </div>
-
-      {/* Jumlah */}
-      <div className="mt-4">
-        <p className="font-semibold mb-2">Jumlah</p>
-        <input
-          type="number"
-          placeholder="0"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-        />
       </div>
 
       {/* Harga */}
@@ -112,7 +91,7 @@ export default function FilterProduct() {
       </div>
 
       {/* Reset Button */}
-      <button className="mt-6 w-full bg-[#52BFBE] text-white font-medium py-2.5 rounded-lg hover:bg-[#43a9a8] transition">
+      <button className="mt-10 w-full bg-[#52BFBE] text-white font-medium py-2.5 rounded-lg hover:bg-[#43a9a8] transition">
         Reset Filters
       </button>
     </div>

@@ -26,4 +26,12 @@ export const Users: CollectionConfig = {
       required: false, // WAJIB false untuk Supabase !!!
     },
   ],
+  access: {
+    read: ({ req }) => {
+      if (req.user?.role === 'superadmin') return true
+      return {
+        tenant: { equals: req.user?.tenant },
+      }
+    },
+  },
 }

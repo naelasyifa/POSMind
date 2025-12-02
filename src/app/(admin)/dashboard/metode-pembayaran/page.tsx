@@ -6,10 +6,10 @@ import HeaderAdmin from '@/components/HeaderAdmin'
 import { Settings } from 'lucide-react'
 
 // IMPORT POPUP
-import KelolaTunai from './kelolaTunai'
-import KelolaQris from './kelolaQris'
-import KelolaEWallet from './kelolaE-wallet'
-import KelolaTransfer from './kelolaTransfer'
+import KelolaTunai from './components/kelolaTunai'
+import KelolaQris from './components/kelolaQris'
+import KelolaEWallet from './components/kelolaE-wallet'
+import KelolaTransfer from './components/kelolaTransfer'
 
 type Metode = {
   id: number

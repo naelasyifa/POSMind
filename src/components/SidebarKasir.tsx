@@ -1,11 +1,33 @@
 'use client'
 
+<<<<<<< HEAD
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+=======
+import { usePathname, useRouter } from 'next/navigation'
+import { useCallback } from 'react'
+>>>>>>> 88fce0ea2d73d18d5e635a5caeec7a6240721942
 
 export default function SidebarKasir() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      localStorage.removeItem('token')
+      document.cookie = 'token=; Max-Age=0; path=/'
+
+      router.push('/')
+    } catch (error) {
+      console.error('Logout gagal:', error)
+    }
+  }, [router])
 
   // Hydration-safe pathname
   const [clientPath, setClientPath] = useState<string | null>(null)
@@ -128,7 +150,10 @@ export default function SidebarKasir() {
 
       {/* Logout */}
       <div className="mt-10 mb-2 flex-shrink-0">
-        <button className="flex flex-col items-center justify-center gap-0.5 text-gray-600 hover:text-red-500 transition">
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center gap-0.5 text-gray-600 hover:text-red-500 transition"
+        >
           <div className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 flex items-center justify-center transition">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

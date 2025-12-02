@@ -2,7 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, SendToBack, Trash2 } from 'lucide-react'
+import PelangganModal from './PelangganModal'
+
+type PromoItem = {
+  label: string
+  type?: 'percent' | 'nominal' // optional jika sudah diproses
+  value: number // selalu nominal (Rupiah). Jika belum, konversi dulu
+}
+
+type CartItem = {
+  id?: string
+  nama: string
+  harga: number
+  qty: number
+  stok?: number
+  note?: string
+}
 
 export default function DetailPesanan({
   keranjang = [],
@@ -13,7 +29,16 @@ export default function DetailPesanan({
   customerName = '',
   onOpenCustomer,
   onRemoveItem,
-}: any) {
+}: {
+  keranjang?: CartItem[]
+  subtotal?: number
+  pajak?: number
+  promoBreakdown?: PromoItem[] // pastikan upstream mengirimkan nominal
+  total?: number
+  customerName?: string
+  onOpenCustomer?: () => void
+  onRemoveItem?: (i: number) => void
+}) {
   const router = useRouter()
   const [currentTime, setCurrentTime] = useState<string>('')
   const [isPaying, setIsPaying] = useState(false)
@@ -21,6 +46,51 @@ export default function DetailPesanan({
   const [amountPaid, setAmountPaid] = useState<number>(0)
   const [change, setChange] = useState<number>(0)
   const [isPaid, setIsPaid] = useState(false)
+  const [transactionId, setTransactionId] = useState<string | null>(null)
+  const [noPesanan, setNoPesanan] = useState<string>('')
+
+  // === State pelanggan & modal ===
+  const [customerNameState, setCustomerNameState] = useState(customerName)
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+
+  const handleOpenCustomer = () => setIsCustomerModalOpen(true)
+  const handleCloseCustomer = () => setIsCustomerModalOpen(false)
+  const handleSaveCustomer = (name: string) => {
+    setCustomerNameState(name)
+    handleCloseCustomer()
+  }
+
+  // helper: jika ada kemungkinan promoBreakdown berisi persen,
+  // konversikan dulu ke nominal berdasarkan subtotal.
+  // Jika promoBreakdown sudah berisi nominal, fungsi ini tidak mengubahnya.
+  const toNominal = (p: PromoItem, subtotalAmount: number) => {
+    if (p.type === 'percent') {
+      return Math.round((p.value / 100) * subtotalAmount)
+    }
+    return p.value // sudah nominal
+  }
+
+  // pastikan array yang kita gunakan berisi nominal (Rupiah)
+  const promoNominalList: PromoItem[] = (promoBreakdown || []).map((p) => ({
+    ...p,
+    value: toNominal(p, subtotal),
+    type: p.type ?? 'nominal',
+  }))
+
+  // =================== FETCH NOMOR PESANAN ===================
+  useEffect(() => {
+    async function fetchNo() {
+      try {
+        const res = await fetch('/api/transactions/generate-no')
+        const data = await res.json()
+        setNoPesanan(data.noPesanan || '')
+      } catch (err) {
+        console.error('Gagal mengambil nomor pesanan:', err)
+      }
+    }
+
+    fetchNo()
+  }, [])
 
   // =================== WAKTU ===================
   useEffect(() => {
@@ -50,24 +120,129 @@ export default function DetailPesanan({
     }
   }, [amountPaid, paymentMethod, total])
 
+  useEffect(() => {
+    if (paymentMethod === 'qris') {
+      setAmountPaid(total)
+    }
+  }, [paymentMethod, total])
+
+  // =================== HANDLER PEMBAYARAN ===================
   const handleCheckout = () => setIsPaying(true)
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (!paymentMethod) return alert('Pilih metode pembayaran!')
-    if (paymentMethod === 'cash' && amountPaid < total) return alert('Jumlah bayar kurang!')
+    if (paymentMethod === 'cash' && amountPaid < total) {
+      return alert('Jumlah bayar kurang!')
+    }
 
-    setIsPaid(true)
-  }
+    try {
+      const discount = promoNominalList.reduce((s, p) => s + p.value, 0)
 
-  const handleCancelPayment = () => {
-    if (confirm('Batalkan proses pembayaran?')) {
-      router.push('/dashboardKasir/transaksi')
+      const itemsForPayload = keranjang.map(({ id, ...rest }) => ({
+        productId: id, // untuk update stok nanti
+        ...rest, // nama, harga, qty, stok, note
+      }))
+
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          noPesanan,
+          tenant: 1,
+          namaKasir: 'Kasir 1',
+          namaPelanggan: customerNameState,
+          items: itemsForPayload, // <<< id dihapus
+          subtotal,
+          pajak,
+          discount,
+          total,
+          metode: paymentMethod === 'cash' ? 'Cash' : 'E-Wallet',
+          bayar: amountPaid,
+          kembalian: paymentMethod === 'cash' ? amountPaid - total : 0,
+          status: 'selesai',
+          waktu: new Date().toISOString(),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) return alert(data.error)
+
+      alert('Transaksi berhasil!')
+      router.push('/dashboardKasir/transaksi/riwayat')
+    } catch (err: any) {
+      alert('Terjadi kesalahan: ' + err.message)
     }
   }
 
-  const handleCancelOrder = () => {
-    if (confirm('Batalkan pesanan ini?')) {
+  const handleCancelPayment = async () => {
+    if (!confirm('Batalkan proses pembayaran?')) return
+
+    try {
+      const itemsForPayload = keranjang.map(({ id, ...rest }) => rest)
+
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant: 'ID_PAYLOAD_TENANT',
+          namaKasir: 'Kasir 1',
+          namaPelanggan: customerNameState,
+          items: itemsForPayload,
+          subtotal,
+          pajak,
+          discount: promoNominalList.reduce((s, p) => s + p.value, 0),
+          total,
+          metode: 'Cash',
+          bayar: 0,
+          kembalian: 0,
+          status: 'batal', // penting supaya tercatat batal
+          waktu: new Date().toISOString(),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) return alert(data.error)
+
+      alert('Pembayaran dibatalkan dan tersimpan!')
       router.push('/dashboardKasir/transaksi')
+    } catch (err: any) {
+      alert('Terjadi kesalahan: ' + err.message)
+    }
+  }
+
+  const handleCancelOrder = async () => {
+    if (!confirm('Batalkan pesanan ini?')) return
+
+    try {
+      const itemsForPayload = keranjang.map(({ id, ...rest }) => rest)
+
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant: 1,
+          namaKasir: 'Kasir 1',
+          namaPelanggan: customerNameState,
+          items: itemsForPayload,
+          subtotal,
+          pajak,
+          discount: promoNominalList.reduce((s, p) => s + p.value, 0),
+          total,
+          metode: 'Cash', // atau 'E-Wallet' jika perlu
+          bayar: 0,
+          kembalian: 0,
+          status: 'batal', // penting
+          waktu: new Date().toISOString(),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) return alert(data.error)
+
+      alert('Pesanan dibatalkan dan tersimpan!')
+      router.push('/dashboardKasir/transaksi/riwayat')
+    } catch (err: any) {
+      alert('Terjadi kesalahan: ' + err.message)
     }
   }
 
@@ -78,17 +253,30 @@ export default function DetailPesanan({
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 h-full flex flex-col justify-between">
+      {/* Modal Pelanggan */}
+      {isCustomerModalOpen && (
+        <PelangganModal
+          initialName={customerNameState}
+          onClose={handleCloseCustomer}
+          onSave={handleSaveCustomer}
+        />
+      )}
+
       {/* =================== SCROLL AREA =================== */}
       <div className="flex-1 overflow-y-auto pr-1">
         <div className="flex flex-col gap-3">
           {/* ============ HEADER ============ */}
           <div>
-            <h2 className="font-bold text-lg">Pesanan #001</h2>
+            <h2 className="font-bold text-lg">
+              {noPesanan ? `Pesanan #${noPesanan}` : 'Pesanan #...'}
+            </h2>
 
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-700 font-medium">{customerName || 'Pelanggan: -'}</p>
+              <p className="text-sm text-gray-700 font-medium">
+                {customerNameState || 'Pelanggan: -'}
+              </p>
 
-              <button onClick={onOpenCustomer} className="p-1 rounded hover:bg-gray-100">
+              <button onClick={handleOpenCustomer} className="p-1 rounded hover:bg-gray-100">
                 <Pencil size={16} />
               </button>
             </div>
@@ -102,7 +290,7 @@ export default function DetailPesanan({
             {keranjang.length === 0 ? (
               <p className="text-sm text-gray-400 italic">Belum ada item</p>
             ) : (
-              keranjang.map((it: any, idx: number) => (
+              keranjang.map((it: CartItem, idx: number) => (
                 <div key={idx} className="flex justify-between items-center border rounded p-2">
                   <div className="flex-1">
                     <div className="font-medium">{it.nama}</div>
@@ -116,7 +304,10 @@ export default function DetailPesanan({
                       Rp{(it.harga * it.qty).toLocaleString()}
                     </div>
 
-                    <button onClick={() => onRemoveItem(idx)} className="p-1 hover:bg-gray-100">
+                    <button
+                      onClick={() => onRemoveItem && onRemoveItem(idx)}
+                      className="p-1 hover:bg-gray-100"
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>

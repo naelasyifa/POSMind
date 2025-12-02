@@ -1,19 +1,31 @@
-import { s3Storage } from '@payloadcms/storage-s3';
-import { buildConfig } from 'payload';
-import { postgresAdapter } from '@payloadcms/db-postgres';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import sharp from 'sharp';
+import { s3Storage } from '@payloadcms/storage-s3'
+import { buildConfig } from 'payload'
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import sharp from 'sharp'
 
-import { Tenants } from './collections/Tenants';
-import { Users } from './collections/Users';
-import { Media } from './collections/Media';
-import Promos from './collections/Promos';
-import Products from './collections/Products';
+import { Tenants } from './collections/Tenants'
+import { Users } from './collections/Users'
+import { Media } from './collections/Media'
+import Promos from './collections/Promos'
+import Products from './collections/Products'
+import Transactions from './collections/Transactions'
+import Notifications from './collections/Notifications'
+import Payments from './collections/Payments'
+import Reservations from './collections/Reservations'
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+console.log('Collections Loaded:', [
+  Tenants.slug,
+  Users.slug,
+  Media.slug,
+  Promos.slug,
+  Products.slug,
+  Transactions.slug,
+])
 
 export default buildConfig({
   admin: {
@@ -23,7 +35,17 @@ export default buildConfig({
     },
   },
 
-  collections: [Tenants, Users, Media, Promos, Products],
+  collections: [
+    Tenants,
+    Users,
+    Media,
+    Promos,
+    Products,
+    Transactions,
+    Payments,
+    Notifications,
+    Reservations,
+  ],
 
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
@@ -59,4 +81,4 @@ export default buildConfig({
       },
     }),
   ],
-});
+})
