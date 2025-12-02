@@ -3,8 +3,10 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     businessName: '',
@@ -23,6 +25,27 @@ export default function RegisterPage() {
     }
   }
 
+  const handleNext = async () => {
+    if (!formData.businessName || !formData.email) {
+      alert('Nama Bisnis dan Email wajib diisi')
+      return
+    }
+
+    const res = await fetch('/api/auth/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: formData.email }),
+    })
+
+    const data = await res.json()
+    if (data?.success) {
+      router.push(
+        `/daftarBisnis?businessName=${encodeURIComponent(formData.businessName)}&email=${encodeURIComponent(formData.email)}&phone=${encodeURIComponent(formData.phone)}`,
+      )
+    } else {
+      alert(data?.message || 'Gagal mengirim OTP')
+    }
+  }
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
@@ -112,26 +135,26 @@ export default function RegisterPage() {
             </div>
           </div>
           {/* Submit Button */}
-            <div className="flex justify-end">
-              <Link
-                href="/daftarBisnis"
-                className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                style={{ backgroundColor: '#4DB8C4' }}
+          <div className="flex justify-end">
+            <button
+              onClick={handleNext}
+              className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+              style={{ backgroundColor: '#4DB8C4' }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="inline-block"
               >
-                <svg 
-                  width="24" 
-                  height="24" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                  className="inline-block"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </Link>
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
           </div>
         </div>
 
