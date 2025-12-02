@@ -1,13 +1,8 @@
 'use client'
-
-<<<<<<< HEAD
-import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-=======
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback } from 'react'
->>>>>>> 88fce0ea2d73d18d5e635a5caeec7a6240721942
 
 export default function SidebarKasir() {
   const pathname = usePathname()
