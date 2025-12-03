@@ -1,14 +1,19 @@
-import { Search } from "lucide-react";
+import { Search } from 'lucide-react'
 
-export default function SearchBar() {
+type SearchBarProps = {
+  onSearch: (value: string) => void
+}
+
+export default function SearchBar({ onSearch }: SearchBarProps) {
   return (
-    <div className="relative w-70">
+    <div className="relative w-70 text-gray-500">
       <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
       <input
         type="text"
         placeholder="Cari produk..."
+        onChange={(e) => onSearch(e.target.value)}
         className="w-full pl-10 pr-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-gray-400 focus:outline-none"
       />
     </div>
-  );
+  )
 }

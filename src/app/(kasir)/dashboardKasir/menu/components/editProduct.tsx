@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import type { Product } from './listProduct'
 
 interface EditProductProps {
   isOpen: boolean
@@ -10,19 +11,11 @@ interface EditProductProps {
     name: string
     stock: number
     status: string
-    category: string
+    category_id: number
     price: number
     image: string
   } | null
-  onSave: (updatedProduct: {
-    id: number
-    name: string
-    stock: number
-    status: string
-    category: string
-    price: number
-    image: string
-  }) => void
+  onSave: (updatedProduct: Product) => void
 }
 
 export default function EditProduk({ isOpen, onClose, productData, onSave }: EditProductProps) {
@@ -42,10 +35,10 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
       setNama(productData.name)
       setKuantitas(productData.stock.toString())
       setHarga(productData.price.toString())
-      setSelectedKategori(productData.category)
+      setSelectedKategori(productData.category_id.toString())
       setGambar(productData.image)
-      setManualId(productData.id.toString()) // <-- load existing ID
-      setUseAutoId(false) // <-- default: manual is enabled
+      setManualId(productData.id.toString())
+      setUseAutoId(false)
     }
   }, [productData])
 
@@ -74,7 +67,7 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
         name: nama,
         stock: Number(kuantitas),
         status: productData.status,
-        category: selectedKategori,
+        category_id: Number(selectedKategori),
         price: Number(harga),
         image: gambar || productData.image,
       })

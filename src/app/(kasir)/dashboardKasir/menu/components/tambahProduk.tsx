@@ -22,8 +22,9 @@ interface AddProductProps {
   onAdd: (newProduct: {
     id: number
     name: string
-    category: string
     stock: number
+    status: string
+    category_id: number
     price: number
     image: string
   }) => void
@@ -81,8 +82,9 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
       onAdd({
         id: useAutoId ? Date.now() : Number(productId),
         name: nama,
-        category: selectedKategori,
         stock: Number(kuantitas),
+        status: 'active',
+        category_id: Number(selectedKategori),
         price: Number(harga),
         image: gambar || '',
       })

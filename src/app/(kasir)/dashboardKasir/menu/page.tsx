@@ -21,7 +21,7 @@ type Product = {
   name: string
   stock: number
   status: string
-  category: string
+  category_id: number
   price: number
   image: string
 }
@@ -30,11 +30,10 @@ export default function MenuPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasPermission] = useState(false)
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false)
-
+  const [products, setProducts] = useState<Product[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
   const [isAddKategoriOpen, setIsAddKategoriOpen] = useState(false)
-
-  const [product, setProduct] = useState<Product[]>([])
 
   const handleModalChange = (open: boolean) => {
     console.log('Modal status:', open)
@@ -43,16 +42,23 @@ export default function MenuPage() {
 
   const handleAddProduct = (newProductInput: Omit<Product, 'id' | 'status'>) => {
     const newProduct: Product = {
-      id: product.length + 1,
+      id: products.length + 1,
       name: newProductInput.name,
-      category: newProductInput.category,
+      category_id: newProductInput.category_id,
       stock: newProductInput.stock,
       price: newProductInput.price,
       status: 'Aktif',
       image: newProductInput.image || '/default.jpg',
     }
-    setProduct((prev) => [...prev, newProduct])
+    setProducts((prev) => [...prev, newProduct])
     setIsAddProductOpen(false)
+  }
+  const handleEditProduct = (updated: Product) => {
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+  }
+
+  const handleDeleteProduct = (id: number) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id))
   }
 
   const [categories, setCategories] = useState<CategoryItem[]>([
@@ -130,7 +136,7 @@ export default function MenuPage() {
           />
 
           <div className="flex justify-between items-center mt-8 mb-2">
-            <SearchBar />
+            <SearchBar onSearch={setSearchQuery} />
             <button
               onClick={() => {
                 if (!hasPermission) {
@@ -146,10 +152,12 @@ export default function MenuPage() {
             </button>
           </div>
           <ProductList
-            products={product}
-            setProducts={setProduct}
-            onModalChange={handleModalChange}
+            searchQuery={searchQuery}
             hasPermission={hasPermission}
+            onModalChange={handleModalChange}
+            products={products}
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
           />
         </div>
       </div>

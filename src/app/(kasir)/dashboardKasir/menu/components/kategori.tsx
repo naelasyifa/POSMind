@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, FolderX } from 'lucide-react'
 
-// TYPE: dynamic category item
+// TYPE: dynamic category item from backend
 export type CategoryItem = {
   id: number
   name: string
@@ -18,12 +18,12 @@ type Props = {
 }
 
 export default function CategoryList({ categories, onEdit, onDelete }: Props) {
-  const [active, setActive] = useState<string>(categories[0]?.name || '')
-  const [menuOpen, setMenuOpen] = useState<string | null>(null)
+  const [active, setActive] = useState<number | null>(null)
+  const [menuOpen, setMenuOpen] = useState<number | null>(null)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  // Close popup menu on outside click
+  // CLOSE MENU ON OUTSIDE CLICK
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -35,35 +35,55 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // SET DEFAULT ACTIVE WHEN DATA ARRIVES
+  useEffect(() => {
+    if (categories.length > 0 && active === null) {
+      setActive(categories[0].id)
+    }
+  }, [categories])
+
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="mb-6">
+
+      {/* ========== EMPTY STATE ========== */}
+      {categories.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-10 text-gray-500">
+          <FolderX size={64} className="text-gray-400 mb-4" />
+          <p className="text-lg font-medium">Belum ada kategori</p>
+          <p className="text-sm">Tambahkan kategori baru untuk memulai</p>
+        </div>
+      )}
+
+      {/* ========== CATEGORY GRID ========== */}
       <div className="flex gap-4 flex-wrap">
         {categories.map((cat) => (
           <div key={cat.id} className="relative">
             <button
-              onClick={() => setActive(cat.name)}
+              onClick={() => setActive(cat.id)}
               className={`rounded-xl p-4 w-28 h-28 shadow-sm transition cursor-pointer flex flex-col justify-between
                 ${
-                  active === cat.name
+                  active === cat.id
                     ? 'bg-[#737373] text-white scale-105 shadow-md'
                     : 'bg-white text-gray-700 hover:bg-[#737373]/70 hover:text-white'
                 }
               `}
             >
-              {/* ICON TOP RIGHT */}
+              {/* TOP RIGHT ICON */}
               <div className="w-full flex justify-end">
                 <cat.icon
                   size={28}
-                  className={active === cat.name ? 'text-white' : 'text-inherit'}
+                  className={active === cat.id ? 'text-white' : 'text-inherit'}
                 />
               </div>
 
-              {/* CATEGORY NAME + COUNT + MENU */}
+              {/* NAME + COUNT + MENU */}
               <div className="flex justify-between items-center w-full">
                 <div className="text-left">
                   <div className="text-sm font-semibold">{cat.name}</div>
                   <div
-                    className={`text-xs ${active === cat.name ? 'text-white/80' : 'text-inherit'}`}
+                    className={`text-xs ${
+                      active === cat.id ? 'text-white/80' : 'text-inherit'
+                    }`}
                   >
                     {cat.count}
                   </div>
@@ -74,7 +94,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
                   className="rounded py-1 hover:bg-gray-200"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setMenuOpen(menuOpen === cat.name ? null : cat.name)
+                    setMenuOpen(menuOpen === cat.id ? null : cat.id)
                   }}
                 >
                   <MoreVertical size={18} />
@@ -83,7 +103,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
             </button>
 
             {/* POPUP MENU */}
-            {menuOpen === cat.name && (
+            {menuOpen === cat.id && (
               <div
                 ref={menuRef}
                 className="absolute right-0 top-0 mt-10 mr-2 bg-white border shadow-md rounded-md z-50"
