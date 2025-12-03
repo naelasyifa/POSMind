@@ -72,6 +72,10 @@ export interface Config {
     media: Media;
     promos: Promo;
     products: Product;
+    transactions: Transaction;
+    payments: Payment;
+    notifications: Notification;
+    reservations: Reservation;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +88,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     promos: PromosSelect<false> | PromosSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    reservations: ReservationsSelect<false> | ReservationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -141,6 +149,15 @@ export interface User {
   id: number;
   role?: ('superadmin' | 'admintoko' | 'kasir') | null;
   tenant?: (number | null) | Tenant;
+  emailVerified?: boolean | null;
+  verificationCode?: string | null;
+  otp?: string | null;
+  otpExpiration?: string | null;
+  adminName?: string | null;
+  businessField?: string | null;
+  businessType?: string | null;
+  address?: string | null;
+  isBusinessUser?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -223,6 +240,63 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: number;
+  noPesanan?: string | null;
+  tenant: number | Tenant;
+  namaKasir: string;
+  namaPelanggan?: string | null;
+  items?:
+    | {
+        nama: string;
+        harga: number;
+        qty: number;
+        id?: string | null;
+      }[]
+    | null;
+  subtotal: number;
+  pajak: number;
+  discount?: number | null;
+  total: number;
+  status?: ('proses' | 'selesai' | 'batal') | null;
+  metode?: ('Cash' | 'E-Wallet') | null;
+  bayar?: number | null;
+  kembalian?: number | null;
+  waktu: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments".
+ */
+export interface Payment {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservations".
+ */
+export interface Reservation {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -264,6 +338,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'products';
         value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: number | Transaction;
+      } | null)
+    | ({
+        relationTo: 'payments';
+        value: number | Payment;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'reservations';
+        value: number | Reservation;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -325,6 +415,15 @@ export interface TenantsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
   tenant?: T;
+  emailVerified?: T;
+  verificationCode?: T;
+  otp?: T;
+  otpExpiration?: T;
+  adminName?: T;
+  businessField?: T;
+  businessType?: T;
+  address?: T;
+  isBusinessUser?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -398,6 +497,59 @@ export interface ProductsSelect<T extends boolean = true> {
   gambar?: T;
   deskripsi?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  noPesanan?: T;
+  tenant?: T;
+  namaKasir?: T;
+  namaPelanggan?: T;
+  items?:
+    | T
+    | {
+        nama?: T;
+        harga?: T;
+        qty?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  pajak?: T;
+  discount?: T;
+  total?: T;
+  status?: T;
+  metode?: T;
+  bayar?: T;
+  kembalian?: T;
+  waktu?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments_select".
+ */
+export interface PaymentsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservations_select".
+ */
+export interface ReservationsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
 }

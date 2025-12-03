@@ -1,34 +1,70 @@
 'use client'
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function DaftarBisnisForm() {
-  const router = useRouter();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const emailFromQuery = searchParams.get('email') || ''
+  const phoneFromQuery = searchParams.get('phone') || ''
+  const businessNameFromQuery = searchParams.get('businessName') || ''
+
   const [formData, setFormData] = useState({
     businessField: '',
-    businessType:'',
+    businessType: '',
     adminName: '',
-    address: ''
-  });
+    address: '',
+    email: emailFromQuery,
+    phone: phoneFromQuery,
+    businessName: businessNameFromQuery,
+  })
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    // Handle registration logic here
-  };
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      email: emailFromQuery,
+      phone: phoneFromQuery,
+      businessName: businessNameFromQuery,
+    }))
+  }, [emailFromQuery, phoneFromQuery, businessNameFromQuery])
+
+  const handleSubmit = async () => {
+    if (!formData.email || !formData.adminName) {
+      alert('Lengkapi data terlebih dahulu.')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/auth/complete-business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await res.json()
+      if (data?.success) {
+        router.push('/verifikasi?email=' + encodeURIComponent(formData.email))
+      } else {
+        alert(data?.message || 'Gagal menyimpan data bisnis')
+      }
+    } catch (error) {
+      console.error('Error saat submit:', error)
+      alert('Terjadi kesalahan saat menyimpan data')
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+      [e.target.name]: e.target.value,
+    })
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#4DB8C4] p-4">
       <div className="w-full max-w-md">
-
-        {/* Form Card */}
         <div className="bg-white rounded-3xl shadow-lg p-8">
           <button
             onClick={() => router.push('/daftar')}
@@ -37,7 +73,6 @@ export default function DaftarBisnisForm() {
             <svg
               width="24"
               height="24"
-              viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -48,13 +83,13 @@ export default function DaftarBisnisForm() {
             </svg>
           </button>
 
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Daftar sebagai bisnis</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            Daftar sebagai bisnis
+          </h2>
 
           <div className="space-y-4">
-            {/* Bidang Bisnis */}
-              <label className="block text-gray-700 text-sm font-medium mb-2">
-                Bidang Bisnis
-              </label>
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Bidang Bisnis</label>
               <input
                 type="text"
                 name="businessField"
@@ -63,24 +98,22 @@ export default function DaftarBisnisForm() {
                 placeholder="contoh: F&B, elektronik, dll."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
               />
+            </div>
 
-            {/* Tipe Bisnis */}
-              <label className="block text-gray-700 text-sm font-medium mb-2">
-                Tipe Bisnis
-              </label>
-                <input
-                  type="text"
-                  name="businessType"
-                  value={formData.businessType}
-                  onChange={handleChange}
-                  placeholder="contoh: UMKM, Restoran, dll."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm pr-12"
-                />
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Tipe Bisnis</label>
+              <input
+                type="text"
+                name="businessType"
+                value={formData.businessType}
+                onChange={handleChange}
+                placeholder="contoh: UMKM, Restoran, dll."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
+              />
+            </div>
 
-            {/* Alamat */}
-              <label className="block text-gray-700 text-sm font-medium mb-2">
-                Alamat
-              </label>
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-2">Alamat</label>
               <input
                 type="text"
                 name="address"
@@ -89,8 +122,9 @@ export default function DaftarBisnisForm() {
                 placeholder="Masukan alamat bisnis"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
               />
+            </div>
 
-            {/* Nama Admin */}
+            <div>
               <label className="block text-gray-700 text-sm font-medium mb-2">
                 Nama Penanggung Jawab/Admin
               </label>
@@ -102,20 +136,20 @@ export default function DaftarBisnisForm() {
                 placeholder="Masukan nama anda"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm"
               />
+            </div>
           </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                style={{ backgroundColor: '#4DB8C4' }}
-              >
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleSubmit}
+              className="px-6 py-3 rounded-lg font-medium text-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+              style={{ backgroundColor: '#4DB8C4' }}
+            >
               Daftar
-              </button>
+            </button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

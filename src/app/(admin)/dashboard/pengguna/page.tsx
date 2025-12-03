@@ -4,9 +4,9 @@ import { useState } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
 import { Edit, Trash2, UserPlus } from 'lucide-react'
-import AddUser from './adduser'
-import EditUser from './edituser'
-import HapusUser from './hapus'
+import AddUser from './components/adduser'
+import EditUser from './components/edituser'
+import HapusUser from './components/hapus'
 
 interface User {
   nama: string
@@ -225,9 +225,9 @@ export default function PenggunaPage() {
         </div>
       </div>
 
-      {/* Overlay Blur ketika modal open */}
-      {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
+      {/* Overlay FIX — Menutupi Sidebar & Konten */}
+      {(isAddModalOpen || isEditModalOpen || isDeleteModalOpen) && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"></div>
       )}
 
       {/* Popup Add User */}

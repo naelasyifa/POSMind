@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   ]
 
   const user = dummyUsers.find((u) => u.email === email && u.password === password)
-  if (!user) return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 })
+  if (!user) return NextResponse.json({ error : 'Email atau password salah' }, { status: 401 })
 
   const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'SECRET_KEY_POSMIND')
   const token = await new SignJWT({
