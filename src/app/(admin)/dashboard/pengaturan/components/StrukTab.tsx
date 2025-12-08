@@ -276,10 +276,11 @@ export default function StrukTab() {
       <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
         <h3 className="font-semibold text-lg mb-4">Tampilan Cetakan Nota</h3>
 
-        <div
-          className="border rounded-lg p-4 text-sm"
-          style={{ width: paperSize === 58 ? 230 : 300 }}
-        >
+        <div className="flex justify-center">
+          <div
+            className="border rounded-lg p-4 text-sm"
+            style={{ width: paperSize === 58 ? 230 : 300 }}
+          >
           {/* PREVIEW CONTENT — SAME AS BEFORE */}
           {options.infoToko && (
             <div className="text-center mb-3">
@@ -363,6 +364,7 @@ export default function StrukTab() {
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }

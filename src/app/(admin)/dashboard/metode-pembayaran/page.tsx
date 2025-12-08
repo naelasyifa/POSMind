@@ -71,7 +71,7 @@ export default function MetodePembayaranPage() {
                             checked={m.status}
                             onChange={() => toggleStatus(m.id)}
                           />
-                          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#3ABAB4] transition-all"></div>
+                          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-[#52bfbe] transition-all"></div>
                           <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full peer-checked:translate-x-5 transition-all"></div>
                         </label>
                       </td>
@@ -80,7 +80,7 @@ export default function MetodePembayaranPage() {
                         <button
                           onClick={() => setSelectedMethod(m.nama)}
                           className="flex items-center gap-2 mx-auto bg-white border border-gray-400 px-4 py-2 rounded-lg
-                                     hover:bg-[#3ABAB4] hover:text-white transition-all text-sm"
+                                     hover:bg-[#52bfbe] hover:text-white transition-all text-sm"
                         >
                           <Settings size={16} />
                           Kelola
