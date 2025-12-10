@@ -51,40 +51,43 @@ export async function GET() {
   }
 }
 
-// CREATE category
 export async function POST(req: Request) {
   try {
     const payload = await getPayloadClient()
-    const data = await req.json() // { nama: string, iconFile }
+    const form = await req.formData()
+
+    const nama = form.get('nama') as string
+    const ikonFile = form.get('iconFile') as File | null
 
     let mediaId: string | undefined
-    if (data.iconFile) {
-      const arrayBuffer = await data.iconFile.arrayBuffer()
+
+    if (ikonFile) {
+      const arrayBuffer = await ikonFile.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
       const uploaded = await payload.create({
         collection: 'media',
         file: {
-          name: data.iconFile.name,
+          name: ikonFile.name,
           data: buffer,
-          mimetype: data.iconFile.type,
+          mimetype: ikonFile.type,
         },
-        data: { alt: data.nama },
+        data: { alt: nama },
       })
+
       mediaId = uploaded.id
     }
 
     const category = await payload.create({
       collection: 'categories',
       data: {
-        nama: data.nama,
-        ikon: mediaId ? { relationTo: 'media', value: mediaId } : undefined,
+        nama,
+        ikon: mediaId,
       },
     })
 
     return NextResponse.json(category)
   } catch (err: any) {
-    console.error(err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
