@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, SendToBack, Trash2 } from 'lucide-react'
 import PelangganModal from './PelangganModal'
+import { cetakTransaksiPDF, Transaksi, StoreSettings } from '../cetakTransaksi'
 
 type PromoItem = {
+  id?: string
   label: string
-  type?: 'percent' | 'nominal' // optional jika sudah diproses
+  type?: 'percent' | 'nominal' | 'bxgy' // optional jika sudah diproses
   value: number // selalu nominal (Rupiah). Jika belum, konversi dulu
+  X?: number // untuk BxGy
+  Y?: number // untuk BxGy
 }
 
 type CartItem = {
@@ -18,12 +22,49 @@ type CartItem = {
   qty: number
   stok?: number
   note?: string
+  isGratis?: boolean
+}
+
+// Fungsi untuk menerapkan promo Beli X Gratis Y pada item
+function applyBxGyPromo(item: CartItem, X: number, Y: number, unlimited: boolean = true) {
+  const qtyBeli = item.qty
+  let bonus = 0
+
+  if (unlimited) {
+    bonus = Math.floor(qtyBeli / X) * Y
+    const block = X + Y
+    const fullBlock = Math.floor(qtyBeli / block)
+    const sisa = qtyBeli % block
+
+    let qtyBayar
+    if (sisa <= X) qtyBayar = fullBlock * X + sisa
+    else qtyBayar = fullBlock * X + X
+
+    return {
+      qtyBayar,
+      qtyGratis: bonus,
+      items: [
+        { ...item, qty: qtyBayar },
+        ...(bonus > 0 ? [{ ...item, qty: bonus, nama: item.nama + ' (Gratis)', harga: 0 }] : []),
+      ],
+    }
+  }
+
+  // non unlimited → maksimal 1x gratis
+  bonus = qtyBeli >= X ? Y : 0
+  return {
+    qtyBayar: qtyBeli - bonus,
+    qtyGratis: bonus,
+    items: [
+      { ...item, qty: qtyBeli - bonus },
+      ...(bonus > 0 ? [{ ...item, qty: bonus, nama: item.nama + ' (Gratis)', harga: 0 }] : []),
+    ],
+  }
 }
 
 export default function DetailPesanan({
   keranjang = [],
   subtotal = 0,
-  pajak = 0,
   promoBreakdown = [], // ⭐ promo dari pesanan baru
   total = 0,
   customerName = '',
@@ -32,7 +73,6 @@ export default function DetailPesanan({
 }: {
   keranjang?: CartItem[]
   subtotal?: number
-  pajak?: number
   promoBreakdown?: PromoItem[] // pastikan upstream mengirimkan nominal
   total?: number
   customerName?: string
@@ -41,12 +81,13 @@ export default function DetailPesanan({
 }) {
   const router = useRouter()
   const [currentTime, setCurrentTime] = useState<string>('')
+  const [frozenTime, setFrozenTime] = useState<string>('')
+
   const [isPaying, setIsPaying] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris' | ''>('')
   const [amountPaid, setAmountPaid] = useState<number>(0)
   const [change, setChange] = useState<number>(0)
   const [isPaid, setIsPaid] = useState(false)
-  const [transactionId, setTransactionId] = useState<string | null>(null)
   const [noPesanan, setNoPesanan] = useState<string>('')
 
   // === State pelanggan & modal ===
@@ -71,17 +112,15 @@ export default function DetailPesanan({
   }
 
   // pastikan array yang kita gunakan berisi nominal (Rupiah)
-  const promoNominalList: PromoItem[] = (promoBreakdown || []).map((p) => ({
-    ...p,
-    value: toNominal(p, subtotal),
-    type: p.type ?? 'nominal',
-  }))
+  const promoNominalList: PromoItem[] = (promoBreakdown || [])
+    .filter((p) => p.type !== 'bxgy') // bxgy akan di-handle langsung di keranjang
+    .map((p) => ({ ...p, value: toNominal(p, subtotal) }))
 
   // =================== FETCH NOMOR PESANAN ===================
   useEffect(() => {
     async function fetchNo() {
       try {
-        const res = await fetch('/api/transactions/generate-no')
+        const res = await fetch('/api/frontend/transactions/generate-no')
         const data = await res.json()
         setNoPesanan(data.noPesanan || '')
       } catch (err) {
@@ -90,6 +129,62 @@ export default function DetailPesanan({
     }
 
     fetchNo()
+  }, [])
+
+  const [displayCart, setDisplayCart] = useState<CartItem[]>([])
+
+  useEffect(() => {
+    const newCart: typeof keranjang = []
+
+    keranjang.forEach((it) => {
+      const promo = promoBreakdown.find(
+        (p) => p.type === 'bxgy' && it.nama.toLowerCase().includes(p.label.trim().toLowerCase()),
+      )
+
+      if (promo && promo.X && promo.Y) {
+        const X = Number(promo.X)
+        const Y = Number(promo.Y)
+
+        if (!isNaN(X) && !isNaN(Y)) {
+          const { items } = applyBxGyPromo(it, X, Y, true)
+          newCart.push(...items)
+        } else {
+          console.warn('Promo BxGy invalid:', promo)
+          newCart.push(it)
+        }
+      } else {
+        newCart.push(it)
+      }
+    })
+
+    setDisplayCart(newCart)
+  }, [keranjang, promoBreakdown])
+
+  // =================== FETCH SETTING TOKO ===================
+  const [storeSettings, setStoreSettings] = useState<{
+    serviceCharge: boolean
+    serviceChargePercentage: number
+    pajak: boolean
+    pajakPercentage: number
+  } | null>(null)
+
+  useEffect(() => {
+    const fetchStoreSettings = async () => {
+      try {
+        const res = await fetch('/api/frontend/store-settings')
+        const data = await res.json()
+        setStoreSettings({
+          serviceCharge: data.serviceCharge ?? true,
+          serviceChargePercentage: data.serviceChargePercentage ?? 10,
+          pajak: data.pajak ?? true,
+          pajakPercentage: data.pajakPercentage ?? 10,
+        })
+      } catch (err) {
+        console.error('Gagal ambil store settings', err)
+      }
+    }
+
+    fetchStoreSettings()
   }, [])
 
   // =================== WAKTU ===================
@@ -111,6 +206,25 @@ export default function DetailPesanan({
     return () => clearInterval(timer)
   }, [])
 
+  // =================== HITUNG TOTAL ===================
+  const calculateTotals = () => {
+    const sub = displayCart.reduce((sum, it) => sum + it.harga * it.qty, 0)
+    const discount = promoNominalList.reduce((s, p) => s + p.value, 0)
+    const subAfterDiscount = sub - discount
+
+    const tax = storeSettings?.pajak
+      ? Math.round((subAfterDiscount * (storeSettings.pajakPercentage ?? 0)) / 100)
+      : 0
+    const service = storeSettings?.serviceCharge
+      ? Math.round((subAfterDiscount * (storeSettings.serviceChargePercentage ?? 0)) / 100)
+      : 0
+
+    const totalAmount = subAfterDiscount + tax + service
+    return { subtotal: sub, discount, tax, service, total: totalAmount }
+  }
+
+  const { subtotal: sub, discount, tax, service, total: totalAmount } = calculateTotals()
+
   // =================== HITUNG KEMBALIAN ===================
   useEffect(() => {
     if (paymentMethod === 'cash') {
@@ -118,32 +232,41 @@ export default function DetailPesanan({
     } else {
       setChange(0)
     }
-  }, [amountPaid, paymentMethod, total])
+  }, [amountPaid, paymentMethod, totalAmount])
 
   useEffect(() => {
     if (paymentMethod === 'qris') {
-      setAmountPaid(total)
+      setAmountPaid(totalAmount)
     }
-  }, [paymentMethod, total])
+  }, [paymentMethod, totalAmount])
 
   // =================== HANDLER PEMBAYARAN ===================
   const handleCheckout = () => setIsPaying(true)
 
   const handleConfirmPayment = async () => {
     if (!paymentMethod) return alert('Pilih metode pembayaran!')
-    if (paymentMethod === 'cash' && amountPaid < total) {
+    if (paymentMethod === 'cash' && amountPaid < totalAmount) {
       return alert('Jumlah bayar kurang!')
     }
 
     try {
+      // === Transform keranjang untuk promo BxGy ===
+      let itemsWithBxGy: CartItem[] = []
+      keranjang.forEach((it) => {
+        const promo = promoBreakdown.find((p) => p.type === 'bxgy' && p.id === it.id)
+        if (promo && promo.X && promo.Y) {
+          const { items } = applyBxGyPromo(it, promo.X, promo.Y, true)
+          itemsWithBxGy.push(...items)
+        } else {
+          itemsWithBxGy.push(it)
+        }
+      })
+
       const discount = promoNominalList.reduce((s, p) => s + p.value, 0)
 
-      const itemsForPayload = keranjang.map(({ id, ...rest }) => ({
-        productId: id, // untuk update stok nanti
-        ...rest, // nama, harga, qty, stok, note
-      }))
+      const itemsForPayload = itemsWithBxGy.map(({ id, ...rest }) => ({ productId: id, ...rest }))
 
-      const res = await fetch('/api/transactions', {
+      const res = await fetch('/api/frontend/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -152,13 +275,14 @@ export default function DetailPesanan({
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
           items: itemsForPayload, // <<< id dihapus
-          subtotal,
-          pajak,
+          subtotal: sub,
+          pajak: tax,
+          serviceCharge: service,
           discount,
-          total,
+          total: totalAmount,
           metode: paymentMethod === 'cash' ? 'Cash' : 'E-Wallet',
           bayar: amountPaid,
-          kembalian: paymentMethod === 'cash' ? amountPaid - total : 0,
+          kembalian: paymentMethod === 'cash' ? amountPaid - totalAmount : 0,
           status: 'selesai',
           waktu: new Date().toISOString(),
         }),
@@ -167,8 +291,9 @@ export default function DetailPesanan({
       const data = await res.json()
       if (!res.ok) return alert(data.error)
 
-      alert('Transaksi berhasil!')
-      router.push('/dashboardKasir/transaksi/riwayat')
+      setIsPaid(true) // aktifkan state setelah bayar
+      setFrozenTime(currentTime)
+      alert('Pembayaran berhasil! Silakan cetak struk.')
     } catch (err: any) {
       alert('Terjadi kesalahan: ' + err.message)
     }
@@ -180,18 +305,19 @@ export default function DetailPesanan({
     try {
       const itemsForPayload = keranjang.map(({ id, ...rest }) => rest)
 
-      const res = await fetch('/api/transactions', {
+      const res = await fetch('/api/frontend/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenant: 'ID_PAYLOAD_TENANT',
+          tenant: 1,
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
           items: itemsForPayload,
-          subtotal,
-          pajak,
+          subtotal: sub,
+          pajak: tax,
+          serviceCharge: service,
           discount: promoNominalList.reduce((s, p) => s + p.value, 0),
-          total,
+          total: totalAmount,
           metode: 'Cash',
           bayar: 0,
           kembalian: 0,
@@ -204,7 +330,7 @@ export default function DetailPesanan({
       if (!res.ok) return alert(data.error)
 
       alert('Pembayaran dibatalkan dan tersimpan!')
-      router.push('/dashboardKasir/transaksi')
+      router.push('/dashboardKasir/transaksi/riwayat')
     } catch (err: any) {
       alert('Terjadi kesalahan: ' + err.message)
     }
@@ -216,7 +342,7 @@ export default function DetailPesanan({
     try {
       const itemsForPayload = keranjang.map(({ id, ...rest }) => rest)
 
-      const res = await fetch('/api/transactions', {
+      const res = await fetch('/api/frontend/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -224,10 +350,11 @@ export default function DetailPesanan({
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
           items: itemsForPayload,
-          subtotal,
-          pajak,
+          subtotal: sub,
+          pajak: tax,
+          serviceCharge: service,
           discount: promoNominalList.reduce((s, p) => s + p.value, 0),
-          total,
+          total: totalAmount,
           metode: 'Cash', // atau 'E-Wallet' jika perlu
           bayar: 0,
           kembalian: 0,
@@ -246,9 +373,33 @@ export default function DetailPesanan({
     }
   }
 
-  const handlePrintReceipt = () => {
-    alert('Struk dicetak (simulasi)')
-    router.push('/dashboardKasir/transaksi')
+  const handleDownloadPDF = async () => {
+    if (!storeSettings) return alert('Store settings belum siap')
+
+    const transaksiObj: Transaksi = {
+      meja: noPesanan,
+      modePenjualan: 'Dine In',
+      pax: 1,
+      kasir: 'Kasir 1',
+      catatan: '',
+      waiter: 'Waiter 1',
+      pajak: tax,
+      service: service,
+      pembulatan: 0,
+      items: displayCart.map((i) => ({
+        name: i.nama,
+        qty: i.qty,
+        price: i.harga,
+        total: i.qty * i.harga,
+      })),
+    }
+
+    const pdf = await cetakTransaksiPDF({
+      transaksi: transaksiObj,
+      storeSettings: storeSettings as StoreSettings,
+    })
+
+    pdf.save(`Transaksi_${noPesanan}.pdf`)
   }
 
   return (
@@ -275,25 +426,33 @@ export default function DetailPesanan({
               <p className="text-sm text-gray-700 font-medium">
                 {customerNameState || 'Pelanggan: -'}
               </p>
-
-              <button onClick={handleOpenCustomer} className="p-1 rounded hover:bg-gray-100">
-                <Pencil size={16} />
-              </button>
+              {!isPaid && (
+                <button onClick={handleOpenCustomer} className="p-1 rounded hover:bg-gray-100">
+                  <Pencil size={16} />
+                </button>
+              )}
             </div>
 
             <div className="border-b my-2"></div>
-            <p className="text-xs text-gray-500">{currentTime}</p>
+            <p className="text-xs text-gray-500">{isPaid ? frozenTime : currentTime}</p>
           </div>
 
           {/* ============ ITEM LIST ============ */}
           <div className="max-h-[250px] overflow-y-auto space-y-3 border-b pb-3">
-            {keranjang.length === 0 ? (
+            {displayCart.length === 0 ? (
               <p className="text-sm text-gray-400 italic">Belum ada item</p>
             ) : (
-              keranjang.map((it: CartItem, idx: number) => (
-                <div key={idx} className="flex justify-between items-center border rounded p-2">
+              displayCart.map((it: CartItem & { isGratis?: boolean }, idx: number) => (
+                <div
+                  key={idx}
+                  className={`flex justify-between items-center border rounded p-2 ${
+                    it.isGratis ? 'ml-4 bg-gray-50' : ''
+                  }`}
+                >
                   <div className="flex-1">
-                    <div className="font-medium">{it.nama}</div>
+                    <div className={`${it.isGratis ? 'text-gray-400 italic' : 'font-medium'}`}>
+                      {it.nama}
+                    </div>
                     {it.note && <div className="text-xs text-gray-500">Catatan: {it.note}</div>}
                     <div className="text-xs text-gray-500">Rp{it.harga.toLocaleString()}</div>
                   </div>
@@ -304,12 +463,21 @@ export default function DetailPesanan({
                       Rp{(it.harga * it.qty).toLocaleString()}
                     </div>
 
-                    <button
-                      onClick={() => onRemoveItem && onRemoveItem(idx)}
-                      className="p-1 hover:bg-gray-100"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {/* tombol hapus hanya untuk item asli */}
+                    {!isPaid && !it.isGratis && (
+                      <button
+                        onClick={() => {
+                          const indexInKeranjang = keranjang.findIndex(
+                            (k) => k.id === it.id && (k.note || '') === (it.note || ''),
+                          )
+                          if (indexInKeranjang !== -1 && onRemoveItem)
+                            onRemoveItem(indexInKeranjang)
+                        }}
+                        className="p-1 hover:bg-gray-100"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -321,13 +489,13 @@ export default function DetailPesanan({
             {/* Subtotal */}
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>Rp{subtotal.toLocaleString()}</span>
+              <span>Rp{sub.toLocaleString()}</span>
             </div>
 
             {/* PROMO DINAMIS */}
-            {promoBreakdown.length > 0 && (
+            {promoNominalList.length > 0 && (
               <div className="space-y-1">
-                {promoBreakdown.map((p: any, i: number) => (
+                {promoNominalList.map((p, i) => (
                   <div key={i} className="flex justify-between text-xs text-red-500 font-medium">
                     <span>{p.label}</span>
                     <span>-Rp{p.value.toLocaleString()}</span>
@@ -338,14 +506,25 @@ export default function DetailPesanan({
 
             {/* Pajak */}
             <div className="flex justify-between">
-              <span>Pajak 10%</span>
-              <span>Rp{pajak.toLocaleString()}</span>
+              <span>Pajak {storeSettings?.pajakPercentage ?? 0}%</span>
+              <span>Rp{tax.toLocaleString()}</span>
             </div>
+
+            {/* Service Charge */}
+            {storeSettings?.serviceCharge && (
+              <div className="flex justify-between">
+                <span>Service Charge {storeSettings.serviceChargePercentage ?? 0}%</span>
+                <span>Rp{service.toLocaleString()}</span>
+              </div>
+            )}
 
             {/* TOTAL */}
             <div className="border-t border-dashed pt-2 flex justify-between font-bold text-base">
               <span>Total</span>
-              <span>Rp{total.toLocaleString()}</span>
+              <span>
+                Rp
+                {totalAmount.toLocaleString()}
+              </span>
             </div>
           </div>
 
@@ -355,6 +534,7 @@ export default function DetailPesanan({
             <input
               className="w-full border rounded p-2 text-sm"
               placeholder="menggunakan alat makan"
+              disabled={isPaid}
             />
           </div>
 
@@ -398,7 +578,9 @@ export default function DetailPesanan({
 
               <div className="flex justify-between text-sm font-medium">
                 <span>Total Bayar</span>
-                <span>Rp{(paymentMethod === 'cash' ? amountPaid : total).toLocaleString()}</span>
+                <span>
+                  Rp{(paymentMethod === 'cash' ? amountPaid : totalAmount).toLocaleString()}
+                </span>
               </div>
 
               <div className="flex justify-between text-sm font-medium">
@@ -432,7 +614,9 @@ export default function DetailPesanan({
 
               <div className="flex justify-between">
                 <span>Total Bayar</span>
-                <span>Rp{(paymentMethod === 'cash' ? amountPaid : total).toLocaleString()}</span>
+                <span>
+                  Rp{(paymentMethod === 'cash' ? amountPaid : totalAmount).toLocaleString()}
+                </span>
               </div>
 
               <div className="flex justify-between">
@@ -441,10 +625,17 @@ export default function DetailPesanan({
               </div>
 
               <button
-                onClick={handlePrintReceipt}
+                onClick={handleDownloadPDF}
                 className="w-full py-2 rounded bg-[#52bfbe] text-white hover:bg-[#44a9a9] mt-2"
               >
                 Cetak Struk
+              </button>
+
+              <button
+                onClick={() => router.push('/dashboardKasir/transaksi/riwayat')}
+                className="w-full py-2 rounded border border-gray-400 text-gray-600 hover:bg-gray-100 mt-1"
+              >
+                Selesai
               </button>
             </div>
           )}

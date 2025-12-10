@@ -1,69 +1,94 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/SidebarKasir'
 import HeaderAdmin from '@/components/HeaderKasir'
 import { Trash2, CheckCircle2, AlertTriangle, PlusSquare } from 'lucide-react'
 import HapusNotifKasir from './components/HapusNotifKasir'
 
 type Notifikasi = {
-  id: number
-  jenis: 'Transaksi' | 'Produk' | 'Peringatan'
-  status: 'Belum Dibaca' | 'Dibaca'
-  judul: string
-  pesan: string
-  tanggal: string
-  ikon: 'berhasil' | 'gagal' | 'warning' | 'baru'
+  id: string
+  type: 'transaksi' | 'produk' | 'promo' | 'reservasi' | 'peringatan'
+  icon: 'berhasil' | 'gagal' | 'warning' | 'baru'
+  tipe: string
+  isRead: boolean
+  title: string
+  message: string
+  createdAt: string
 }
 
 export default function NotifikasiKasir() {
-  const [tab, setTab] = useState<'Semua' | 'Belum Dibaca' | 'Transaksi' | 'Produk'>('Semua')
-  const [data, setData] = useState<Notifikasi[]>([
-    {
-      id: 1,
-      jenis: 'Peringatan',
-      status: 'Belum Dibaca',
-      judul: 'Peringatan Stok Rendah',
-      pesan: 'Pemberitahuan bahwa beberapa barang berikut hampir habis stoknya.',
-      tanggal: '07/04/24',
-      ikon: 'warning',
-    },
-    {
-      id: 2,
-      jenis: 'Transaksi',
-      status: 'Belum Dibaca',
-      judul: 'Transaksi Berhasil',
-      pesan: 'Transaksi #INV-104 berhasil menggunakan QRIS.',
-      tanggal: '07/04/24',
-      ikon: 'berhasil',
-    },
-    {
-      id: 3,
-      jenis: 'Transaksi',
-      status: 'Belum Dibaca',
-      judul: 'Transaksi Gagal',
-      pesan: 'Pembayaran #INV-099 gagal diproses oleh gateway.',
-      tanggal: '07/04/24',
-      ikon: 'gagal',
-    },
-    {
-      id: 4,
-      jenis: 'Produk',
-      status: 'Belum Dibaca',
-      judul: 'Berhasil Menambahkan Produk',
-      pesan: 'Produk baru “Chicken Parmigiana” berhasil ditambahkan.',
-      tanggal: '07/04/24',
-      ikon: 'baru',
-    },
-  ])
+  const [tab, setTab] = useState<
+    'Semua' | 'Belum Dibaca' | 'Transaksi' | 'Produk' | 'Promo' | 'Reservasi'
+  >('Semua')
+  const [data, setData] = useState<Notifikasi[]>([])
 
   // 🧩 State untuk modal hapus
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedNotif, setSelectedNotif] = useState<Notifikasi | null>(null)
 
-  // Fungsi hapus
-  const handleDelete = (id: number) => {
-    setData(data.filter((n) => n.id !== id))
+  // Ambil data notifikasi dari API
+  useEffect(() => {
+    const fetchNotif = async () => {
+      try {
+        const res = await fetch('/api/frontend/notifications', {
+          credentials: 'include',
+        })
+
+        const json = await res.json()
+        if (json.success) setData(json.docs || [])
+      } catch (err) {
+        console.error('Gagal ambil notifikasi', err)
+      }
+    }
+
+    fetchNotif()
+  }, [])
+
+  // Tandai satu notifikasi dibaca
+  const handleMarkOneRead = async (id: string) => {
+    try {
+      await fetch('/api/frontend/notifications/mark-one', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+        credentials: 'include',
+      })
+
+      setData((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
+    } catch (err) {
+      console.error('Gagal mark one read', err)
+    }
+  }
+
+  // Fungsi tandai semua dibaca
+  const handleMarkAllRead = async () => {
+    try {
+      await fetch('/api/frontend/notifications/mark-all', {
+        method: 'PATCH',
+        credentials: 'include',
+      })
+
+      setData((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    } catch (err) {
+      console.error('Gagal mark all read', err)
+    }
+  }
+
+  // Fungsi hapus 1 notifikasi
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch('/api/frontend/notifications', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id }),
+      })
+
+      setData((prev) => prev.filter((n) => n.id !== id))
+    } catch (err) {
+      console.error('Gagal hapus notifikasi:', err)
+    }
   }
 
   // Fungsi konfirmasi hapus
@@ -74,19 +99,17 @@ export default function NotifikasiKasir() {
     }
   }
 
-  const handleMarkAllRead = () => {
-    setData(data.map((n) => ({ ...n, status: 'Dibaca' })))
-  }
-
   const filteredData = data.filter((n) => {
     if (tab === 'Semua') return true
-    if (tab === 'Belum Dibaca') return n.status === 'Belum Dibaca'
-    if (tab === 'Transaksi') return n.jenis === 'Transaksi'
-    if (tab === 'Produk') return n.jenis === 'Produk'
+    if (tab === 'Belum Dibaca') return !n.isRead
+    if (tab === 'Transaksi') return n.type === 'transaksi'
+    if (tab === 'Produk') return n.type === 'produk'
+    if (tab === 'Promo') return n.type === 'promo'
+    if (tab === 'Reservasi') return n.type === 'reservasi'
     return true
   })
 
-  const getIcon = (ikon: Notifikasi['ikon']) => {
+  const getIcon = (ikon: Notifikasi['icon']) => {
     switch (ikon) {
       case 'berhasil':
         return <CheckCircle2 className="text-green-500" size={18} />
@@ -101,9 +124,13 @@ export default function NotifikasiKasir() {
 
   return (
     <div className="flex min-h-screen bg-[#52BFBE]">
-      <Sidebar />
+      <Sidebar key="notifikasi" />
       <div className="flex-1 flex flex-col ml-28">
-        <HeaderAdmin title="Notifikasi" showBack={true} />
+        <HeaderAdmin
+          title="Notifikasi"
+          showBack={true}
+          notifications={data.filter((n) => !n.isRead).length}
+        />
         <div className="p-6">
           <div className="bg-white rounded-xl shadow p-6">
             {/* Header Notifikasi */}
@@ -111,7 +138,7 @@ export default function NotifikasiKasir() {
               <div>
                 <h2 className="text-lg font-semibold text-black">Notifikasi</h2>
                 <p className="text-sm text-gray-700">
-                  Terdapat {data.filter((n) => n.status === 'Belum Dibaca').length} pesan belum dibaca
+                  Terdapat {data.filter((n) => !n.isRead).length} pesan belum dibaca
                 </p>
               </div>
               <button
@@ -124,7 +151,7 @@ export default function NotifikasiKasir() {
 
             {/* Tabs */}
             <div className="flex gap-4 mb-6">
-              {['Semua', 'Belum Dibaca', 'Transaksi', 'Produk'].map((t) => (
+              {['Semua', 'Belum Dibaca', 'Transaksi', 'Produk', 'Promo', 'Reservasi'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t as any)}
@@ -144,17 +171,22 @@ export default function NotifikasiKasir() {
               {filteredData.map((n) => (
                 <div
                   key={n.id}
-                  className="bg-white rounded-lg shadow-sm flex justify-between items-center p-4"
+                  onClick={() => handleMarkOneRead(n.id)} // ✅ langsung tandai dibaca
+                  className={`bg-white rounded-lg shadow-sm flex justify-between items-center p-4 cursor-pointer ${
+                    n.isRead ? '' : 'bg-[#E0F7F6]'
+                  }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-1">{getIcon(n.ikon)}</div>
+                    <div className="mt-1">{getIcon(n.icon)}</div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-800">{n.judul}</h3>
-                      <p className="text-sm text-gray-600">{n.pesan}</p>
+                      <h3 className="text-sm font-semibold text-gray-800">{n.title}</h3>
+                      <p className="text-sm text-gray-600">{n.message}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-gray-500">{n.tanggal}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(n.createdAt).toLocaleDateString('id-ID')}
+                    </span>
                     <button
                       onClick={() => {
                         setSelectedNotif(n)
@@ -177,7 +209,7 @@ export default function NotifikasiKasir() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        notifTitle={selectedNotif?.judul || ''}
+        notifTitle={selectedNotif?.title || ''}
       />
     </div>
   )

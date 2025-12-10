@@ -20,25 +20,27 @@ const Products: CollectionConfig = {
     { name: 'nama', type: 'text', required: true },
 
     {
+      name: 'useAutoSku',
+      type: 'checkbox',
+      label: 'Generate SKU otomatis?',
+      defaultValue: true,
+    },
+
+    {
       name: 'sku',
       type: 'text',
       unique: false, // jangan unique untuk semua tenant
       admin: {
-        readOnly: true,
+        readOnly: false,
+        condition: (data) => data.useAutoSku === false, // hanya bisa diisi kalau manual
       },
     },
 
     {
       name: 'kategori',
-      type: 'select',
+      type: 'relationship',
+      relationTo: 'categories',
       required: true,
-      defaultValue: 'other',
-      options: [
-        { label: 'Makanan', value: 'makanan' },
-        { label: 'Minuman', value: 'minuman' },
-        { label: 'Snack', value: 'snack' },
-        { label: 'Lainnya', value: 'other' },
-      ],
     },
 
     { name: 'harga', type: 'number', required: true },
@@ -69,7 +71,7 @@ const Products: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, req, operation }) => {
-        if (operation === 'create') {
+        if (operation === 'create' && data.useAutoSku !== false) {
           const name = data.nama || ''
 
           const base = name
@@ -86,11 +88,71 @@ const Products: CollectionConfig = {
           })
 
           const next = (existing.totalDocs + 1).toString().padStart(3, '0')
-
           data.sku = `${base}-${next}`
         }
-
+        // kalau manual, SKU tetap seperti yang diisi admin
         return data
+      },
+    ],
+
+    afterChange: [
+      async ({ req, doc, previousDoc }) => {
+        const payload = req.payload
+
+        // 🔔 Produk baru
+        if (!previousDoc) {
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'produk',
+              icon: 'baru',
+              tipe: 'product_new',
+              title: 'Produk Baru Ditambahkan',
+              message: `Produk "${doc.nama}" telah ditambahkan.`,
+            },
+          })
+          return
+        }
+
+        // 🔔 Stok hampir habis (<=3)
+        if (doc.stok <= 3 && previousDoc.stok > 3) {
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'produk',
+              icon: 'warning',
+              tipe: 'low_stock',
+              title: 'Stok Hampir Habis',
+              message: `Stok produk "${doc.nama}" tinggal ${doc.stok}.`,
+            },
+          })
+        }
+
+        // 🔔 Stok habis
+        if (doc.stok === 0 && previousDoc.stok > 0) {
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'produk',
+              icon: 'warning',
+              tipe: 'out_of_stock',
+              title: 'Produk Habis',
+              message: `Produk "${doc.nama}" telah HABIS.`,
+            },
+          })
+
+          // Kasir juga butuh
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'produk',
+              icon: 'warning',
+              tipe: 'out_of_stock',
+              title: 'Produk Habis',
+              message: `"${doc.nama}" sudah tidak tersedia.`,
+            },
+          })
+        }
       },
     ],
   },

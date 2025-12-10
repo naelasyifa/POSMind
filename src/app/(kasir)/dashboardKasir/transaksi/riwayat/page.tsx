@@ -96,7 +96,7 @@ export default function RiwayatPage() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/get-transactions')
+      const res = await fetch('/api/frontend/get-transactions')
       const data = await res.json()
       // mapping nama pelanggan dari database ke field 'nama'
       const mappedData = data.map((p: any, idx: number) => ({
@@ -123,7 +123,7 @@ export default function RiwayatPage() {
       }))
 
       setPesananList(mappedData)
-    } 
+    }
 
     load()
   }, [])

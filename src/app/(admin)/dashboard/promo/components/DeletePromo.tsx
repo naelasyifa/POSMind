@@ -18,12 +18,29 @@ export default function DeletePromo({ promo, onConfirm, onCancel }: DeletePromoP
     setTimeout(() => onCancel(), 220) // tunggu animasi scale out selesai
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setClosing(true)
-    setTimeout(() => {
-      onConfirm(promo.id)
-      onCancel()
-    }, 220)
+    try {
+      const res = await fetch('/api/frontend/promos', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: promo.id }),
+      })
+
+      if (!res.ok) throw new Error('Gagal menghapus promo')
+
+      // opsional: dapat response dari server, misal data promo yang dihapus
+      const data = await res.json()
+      console.log('Deleted promo:', data)
+
+      onConfirm(promo.id) // update state parent
+      setTimeout(() => onCancel(), 220) // tunggu animasi selesai
+    } catch (err) {
+      console.error(err)
+      alert('Terjadi kesalahan saat menghapus promo')
+    }
   }
 
   return (
