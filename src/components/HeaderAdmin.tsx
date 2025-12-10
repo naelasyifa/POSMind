@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Bell, UserCircle, ChevronLeft } from 'lucide-react'
+import { useNotif } from '@/context/NotificationContext'
 
 interface HeaderAdminProps {
   title: string
@@ -15,6 +16,7 @@ export default function HeaderAdmin({
   notifications = 0,
 }: HeaderAdminProps) {
   const headerHeight = 48
+  const { unreadCount } = useNotif()
 
   return (
     <>
@@ -43,9 +45,9 @@ export default function HeaderAdmin({
             <Bell className="w-5 h-5 text-white" />
 
             {/* Lingkaran merah dan jumlah notifikasi hanya muncul jika ada */}
-            {notifications > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-500 text-xs text-white font-bold rounded-full">
-                {notifications > 99 ? '99+' : notifications}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </Link>

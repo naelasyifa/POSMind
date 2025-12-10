@@ -2,11 +2,50 @@
 
 import { useState } from 'react'
 
-export default function FilterProduct() {
+interface FilterProductProps {
+  categories: string[] // daftar kategori dari backend
+  onFilterChange: (filters: {
+    search?: string
+    status?: string
+    category?: string
+    stok?: string
+    priceMin?: number
+    priceMax?: number
+  }) => void
+}
+
+export default function FilterProduct({ categories, onFilterChange }: FilterProductProps) {
+  const [search, setSearch] = useState('')
   const [status, setStatus] = useState('Semua')
+  const [category, setCategory] = useState('')
+  const [stok, setStok] = useState('Semua')
+  const [priceMin, setPriceMin] = useState<number | ''>('')
+  const [priceMax, setPriceMax] = useState<number | ''>('')
+
+  const applyFilter = (newFilters: Partial<FilterProductProps['onFilterChange']>) => {
+    onFilterChange({
+      search,
+      status: status !== 'Semua' ? status : undefined,
+      category: category || undefined,
+      stok: stok !== 'Semua' ? stok : undefined,
+      priceMin: priceMin !== '' ? priceMin : undefined,
+      priceMax: priceMax !== '' ? priceMax : undefined,
+      ...newFilters,
+    })
+  }
+
+  const handleReset = () => {
+    setSearch('')
+    setStatus('Semua')
+    setCategory('')
+    setStok('Semua')
+    setPriceMin('')
+    setPriceMax('')
+    onFilterChange({})
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 w-[320px] h-[500px]">
+    <div className="bg-white rounded-xl shadow p-5 w-[320px] h-[600px]">
       {/* Search Produk */}
       <div className="mb-4">
         <p className="font-semibold mb-1">Cari Produk</p>
@@ -17,6 +56,10 @@ export default function FilterProduct() {
             placeholder="Cari nama produk..."
             className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm
                  focus:outline-none focus:border-[#52BFBE]"
+            onChange={(e) => {
+              setSearch(e.target.value)
+              applyFilter({ search: e.target.value })
+            }}
           />
 
           {/* Search Icon */}
@@ -41,32 +84,57 @@ export default function FilterProduct() {
       <div>
         <p className="font-semibold mb-1">Status</p>
         <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: 'Semua', count: 150 },
-            { label: 'Aktif', count: 120 },
-            { label: 'Draft', count: 10 },
-            { label: 'Non-Aktif', count: 10 },
-          ].map((item) => (
+          {['Semua', 'Aktif', 'Draft', 'Non-Aktif'].map((item) => (
             <button
-              key={item.label}
-              onClick={() => setStatus(item.label)}
+              key={item}
+              onClick={() => {
+                setStatus(item)
+                applyFilter({ status: item !== 'Semua' ? item : undefined })
+              }}
               className={`flex justify-between items-center border rounded-lg py-2 px-3 text-sm transition ${
-                status === item.label
+                status === item
                   ? 'bg-[#52BFBE] text-white border-[#52BFBE]'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-[#52BFBE]'
               }`}
             >
-              <span>{item.label}</span>
-              <span>{item.count}</span>
+              <span>{item}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Kategori */}
+      <div className="mt-4">
+        <p className="font-semibold mb-1">Kategori</p>
+        <select
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value)
+            applyFilter({ category: e.target.value || undefined })
+          }}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
+        >
+          <option value="">Semua</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Stok */}
       <div className="mt-4">
         <p className="font-semibold mb-2">Stok</p>
-        <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]">
+        <select
+          value={stok}
+          onChange={(e) => {
+            setStok(e.target.value)
+            applyFilter({ stok: e.target.value !== 'Semua' ? e.target.value : undefined })
+          }}
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
+        >
+          <option>Semua</option>
           <option>Tersedia</option>
           <option>Habis</option>
         </select>
@@ -77,22 +145,45 @@ export default function FilterProduct() {
         <p className="font-semibold mb-2">Harga</p>
         <div className="flex items-center gap-2 w-full">
           <div className="flex flex-1 min-w-0 items-center border border-gray-300 rounded-lg px-3 py-2">
-            <input type="number" placeholder="0" className="w-full outline-none text-sm" />
+            <input
+              type="number"
+              placeholder="0"
+              className="w-full outline-none text-sm"
+              value={priceMin}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setPriceMin(val)
+                applyFilter({ priceMin: val })
+              }}
+            />
             <span className="text-[#52BFBE] text-sm ml-1">Rp</span>
           </div>
 
           <span className="text-gray-700">-</span>
 
           <div className="flex flex-1 min-w-0 items-center border border-gray-300 rounded-lg px-3 py-2">
-            <input type="number" placeholder="0" className="w-full outline-none text-sm" />
+            <input
+              type="number"
+              placeholder="0"
+              className="w-full outline-none text-sm"
+              value={priceMax}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setPriceMax(val)
+                applyFilter({ priceMax: val })
+              }}
+            />
             <span className="text-[#52BFBE] text-sm ml-1">Rp</span>
           </div>
         </div>
       </div>
 
       {/* Reset Button */}
-      <button className="mt-10 w-full bg-[#52BFBE] text-white font-medium py-2.5 rounded-lg hover:bg-[#43a9a8] transition">
-        Reset Filters
+      <button
+        onClick={handleReset}
+        className="mt-10 w-full bg-[#52BFBE] text-white font-medium py-2.5 rounded-lg hover:bg-[#43a9a8] transition"
+      >
+        Reset Filter
       </button>
     </div>
   )

@@ -96,6 +96,62 @@ const Transactions: CollectionConfig = {
         return data
       },
     ],
+
+    afterChange: [
+      async ({ req, operation, doc }) => {
+        const payload = req.payload
+
+        // Notif transaksi berhasil
+        if (operation === 'create' && doc.status !== 'batal') {
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'transaksi',
+              icon: 'berhasil',
+              tipe: 'trx_success',
+              title: 'Transaksi Berhasil',
+              message: `Transaksi ${doc.noPesanan} sebesar Rp${doc.total} berhasil.`,
+            },
+          })
+        }
+
+        // Notif batal
+        if ((operation === 'update' || operation === 'create') && doc.status === 'batal') {
+          const existing = await payload.find({
+            collection: 'notifications',
+            limit: 1,
+            where: {
+              tipe: { equals: 'trx_success' },
+              title: { contains: doc.noPesanan },
+            },
+          })
+
+          if (existing.docs.length > 0) {
+            await payload.update({
+              collection: 'notifications',
+              id: existing.docs[0].id,
+              data: {
+                icon: 'gagal',
+                tipe: 'trx_cancel',
+                title: 'Transaksi Dibatalkan',
+                message: `Transaksi ${doc.noPesanan} telah dibatalkan.`,
+              },
+            })
+          } else {
+            await payload.create({
+              collection: 'notifications',
+              data: {
+                type: 'transaksi',
+                icon: 'gagal',
+                tipe: 'trx_cancel',
+                title: 'Transaksi Dibatalkan',
+                message: `Transaksi ${doc.noPesanan} telah dibatalkan.`,
+              },
+            })
+          }
+        }
+      },
+    ],
   },
 }
 

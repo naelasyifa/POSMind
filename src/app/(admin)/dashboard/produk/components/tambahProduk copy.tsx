@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Pizza,
   Beef,
@@ -16,17 +16,24 @@ import {
   Package,
 } from 'lucide-react'
 
+// ubah tipe AddProductProps
 interface AddProductProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (newProduct: {
-    id: number
-    name: string
-    category: string
-    stock: number
-    price: number
-    image: string
+    id: string
+    nama: string
+    kategori: { id: string; nama: string }
+    stok: number
+    harga: number
+    gambar?: { id: string; url: string }
+    status: string
   }) => void
+}
+
+interface CategoryItem {
+  id: string
+  name: string
 }
 
 const ICON_OPTIONS = [
@@ -50,7 +57,7 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
   const [harga, setHarga] = useState('')
-  const [kategori, setKategori] = useState<string[]>([])
+  const [categories, setCategories] = useState<CategoryItem[]>([])
   const [selectedKategori, setSelectedKategori] = useState('')
   const [newKategori, setNewKategori] = useState('')
   const [selectedIcon, setSelectedIcon] = useState('Package')
@@ -58,41 +65,93 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   const [gambar, setGambar] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleAddCategory = () => {
-    if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
-      setKategori([...kategori, newKategori])
-      setNewKategori('')
-    }
-  }
+  // FETCH categories dari API saat mount
+  useEffect(() => {
+    fetch('/api/frontend/categories')
+      .then((res) => res.json())
+      .then((data: CategoryItem[]) => {
+        setCategories(data.filter((c) => c.id !== 'all')) // kecuali "Semua"
+        if (data.length > 0) setSelectedKategori(data[0].id) // default kategori pertama
+      })
+      .catch((err) => console.error(err))
+  }, [])
+
+  // const handleAddCategory = () => {
+  //   if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
+  //     setKategori([...kategori, newKategori])
+  //     setNewKategori('')
+  //   }
+  // }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setGambar(reader.result as string)
-      }
+      reader.onloadend = () => setGambar(reader.result as string)
       reader.readAsDataURL(file)
     }
   }
 
-  const handleSubmit = () => {
-    if (nama && selectedKategori && harga) {
-      onAdd({
-        id: useAutoId ? Date.now() : Number(productId),
-        name: nama,
-        category: selectedKategori,
-        stock: Number(kuantitas),
-        price: Number(harga),
-        image: gambar || '',
+  async function uploadImage(base64: string) {
+    const res = await fetch('/api/frontend/upload-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64 }),
+    })
+
+    return await res.json() // return { id }
+  }
+
+  const handleSubmit = async () => {
+    if (!nama || !selectedKategori || !harga) return
+
+    try {
+      let imageId = null
+
+      // ⬅ Upload gambar dulu
+      if (gambar) {
+        const uploaded = await uploadImage(gambar)
+        imageId = uploaded.id
+      }
+
+      // ⬅ Kirim produk ke Payload (POST)
+      const res = await fetch('/api/frontend/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nama,
+          kategori: selectedKategori, // hanya ID kategori
+          stock: Number(kuantitas),
+          price: Number(harga),
+          image: imageId, // ID media, bukan base64
+        }),
       })
 
+      const created = await res.json()
+
+      // ⬅ Update ke ListProduct
+      onAdd({
+        id: created.id,
+        nama: created.name,
+        kategori: {
+          id: created.kategori?.id || '',
+          nama: created.kategori?.nama || '',
+        },
+        stok: created.stock,
+        harga: created.price,
+        gambar: created.image ? { id: created.image.id, url: created.image.url } : undefined,
+        status: created.status || 'Tersedia',
+      })
+
+      // reset
       setNama('')
       setKuantitas('')
       setHarga('')
-      setSelectedKategori('')
       setGambar(null)
+      setSelectedKategori(categories[0]?.id || '')
       onClose()
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -213,9 +272,9 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
               <option value="" disabled>
                 Pilih kategori
               </option>
-              {kategori.map((kategori, index) => (
-                <option key={index} value={kategori}>
-                  {kategori}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>

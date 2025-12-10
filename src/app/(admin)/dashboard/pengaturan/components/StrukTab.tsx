@@ -1,6 +1,8 @@
 /* --- SAME IMPORTS --- */
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { generateStrukPDF } from '@/utils/strukPdfGenerator'
+import StrukPreview from '../components/struk/StrukPreview'
 
 type OptionKey =
   | 'infoToko'
@@ -29,7 +31,8 @@ export default function StrukTab() {
   const [header, setHeader] = useState('')
   const [footer, setFooter] = useState('')
   const [paperSize, setPaperSize] = useState<58 | 80>(80)
-  const [logo, setLogo] = useState<string | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const [options, setOptions] = useState<Record<OptionKey, boolean>>({
     infoToko: true,
@@ -59,13 +62,33 @@ export default function StrukTab() {
     setOptions((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const uploadLogo = (e: any) => {
+  const uploadLogo = async (e: any) => {
     if (readOnly) return
+
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setLogo(reader.result as string)
-    reader.readAsDataURL(file)
+
+    setIsUploading(true)
+
+    const formData = new FormData()
+    formData.append('logo', file)
+
+    const res = await fetch('/api/frontend/store-settings/upload-logo', {
+      method: 'POST',
+      body: formData,
+    })
+
+    setIsUploading(false)
+
+    if (!res.ok) {
+      alert('Gagal upload logo')
+      return
+    }
+
+    const data = await res.json()
+
+    // Simpan URL logo yang dikembalikan API
+    setLogoUrl(data.url)
   }
 
   const toggleList: [OptionKey, string][] = [
@@ -89,12 +112,77 @@ export default function StrukTab() {
     ['powered', 'Powered by POSMind'],
   ]
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const payload = {
+      header,
+      footer,
+      paperSize,
+      logoUrl,
+      options,
+    }
+
+    const res = await fetch('/api/frontend/store-settings/struk', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      alert('Gagal menyimpan pengaturan struk')
+      return
+    }
+
     setIsFirstTime(false)
     setIsEditing(false)
   }
 
   const handleCancel = () => setIsEditing(false)
+
+  useEffect(() => {
+    async function load() {
+      const res = await fetch('/api/frontend/store-settings/struk')
+      if (!res.ok) return
+
+      const data = await res.json()
+
+      setHeader(data.header || '')
+      setFooter(data.footer || '')
+      setPaperSize(data.paperSize || 80)
+      setLogoUrl(data.logo?.url ?? null)
+
+      // merge toggle
+      setOptions((prev) => {
+        const incoming = data.options || {}
+        const fixed: any = {}
+
+        for (const key in prev) {
+          const k = key as OptionKey
+          fixed[k] = incoming[k] ?? prev[k]
+        }
+
+        return fixed
+      })
+
+      setIsFirstTime(false)
+      setIsEditing(false)
+    }
+    load()
+  }, [])
+
+  const handlePreviewPDF = async () => {
+    const pdf = await generateStrukPDF({
+      header,
+      footer,
+      logoUrl,
+      paperSize,
+      options,
+    })
+
+    const blob = pdf.output('blob')
+    const url = URL.createObjectURL(blob)
+
+    window.open(url, '_blank')
+  }
 
   return (
     <div className="w-full flex gap-6">
@@ -111,8 +199,8 @@ export default function StrukTab() {
             </div>
 
             <div className="border rounded-lg h-40 w-full flex flex-col items-center justify-center bg-gray-50 relative overflow-hidden text-center p-3">
-              {logo ? (
-                <img src={logo} className="h-full object-contain rounded" />
+              {logoUrl ? (
+                <img src={logoUrl} className="h-full object-contain rounded" />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-gray-500">
                   <div className="w-14 h-16 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center">
@@ -160,7 +248,7 @@ export default function StrukTab() {
             <p className="font-medium">Header Struk</p>
             <input
               type="text"
-              value={header}
+              value={header ?? ''}
               readOnly={readOnly}
               onChange={(e) => setHeader(e.target.value)}
               className={`border p-2 rounded ${readOnly ? 'bg-gray-100' : ''}`}
@@ -172,7 +260,7 @@ export default function StrukTab() {
           <div className="grid grid-cols-2 gap-4 items-center">
             <p className="font-medium">Ukuran Kertas</p>
             <select
-              value={paperSize}
+              value={paperSize ?? 80}
               disabled={readOnly}
               onChange={(e) => setPaperSize(Number(e.target.value) as 58 | 80)}
               className={`border p-2 rounded ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -202,7 +290,7 @@ export default function StrukTab() {
                     >
                       <input
                         type="checkbox"
-                        checked={options[key]}
+                        checked={options[key] ?? false}
                         disabled={readOnly}
                         onChange={() => toggle(key)}
                         className="sr-only peer"
@@ -230,7 +318,7 @@ export default function StrukTab() {
           <div className="grid grid-cols-2 gap-4 items-start">
             <p className="font-medium">Footer Struk</p>
             <textarea
-              value={footer}
+              value={footer ?? ''}
               readOnly={readOnly}
               onChange={(e) => setFooter(e.target.value)}
               className={`border p-2 rounded w-full h-20 ${readOnly ? 'bg-gray-100' : ''}`}
@@ -268,6 +356,16 @@ export default function StrukTab() {
                 Edit
               </button>
             )}
+            {/* TOMBOL PREVIEW HANYA MUNCUL KALAU SUDAH PERNAH TERSIMPAN */}
+            {!isEditing && !isFirstTime && (
+              <button
+                onClick={handlePreviewPDF}
+                className="bg-gray-700 text-white py-2 rounded hover:bg-gray-800"
+                style={{ width: '200px' }}
+              >
+                Preview PDF
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -276,95 +374,14 @@ export default function StrukTab() {
       <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
         <h3 className="font-semibold text-lg mb-4">Tampilan Cetakan Nota</h3>
 
-        <div className="flex justify-center">
-          <div
-            className="border rounded-lg p-4 text-sm"
-            style={{ width: paperSize === 58 ? 230 : 300 }}
-          >
-          {/* PREVIEW CONTENT — SAME AS BEFORE */}
-          {options.infoToko && (
-            <div className="text-center mb-3">
-              {logo ? (
-                <img src={logo} className="w-20 h-20 rounded mx-auto" />
-              ) : (
-                <div className="w-20 h-20 bg-gray-200 rounded mx-auto"></div>
-              )}
-            </div>
-          )}
-
-          {header && <p className="text-center mb-6 font-semibold">{header}</p>}
-
-          {options.noNota && <p>Nota: 280390283203</p>}
-          {options.noTransaksi && <p>Transaksi: INV-12892</p>}
-          {options.jamTransaksi && <p>Waktu: 20/05/2025 - 12:00</p>}
-          {options.jamBuka && <p>Jam Buka: 09:00</p>}
-          {options.namaMeja && <p>Meja: A-07</p>}
-          {options.modePenjualan && <p>Mode: Dine In</p>}
-          {options.pax && <p>Pax: 4 Orang</p>}
-          {options.namaKasir && <p>Kasir: Mira Alfariyah</p>}
-          {options.cetakKe && <p>Cetakan ke: 1</p>}
-          {options.posmindOrder && <p>Order ID: #POS12392</p>}
-          {options.wifi && <p>WiFi: POSMind-Guest</p>}
-          {options.infoTambahan && <p>Catatan: Jangan pedas</p>}
-
-          <hr className="my-2" />
-
-          <div className="mt-2 space-y-3">
-            <div>
-              <p className="font-medium">Nasi Goreng</p>
-              <div className="flex justify-between text-xs text-gray-600">
-                <div className="flex gap-4">
-                  <span>2x</span>
-                  <span>20.000</span>
-                </div>
-                <span>40.000</span>
-              </div>
-            </div>
-
-            <div>
-              <p className="font-medium">Es Teh</p>
-              <div className="flex justify-between text-xs text-gray-600">
-                <div className="flex gap-4">
-                  <span>1x</span>
-                  <span>5.000</span>
-                </div>
-                <span>5.000</span>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-2" />
-
-          {options.pajak && (
-            <p className="flex justify-between">
-              <span>Pajak 10%</span> <span>2.500</span>
-            </p>
-          )}
-          {options.service && (
-            <p className="flex justify-between">
-              <span>Service 5%</span> <span>1.250</span>
-            </p>
-          )}
-          {options.pembulatan && (
-            <p className="flex justify-between">
-              <span>Pembulatan</span> <span>0</span>
-            </p>
-          )}
-
-          <p className="flex justify-between font-semibold mt-1">
-            <span>Total</span> <span>28.750</span>
-          </p>
-
-          {footer && (
-            <p className="text-center text-xs mt-4 text-gray-600 whitespace-pre-line">{footer}</p>
-          )}
-
-          {options.powered && (
-            <p className="text-center text-[11px] mt-2 text-gray-400">Powered by POSMind</p>
-          )}
-        </div>
+        <StrukPreview
+          header={header}
+          footer={footer}
+          paperSize={paperSize}
+          logoUrl={logoUrl}
+          options={options}
+        />
       </div>
-    </div>
     </div>
   )
 }

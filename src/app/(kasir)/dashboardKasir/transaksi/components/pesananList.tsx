@@ -3,10 +3,18 @@ import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import style from 'styled-jsx/style'
 
+interface Category {
+  id: string
+  nama: string
+  ikon?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 interface Product {
   id?: string | number
   nama: string
-  kategori?: string
+  kategori?: Category | string
   harga: number
   stok?: number
   // Tambahkan format Payload Media
@@ -29,14 +37,27 @@ export default function PesananList({ products = [], onSelect }: Props) {
 
   // Buat kategori unik, ganti undefined jadi 'Lainnya'
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(products.map((p) => p.kategori || 'Lainnya')))
+    const cats = Array.from(
+      new Set(
+        products.map((p) => {
+          if (!p.kategori) return 'Lainnya'
+          return typeof p.kategori === 'string' ? p.kategori : p.kategori.nama
+        }),
+      ),
+    )
     return ['Semua', ...cats]
   }, [products])
 
   // Filter berdasarkan kategori dan pencarian
   const filtered = useMemo(() => {
     return products.filter((p) => {
-      const matchCat = category === 'Semua' || (p.kategori || 'Lainnya') === category
+      const catName = !p.kategori
+        ? 'Lainnya'
+        : typeof p.kategori === 'string'
+          ? p.kategori
+          : p.kategori.nama
+
+      const matchCat = category === 'Semua' || catName === category
       const matchQuery = p.nama.toLowerCase().includes(query.toLowerCase())
       return matchCat && matchQuery
     })
@@ -54,11 +75,11 @@ export default function PesananList({ products = [], onSelect }: Props) {
         <div className="flex items-start gap-2 mb-2">
           {/* Input Pencarian */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 text-gray-400" />
+            <Search className="absolute h-5 w-5 left-3 top-3 text-gray-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari produk..."
+              placeholder="Cari produk"
               className="pl-10 pr-3 py-2 w-full border rounded-lg"
             />
           </div>
@@ -73,7 +94,7 @@ export default function PesananList({ products = [], onSelect }: Props) {
         </div>
 
         {/* Filter Kategori + Items count */}
-        <div className="flex items-center justify-between mb-4 overflow-x-auto gap-2">
+        <div className="flex items-center justify-between mt-2 mb-4 overflow-x-auto gap-2">
           {/* Kategori */}
           <div className="flex gap-2 overflow-x-auto">
             {categories.map((cat) => (
@@ -136,7 +157,9 @@ export default function PesananList({ products = [], onSelect }: Props) {
                 </div>
 
                 <div className="font-semibold truncate">{p.nama}</div>
-                <div className="text-xs text-gray-500">{p.kategori || 'Lainnya'}</div>
+                <div className="text-xs text-gray-500">
+                  {typeof p.kategori === 'string' ? p.kategori : p.kategori?.nama || 'Lainnya'}
+                </div>
 
                 {/* Stok warna dinamis */}
                 <div

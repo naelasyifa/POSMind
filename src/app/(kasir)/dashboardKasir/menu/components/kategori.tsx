@@ -13,11 +13,19 @@ export type CategoryItem = {
 
 type Props = {
   categories: CategoryItem[]
+  activeCategory: string
+  onCategoryClick: (name: string) => void
   onEdit: (cat: CategoryItem) => void
   onDelete: (cat: CategoryItem) => void
 }
 
-export default function CategoryList({ categories, onEdit, onDelete }: Props) {
+export default function CategoryList({
+  categories,
+  activeCategory,
+  onCategoryClick,
+  onEdit,
+  onDelete,
+}: Props) {
   const [active, setActive] = useState<string>(categories[0]?.name || '')
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
 
@@ -41,7 +49,10 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
         {categories.map((cat) => (
           <div key={cat.id} className="relative">
             <button
-              onClick={() => setActive(cat.name)}
+              onClick={() => {
+                setActive(cat.name)
+                onCategoryClick(cat.name) // ini penting
+              }}
               className={`rounded-xl p-4 w-28 h-28 shadow-sm transition cursor-pointer flex flex-col justify-between
                 ${
                   active === cat.name
@@ -69,16 +80,15 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="rounded py-1 hover:bg-gray-200"
+                <span
+                  className="rounded py-1 hover:bg-gray-200 cursor-pointer inline-flex items-center justify-center"
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpen(menuOpen === cat.name ? null : cat.name)
                   }}
                 >
                   <MoreVertical size={18} />
-                </button>
+                </span>
               </div>
             </button>
 

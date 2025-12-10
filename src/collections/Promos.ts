@@ -26,9 +26,47 @@ const Promos: CollectionConfig = {
       unique: false, // unique per tenant, bukan global
     },
 
+    // Banner dan tampilkan/sembunyikan
+    {
+      name: 'showOnDashboard',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: { description: 'Jika dicentang, promo muncul di dashboard kasir' },
+    },
+    {
+      name: 'banner',
+      type: 'upload',
+      relationTo: 'media',
+      required: false,
+      admin: {
+        description: 'Jika kosong, gunakan gambar default di dashboard',
+      },
+    },
+
+    // Rentang tanggal berlaku
     { name: 'mulai', type: 'date', required: true },
     { name: 'akhir', type: 'date', required: true },
 
+    // Hari & Jam berlaku
+    {
+      name: 'availableDays',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Senin', value: 'monday' },
+        { label: 'Selasa', value: 'tuesday' },
+        { label: 'Rabu', value: 'wednesday' },
+        { label: 'Kamis', value: 'thursday' },
+        { label: 'Jumat', value: 'friday' },
+        { label: 'Sabtu', value: 'saturday' },
+        { label: 'Minggu', value: 'sunday' },
+      ],
+      admin: { description: 'Kosong = semua hari berlaku' },
+    },
+    { name: 'startTime', type: 'text', admin: { description: 'HH:mm, optional' } },
+    { name: 'endTime', type: 'text', admin: { description: 'HH:mm, optional' } },
+
+    //kategori promo
     {
       name: 'kategori',
       type: 'select',
@@ -58,6 +96,19 @@ const Promos: CollectionConfig = {
       },
     },
 
+    // Tipe promo
+    {
+      name: 'promoType',
+      type: 'select',
+      required: true,
+      defaultValue: 'discount',
+      options: [
+        { label: 'Diskon', value: 'discount' },
+        { label: 'Beli X Gratis Y', value: 'bxgy' },
+      ],
+    },
+
+    //diskon
     {
       name: 'tipeDiskon',
       type: 'select',
@@ -67,11 +118,59 @@ const Promos: CollectionConfig = {
         { label: 'Persentase', value: 'percent' },
         { label: 'Nominal', value: 'nominal' },
       ],
+      admin: { condition: (data) => data?.promoType === 'discount' },
     },
 
-    { name: 'nilaiDiskon', type: 'number', required: true },
-    { name: 'kuota', type: 'number', required: true },
+    {
+      name: 'nilaiDiskon',
+      type: 'number',
+      required: true,
+      admin: { condition: (data) => data?.promoType === 'discount' },
+    },
 
+    // Beli X Gratis Y
+    {
+      name: 'buyQuantity',
+      type: 'number',
+      required: false,
+      admin: { condition: (data) => data?.promoType === 'bxgy' },
+    },
+    {
+      name: 'freeQuantity',
+      type: 'number',
+      required: false,
+      admin: { condition: (data) => data?.promoType === 'bxgy' },
+    },
+    {
+      name: 'applicableProducts',
+      type: 'relationship',
+      relationTo: 'products',
+      hasMany: true,
+      required: false,
+      admin: { condition: (data) => data?.promoType === 'bxgy' },
+    },
+    {
+      name: 'isMultiple',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        description:
+          'Berlaku kelipatan? Contoh: beli 4 gratis 2. Jika dimatikan → hanya 1x: beli 4 gratis tetap 1.',
+        condition: (data) => data?.promoType === 'bxgy',
+      },
+    },
+
+    // Kuota opsional
+    { name: 'useQuota', type: 'checkbox', defaultValue: false },
+    {
+      name: 'kuota',
+      type: 'number',
+      required: false,
+      admin: { condition: (data) => data?.useQuota === true },
+    },
+    { name: 'kuotaUsed', type: 'number', defaultValue: 0, admin: { readOnly: true } },
+
+    // Pengaturan lanjutan
     {
       name: 'stacking',
       type: 'select',
@@ -116,6 +215,47 @@ const Promos: CollectionConfig = {
       ],
     },
   ],
+
+  hooks: {
+    afterChange: [
+      async (args) => {
+        const { req, doc, previousDoc } = args
+        const payload = req.payload
+
+        if (doc.useQuota) {
+          const sisa = doc.kuota - doc.kuotaUsed
+
+          // 🔔 Kuota hampir habis
+          if (sisa <= 10 && previousDoc?.kuota - previousDoc?.kuotaUsed > 10) {
+            await payload.create({
+              collection: 'notifications',
+              data: {
+                type: 'promo',
+                icon: 'warning',
+                tipe: 'promo_low_quota',
+                title: 'Kuota Promo Hampir Habis',
+                message: `Promo "${doc.nama}" tersisa ${sisa} kuota.`,
+              },
+            })
+          }
+
+          // 🔔 Kuota habis
+          if (sisa <= 0 && previousDoc?.kuota - previousDoc?.kuotaUsed > 0) {
+            await payload.create({
+              collection: 'notifications',
+              data: {
+                type: 'promo',
+                icon: 'warning',
+                tipe: 'promo_out_quota',
+                title: 'Kuota Promo Habis',
+                message: `Promo "${doc.nama}" telah habis kuota.`,
+              },
+            })
+          }
+        }
+      },
+    ],
+  },
 }
 
 export default Promos

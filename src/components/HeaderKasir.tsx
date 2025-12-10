@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Bell, UserCircle, ChevronLeft } from 'lucide-react'
+import { useNotif } from '@/context/NotificationContext'
 
 interface HeaderKasirProps {
   title: string
@@ -17,6 +18,7 @@ export default function HeaderKasir({
   onBack,
 }: HeaderKasirProps) {
   const headerHeight = 48
+  const { unreadCount } = useNotif()
 
   return (
     <>
@@ -56,9 +58,9 @@ export default function HeaderKasir({
             className="relative p-2 rounded-full hover:bg-white/10 transition"
           >
             <Bell className="w-5 h-5 text-white" />
-            {notifications > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute top-0 right-0 flex items-center justify-center w-4 h-4 bg-red-500 text-xs text-white font-bold rounded-full">
-                {notifications > 99 ? '99+' : notifications}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </Link>

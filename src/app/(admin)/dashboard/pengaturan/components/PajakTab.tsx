@@ -1,12 +1,32 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+type JamBuka = {
+  hari: string
+  buka: boolean
+  fullDay: boolean
+  jamBuka: string
+  jamTutup: string
+}
+
+type StoreSettings = {
+  tenant: number
+  storeName: string
+  serviceCharge: boolean
+  pajak: boolean
+  serviceChargePercentage: number
+  pajakPercentage: number
+  jamBuka: JamBuka[]
+}
 
 export default function PajakTab() {
+  const [loading, setLoading] = useState(true)
   const [serviceCharge, setServiceCharge] = useState(true)
   const [pajak, setPajak] = useState(true)
   const [serviceChargePercentage, setServiceChargePercentage] = useState(10)
   const [pajakPercentage, setPajakPercentage] = useState(10)
-  const [jamBuka, setJamBuka] = useState([
+
+  const defaultJamBuka: JamBuka[] = [
     { hari: 'Senin', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
     { hari: 'Selasa', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
     { hari: 'Rabu', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
@@ -14,12 +34,52 @@ export default function PajakTab() {
     { hari: 'Jumat', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
     { hari: 'Sabtu', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
     { hari: 'Minggu', buka: true, fullDay: false, jamBuka: '09:00', jamTutup: '17:00' },
-  ])
+  ]
 
-  const handleJamChange = (index: number, field: string, value: any) => {
+  const [jamBuka, setJamBuka] = useState<JamBuka[]>(defaultJamBuka)
+
+  // Ambil data dari API
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/frontend/store-settings')
+        const data = (await res.json()) as Partial<StoreSettings>
+
+        setServiceCharge(data.serviceCharge ?? true)
+        setPajak(data.pajak ?? true)
+        setServiceChargePercentage(data.serviceChargePercentage ?? 10)
+        setPajakPercentage(data.pajakPercentage ?? 10)
+        setJamBuka((prev) =>
+          prev.map((j: JamBuka) => {
+            const apiJam = (data.jamBuka ?? []) as JamBuka[]
+            const found = apiJam.find((x) => x.hari === j.hari)
+            return {
+              ...j,
+              buka: found?.buka ?? j.buka,
+              fullDay: found?.fullDay ?? j.fullDay,
+              jamBuka: found?.jamBuka ?? j.jamBuka,
+              jamTutup: found?.jamTutup ?? j.jamTutup,
+            }
+          }),
+        )
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSettings()
+  }, [])
+
+  if (loading) return <p>Loading</p>
+
+  // Generic function supaya TypeScript tahu tipe value sesuai field
+  const handleJamChange = <K extends keyof JamBuka>(index: number, field: K, value: JamBuka[K]) => {
     const newJam = [...jamBuka]
+    newJam[index][field] = value
+
+    // jika fullDay diubah
     if (field === 'fullDay') {
-      newJam[index].fullDay = value
       if (value) {
         newJam[index].jamBuka = ''
         newJam[index].jamTutup = ''
@@ -27,10 +87,50 @@ export default function PajakTab() {
         newJam[index].jamBuka = '09:00'
         newJam[index].jamTutup = '17:00'
       }
-    } else {
-      ;(newJam[index] as any)[field] = value
     }
+
     setJamBuka(newJam)
+
+    // langsung PATCH ke backend
+    fetch('/api/frontend/store-settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        serviceCharge,
+        pajak,
+        serviceChargePercentage,
+        pajakPercentage,
+        jamBuka: newJam,
+      }),
+    }).catch((err) => console.error('Gagal update jam buka', err))
+  }
+
+  const handleSave = async () => {
+    const payload: StoreSettings = {
+      tenant: 1, // ID tenant
+      storeName: "lovy's cafe", // Nama toko
+      serviceCharge,
+      pajak,
+      serviceChargePercentage,
+      pajakPercentage,
+      jamBuka,
+    }
+
+    try {
+      const res = await fetch('/api/frontend/store-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error('Gagal update pengaturan')
+
+      const updated = await res.json()
+      alert('Pengaturan berhasil disimpan!')
+    } catch (err) {
+      console.error(err)
+      alert('Terjadi kesalahan saat menyimpan')
+    }
   }
 
   return (
@@ -105,7 +205,12 @@ export default function PajakTab() {
           )}
         </div>
 
-        <button className="bg-[#52bfbe] text-white px-4 py-2 rounded mt-2 w-full">Simpan</button>
+        <button
+          onClick={handleSave}
+          className="bg-[#52bfbe] hover:bg-[#3aa9a9] text-white px-4 py-2 rounded mt-2 w-full transition-colors duration-200"
+        >
+          Simpan
+        </button>
       </div>
 
       {/* Jam Buka */}

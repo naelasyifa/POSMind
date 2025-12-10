@@ -15,17 +15,44 @@ type SortKey = 'id' | 'kuota' | 'mulai' | null
 export default function PromoPage() {
   const [isClient, setIsClient] = useState(false)
   const [query, setQuery] = useState('')
-  const [data, setData] = useState(initialData)
+  const [data, setData] = useState<any[]>([])
   const [selectedPromo, setSelectedPromo] = useState<any>(null)
   const [editPromoId, setEditPromoId] = useState<number | null>(null)
   const [tambahOpen, setTambahOpen] = useState(false)
   const [detailPromo, setDetailPromo] = useState<any>(null) // state untuk modal detail
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({
-    key: null,
+    key: 'id',
     direction: 'asc',
   })
 
   useEffect(() => setIsClient(true), [])
+
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const res = await fetch('/api/frontend/promos', { method: 'GET' })
+        const promos = await res.json()
+
+        const tenantId = 1
+        const filtered = Array.isArray(promos)
+          ? promos.filter((p: any) => !p.tenant || p.tenant.id === tenantId)
+          : promos.docs?.filter((p: any) => !p.tenant || p.tenant.id === tenantId) || []
+
+        // pastikan ada field showInDashboard
+        const withShowFlag = filtered.map((p: any) => ({
+          ...p,
+          nama: p.nama || '',
+          kode: p.kode || '',
+          showInDashboard: p.showInDashboard ?? false,
+        }))
+
+        setData(withShowFlag)
+      } catch (err) {
+        console.error('Error fetching promos:', err)
+      }
+    }
+    fetchPromos()
+  }, [])
 
   // Update status otomatis jika lewat tanggal
   useEffect(() => {
@@ -38,6 +65,11 @@ export default function PromoPage() {
       }),
     )
   }, [])
+
+  const displayQuota = (item: any) => {
+    if (!item.useQuota) return '-' // opsional, tidak pakai kuota
+    return item.kuota ?? 0 // kalau pakai kuota, tampil angka atau 0
+  }
 
   const formatDateTime = (date: string) => {
     if (!isClient) return ''
@@ -93,11 +125,13 @@ export default function PromoPage() {
   }
 
   const sortedData = [...data]
-    .filter(
-      (item) =>
-        item.nama.toLowerCase().includes(query.toLowerCase()) ||
-        item.kode.toLowerCase().includes(query.toLowerCase()),
-    )
+    .filter((item) => {
+      const nama = item.nama?.toLowerCase() || ''
+      const kode = item.kode?.toLowerCase() || ''
+      const q = query.toLowerCase()
+
+      return nama.includes(q) || kode.includes(q)
+    })
     .sort((a, b) => {
       if (!sortConfig.key) return 0
       switch (sortConfig.key) {
@@ -191,7 +225,7 @@ export default function PromoPage() {
                           {formatDateTime(item.mulai)} - {formatDateTime(item.akhir)}
                         </td>
                         <td className="py-3 px-2">{renderDiskon(item)}</td>
-                        <td className="py-3 px-2">{item.kuota}</td>
+                        <td className="py-3 px-2">{displayQuota(item)}</td>
                         <td className="py-3 px-2">
                           <span
                             className={`text-sm font-medium ${
@@ -256,7 +290,7 @@ export default function PromoPage() {
       )}
 
       {/* Modal Detail */}
-      {detailPromo && <DetailPromo promo={detailPromo} onClose={() => setDetailPromo(null)} />}
+      {detailPromo && <DetailPromo promoData={detailPromo} onClose={() => setDetailPromo(null)} />}
     </div>
   )
 }
