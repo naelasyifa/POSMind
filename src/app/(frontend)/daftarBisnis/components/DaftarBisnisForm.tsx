@@ -31,29 +31,30 @@ export default function DaftarBisnisForm() {
   }, [emailFromQuery, phoneFromQuery, businessNameFromQuery])
 
   const handleSubmit = async () => {
-    if (!formData.email || !formData.adminName) {
-      alert('Lengkapi data terlebih dahulu.')
-      return
-    }
-
-    try {
-      const res = await fetch('/api/auth/complete-business', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await res.json()
-      if (data?.success) {
-        router.push('/verifikasi?email=' + encodeURIComponent(formData.email))
-      } else {
-        alert(data?.message || 'Gagal menyimpan data bisnis')
-      }
-    } catch (error) {
-      console.error('Error saat submit:', error)
-      alert('Terjadi kesalahan saat menyimpan data')
-    }
+  if (!formData.email || !formData.adminName) {
+    alert("Lengkapi data terlebih dahulu.");
+    return;
   }
+
+  try {
+    const res = await fetch("/api/auth/register-business", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+
+    if (data?.success) {
+      router.push(`/verifikasi?email=${encodeURIComponent(formData.email)}`);
+    } else {
+      alert(data?.message || "Gagal menyimpan data bisnis");
+    }
+  } catch (error) {
+    console.error("Error submit:", error);
+    alert("Terjadi kesalahan saat menyimpan data");
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

@@ -13,6 +13,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
+    "types": ["payload"],       
+    "allowImportingTsExtensions": true,
+
     "plugins": [
       {
         "name": "next"

@@ -8,7 +8,6 @@ import sharp from 'sharp'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import type { Endpoint } from 'payload'
 
-
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -18,9 +17,11 @@ import Transactions from './collections/Transactions'
 import Notifications from './collections/Notifications'
 import Payments from './collections/Payments'
 import Reservations from './collections/Reservations'
+import ActionRequests from './collections/ActionRequests'
+import EmailOtps from './collections/emailOtps'
 
-const filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 console.log('Collections Loaded:', [
   Tenants.slug,
   Users.slug,
@@ -28,6 +29,8 @@ console.log('Collections Loaded:', [
   Promos.slug,
   Products.slug,
   Transactions.slug,
+  ActionRequests.slug,
+  EmailOtps.slug,
 ])
 
 const sendOtpEndpoint: any = {
@@ -76,10 +79,15 @@ const sendOtpEndpoint: any = {
 
 
 export default buildConfig({
+
+  typescript: {
+    outputFile: path.resolve(__dirname, 'payload-types.ts'),
+  },
+
   admin: {
     user: Users.slug,
     importMap: {
-      baseDir: path.resolve(dirname),
+      baseDir: path.resolve(__dirname),
     },
   },
 
@@ -93,6 +101,12 @@ export default buildConfig({
     Payments,
     Notifications,
     Reservations,
+    ActionRequests,
+    EmailOtps,
+  ],
+
+  endpoints: [
+    sendOtpEndpoint,
   ],
 
   email: nodemailerAdapter({
@@ -101,7 +115,7 @@ export default buildConfig({
     transportOptions: {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
-      secure: false, // kalau pakai TLS ubah jadi true
+      secure: true, // kalau pakai TLS ubah jadi true
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,

@@ -25,27 +25,17 @@ export default function RegisterPage() {
     }
   }
 
-  const handleNext = async () => {
-    if (!formData.businessName || !formData.email) {
-      alert('Nama Bisnis dan Email wajib diisi')
-      return
-    }
-
-    const res = await fetch('/api/auth/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: formData.email }),
-    })
-
-    const data = await res.json()
-    if (data?.success) {
-      router.push(
-        `/daftarBisnis?businessName=${encodeURIComponent(formData.businessName)}&email=${encodeURIComponent(formData.email)}&phone=${encodeURIComponent(formData.phone)}`,
-      )
-    } else {
-      alert(data?.message || 'Gagal mengirim OTP')
-    }
+  const handleNext = () => {
+  if (!formData.businessName || !formData.email) {
+    alert("Nama Bisnis dan Email wajib diisi");
+    return;
   }
+
+  router.push(
+    `/daftarBisnis?businessName=${encodeURIComponent(formData.businessName)}&email=${encodeURIComponent(formData.email)}&phone=${encodeURIComponent(formData.phone)}`
+  );
+};
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"

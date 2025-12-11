@@ -1,59 +1,27 @@
-import { NextResponse } from 'next/server'
-import payload from 'payload'
+import { NextRequest, NextResponse } from 'next/server';
+import { initPayload } from '@/payload/initPayload';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { email, code } = await req.json()
+    const { email, otp } = await req.json();
 
-    if (!email || !code) {
-      return NextResponse.json(
-        { error: true, message: 'Email dan kode OTP wajib diisi' },
-        { status: 400 },
-      )
-    }
+    const payload = await initPayload();
 
-    const users = await payload.find({
+    const existing = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
-    })
+      limit: 1,
+    });
 
-    const user = users.docs[0]
-    if (!user) {
-      return NextResponse.json({ error: true, message: 'User tidak ditemukan' }, { status: 404 })
-    }
-
-    // Pastikan field tersedia dan valid
-    if (!user.otp || !user.otpExpiration) {
-      return NextResponse.json(
-        { error: true, message: 'OTP tidak tersedia atau sudah digunakan' },
-        { status: 400 },
-      )
-    }
-
-    const expiration = new Date(user.otpExpiration)
-    const now = new Date()
-
-    if (user.otp !== code || expiration < now) {
-      return NextResponse.json(
-        { error: true, message: 'OTP salah atau sudah kadaluarsa' },
-        { status: 400 },
-      )
-    }
-
-    // Update status verifikasi
-    await payload.update({
-      collection: 'users',
-      id: user.id,
-      data: {
-        emailVerified: true,
-        otp: null,
-        otpExpiration: null,
-      },
-    })
-
-    return NextResponse.json({ success: true })
-  } catch (err) {
-    console.error('[VERIFY-OTP ERROR]', err)
-    return NextResponse.json({ error: true, message: 'Verifikasi gagal' }, { status: 500 })
+    return NextResponse.json({
+      success: true,
+      message: 'OTP sent!',
+    });
+  } catch (error) {
+    console.error('[SEND-OTP ERROR]', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed sending OTP' },
+      { status: 500 },
+    );
   }
 }

@@ -3,23 +3,49 @@ import payload from 'payload'
 
 export async function POST(req: Request) {
   try {
-    const { email, adminName, businessField, businessType, address } = await req.json()
+    const { email, adminName, businessName, businessField, businessType, address } =
+      await req.json()
 
-    if (!email) return NextResponse.json({ error: true, message: 'Email wajib diisi' }, { status: 400 })
+    if (!email) {
+      return NextResponse.json({ error: true, message: 'Email wajib diisi' }, { status: 400 })
+    }
 
-    const existing = await payload.find({
+    const found = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
       limit: 1,
     })
 
-    if (existing.totalDocs === 0) {
-      return NextResponse.json({ error: true, message: 'Email belum verifikasi OTP' }, { status: 400 })
+    if (found.totalDocs === 0) {
+      return NextResponse.json(
+        { error: true, message: 'Email belum verifikasi OTP' },
+        { status: 400 },
+      )
     }
 
-    const user = existing.docs[0]
+    const user = found.docs[0]
 
-    // update data bisnis
+    if (!user.emailVerified) {
+      return NextResponse.json(
+        { error: true, message: 'Email belum diverifikasi' },
+        { status: 400 },
+      )
+    }
+
+    // 1. CREATE TENANT
+    const tenant = await payload.create({
+      collection: 'tenants',
+      data: {
+        businessName,
+        businessField,
+        businessType,
+        address,
+        owner: user.id,
+        createdBy: user.id,
+      },
+    })
+
+    // 2. UPDATE USER with tenant + role
     await payload.update({
       collection: 'users',
       id: user.id,
@@ -28,12 +54,14 @@ export async function POST(req: Request) {
         businessField,
         businessType,
         address,
+        tenant: tenant.id,
+        role: 'admintoko',
       },
     })
 
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[COMPLETE-BUSINESS ERROR]', err)
-    return NextResponse.json({ error: true, message: 'Internal Error' }, { status: 500 })
+    return NextResponse.json({ error: true, message: 'Internal Server Error' }, { status: 500 })
   }
 }

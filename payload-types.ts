@@ -76,6 +76,7 @@ export interface Config {
     payments: Payment;
     notifications: Notification;
     reservations: Reservation;
+    'action-requests': ActionRequest;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +93,7 @@ export interface Config {
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     reservations: ReservationsSelect<false> | ReservationsSelect<true>;
+    'action-requests': ActionRequestsSelect<false> | ActionRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -135,8 +137,12 @@ export interface UserAuthOperations {
  */
 export interface Tenant {
   id: number;
-  name: string;
+  businessName: string;
+  businessField?: string | null;
+  businessType?: string | null;
+  address?: string | null;
   domain?: string | null;
+  owner: number | User;
   createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
@@ -150,10 +156,10 @@ export interface User {
   role?: ('superadmin' | 'admintoko' | 'kasir') | null;
   tenant?: (number | null) | Tenant;
   emailVerified?: boolean | null;
-  verificationCode?: string | null;
   otp?: string | null;
   otpExpiration?: string | null;
   adminName?: string | null;
+  businessName?: string | null;
   businessField?: string | null;
   businessType?: string | null;
   address?: string | null;
@@ -297,6 +303,30 @@ export interface Reservation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "action-requests".
+ */
+export interface ActionRequest {
+  id: number;
+  tenant: number | Tenant;
+  actionType: 'create' | 'update' | 'delete';
+  product?: (number | null) | Product;
+  payload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: (number | null) | User;
+  createdBy: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -354,6 +384,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'reservations';
         value: number | Reservation;
+      } | null)
+    | ({
+        relationTo: 'action-requests';
+        value: number | ActionRequest;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -402,8 +436,12 @@ export interface PayloadMigration {
  * via the `definition` "tenants_select".
  */
 export interface TenantsSelect<T extends boolean = true> {
-  name?: T;
+  businessName?: T;
+  businessField?: T;
+  businessType?: T;
+  address?: T;
   domain?: T;
+  owner?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -416,10 +454,10 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   tenant?: T;
   emailVerified?: T;
-  verificationCode?: T;
   otp?: T;
   otpExpiration?: T;
   adminName?: T;
+  businessName?: T;
   businessField?: T;
   businessType?: T;
   address?: T;
@@ -550,6 +588,21 @@ export interface NotificationsSelect<T extends boolean = true> {
  * via the `definition` "reservations_select".
  */
 export interface ReservationsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "action-requests_select".
+ */
+export interface ActionRequestsSelect<T extends boolean = true> {
+  tenant?: T;
+  actionType?: T;
+  product?: T;
+  payload?: T;
+  status?: T;
+  approvedBy?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
