@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
 
 interface Notif {
   id: string
@@ -23,16 +23,33 @@ export const useNotif = () => useContext(NotifContext)
 export const NotifProvider = ({ children }: { children: ReactNode }) => {
   const [unreadCount, setUnreadCount] = useState(0)
 
+  // Anti-spam (tunggu 3 detik sebelum boleh refresh lagi)
+  const lastFetchRef = useRef(0)
+
   const fetchNotifs = async () => {
+    const now = Date.now()
+    if (now - lastFetchRef.current < 3000) return
+    lastFetchRef.current = now
+
     try {
-      const res = await fetch('/api/frontend/notifications', { credentials: 'include' })
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 7000) // timeout 7 detik
+
+      const res = await fetch('/api/frontend/notifications', {
+        credentials: 'include',
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeout)
+
       const json = await res.json()
-      if (json.success) {
-        const count = (json.docs || []).filter((n: Notif) => !n.isRead).length
+
+      if (json.success && Array.isArray(json.docs)) {
+        const count = json.docs.filter((n: Notif) => !n.isRead).length
         setUnreadCount(count)
       }
     } catch (err) {
-      console.error('Gagal fetch notifikasi', err)
+      console.warn('Gagal fetch notifikasi:', err)
     }
   }
 

@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
 import { getPayloadClient } from '@/app/payloadClient'
 
@@ -25,11 +27,13 @@ export async function GET(req: Request) {
       collection: 'notifications',
       where,
       sort: '-createdAt',
-      limit: 100,
+      limit: 50,
+      depth: 0,
     })
 
     return NextResponse.json({ success: true, docs: notif.docs })
   } catch (err: any) {
+    console.error('GET /notifications error →', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -52,6 +56,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true, data: updated })
   } catch (err: any) {
+    console.error('PATCH /notifications error →', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
@@ -73,6 +78,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
+    console.error('DELETE /notifications error →', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
