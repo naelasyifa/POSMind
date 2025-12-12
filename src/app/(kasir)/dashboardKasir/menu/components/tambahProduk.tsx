@@ -20,13 +20,13 @@ interface AddProductProps {
   isOpen: boolean
   onClose: () => void
   onAdd: (newProduct: {
-    id: number
-    name: string
-    stock: number
+    id: string
+    nama: string
+    stok: number
     status: string
-    category_id: number
-    price: number
-    image: string
+    kategori: { nama: string }
+    harga: number
+    gambar?: { url: string }
   }) => void
 }
 
@@ -78,25 +78,26 @@ export default function TambahProduk({ isOpen, onClose, onAdd }: AddProductProps
   }
 
   const handleSubmit = () => {
-    if (nama && selectedKategori && harga) {
-      onAdd({
-        id: useAutoId ? Date.now() : Number(productId),
-        name: nama,
-        stock: Number(kuantitas),
-        status: 'active',
-        category_id: Number(selectedKategori),
-        price: Number(harga),
-        image: gambar || '',
-      })
+  if (nama && selectedKategori && harga) {
+    onAdd({
+      id: useAutoId ? Date.now().toString() : productId,
+      nama,
+      stok: Number(kuantitas),
+      status: 'Aktif',
+      kategori: { nama: selectedKategori },
+      harga: Number(harga),
+      gambar: gambar ? { url: gambar } : undefined,
+    });
 
-      setNama('')
-      setKuantitas('')
-      setHarga('')
-      setSelectedKategori('')
-      setGambar(null)
-      onClose()
-    }
+    setNama('');
+    setKuantitas('');
+    setHarga('');
+    setSelectedKategori('');
+    setGambar(null);
+    onClose();
   }
+};
+
 
   return (
     <>

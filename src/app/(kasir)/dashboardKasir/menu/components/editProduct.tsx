@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import type { Product } from './listProduct'
 
 interface EditProductProps {
   isOpen: boolean

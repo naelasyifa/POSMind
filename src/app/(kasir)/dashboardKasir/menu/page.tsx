@@ -127,32 +127,36 @@ export default function MenuPage() {
   }
 
   const handleAddProduct = (newProductInput: {
-    name: string
-    category: string
-    stock: number
-    price: number
-    image: string
+    id: string
+    nama: string
+    stok: number
+    status: string
+    kategori: { nama: string }
+    harga: number
+    gambar?: { url: string }
   }) => {
     const newProduct: Product = {
-      id: (product.length + 1).toString(),
-      nama: newProductInput.name,
-      kategori: { nama: newProductInput.category },
-      stok: newProductInput.stock,
-      harga: newProductInput.price,
-      status: 'Aktif',
-      gambar: newProductInput.image
-        ? { url: newProductInput.image }
+      id: (products.length + 1).toString(), // FIX 1
+      nama: newProductInput.nama,
+      kategori: { nama: newProductInput.kategori.nama }, // FIX 2
+      stok: newProductInput.stok,
+      harga: newProductInput.harga,
+      status: newProductInput.status || 'Aktif',
+      gambar: newProductInput.gambar // FIX 3
+        ? { url: newProductInput.gambar.url }
         : { url: '/images/image-placeholder.png' },
     }
+
     setProducts((prev) => [...prev, newProduct])
     setIsAddProductOpen(false)
   }
+
   const handleEditProduct = (updated: Product) => {
     setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
   }
 
   const handleDeleteProduct = (id: number) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id))
+    setProducts((prev) => prev.filter((p) => p.id !== id.toString()))
   }
 
   const handleEditCategory = (cat: CategoryItem) => {
@@ -224,6 +228,8 @@ export default function MenuPage() {
             onEditCategory={handleEditCategory}
             onDeleteCategory={handleDeleteCategory}
             setIsAddProductOpen={setIsAddProductOpen}
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
           />
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Edit, Trash2, Package, MoreVertical } from 'lucide-react'
+import { Edit, Trash2, Package, PackageSearch, MoreVertical } from 'lucide-react'
 import EditProduct from './editProduct'
 import HapusProduct from './hapusProduct'
 import ReqPermission from './requestPermission'
@@ -23,7 +23,7 @@ type ListProductProps = {
   products: Product[]
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
   onModalChange: (open: boolean) => void
-  onEdit: (p: Product) => void  // ⬅️ READY FOR BACKEND UPDATE
+  onEdit: (p: Product) => void // ⬅️ READY FOR BACKEND UPDATE
   onDelete: (id: number) => void
   hasPermission: boolean
   activeCategory: string
@@ -249,74 +249,75 @@ export default function ListProduct({
               </tr>
             </thead>
 
-          <tbody>
-            {filteredProducts.length === 0 ? (
-              // === EMPTY ROW ===
-              <tr>
-                <td colSpan={8}>
-                  <div className="flex flex-col items-center justify-center pt-35 text-gray-500">
-                    <PackageSearch size={64} className="text-gray-400 mb-4" />
-                    <p className="text-lg font-medium">Belum ada produk</p>
-                    <p className="text-sm">Tambahkan produk baru untuk mulai menjual</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              {filteredProducts.map((product, index) => (
-                <tr key={product.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="p-3">{product.id}</td>
-                  <td className="p-3 text-sm font-normal">{product.sku}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 relative">
-                        <Image
-                          src={
-                            product.gambar?.url && product.gambar.url !== ''
-                              ? product.gambar.url
-                              : '/images/image-placeholder.png'
-                          }
-                          alt={product.nama || 'placeholder'}
-                          fill
-                          className="object-cover rounded-md border bg-gray-200"
-                        />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate">{product.nama}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td></td>
-                  <td className="py-3">{product.stok}</td>
-                  <td className="py-3">{product.status}</td>
-                  <td className="py-3">{product.kategori.nama}</td>
-                  <td className="py-3 font-semibold">Rp {product.harga.toLocaleString()}</td>
-
-                  <td className="py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditClick(product, index)}
-                        className="p-2 bg-white border border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white rounded transition-colors"
-                      >
-                        <Edit size={16} />
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteClick(product, index)}
-                        className="p-2 bg-white border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+            <tbody>
+              {filteredProducts.length === 0 ? (
+                // === EMPTY ROW ===
+                <tr>
+                  <td colSpan={8}>
+                    <div className="flex flex-col items-center justify-center pt-35 text-gray-500">
+                      <PackageSearch size={64} className="text-gray-400 mb-4" />
+                      <p className="text-lg font-medium">Belum ada produk</p>
+                      <p className="text-sm">Tambahkan produk baru untuk mulai menjual</p>
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                filteredProducts.map((product, index) => (
+                  <tr key={product.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="p-3">{product.id}</td>
+                    <td className="p-3 text-sm font-normal">{product.sku}</td>
 
-    </div>
+                    <td className="py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 relative">
+                          <Image
+                            src={
+                              product.gambar?.url && product.gambar.url !== ''
+                                ? product.gambar.url
+                                : '/images/image-placeholder.png'
+                            }
+                            alt={product.nama || 'placeholder'}
+                            fill
+                            className="object-cover rounded-md border bg-gray-200"
+                          />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate">{product.nama}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td></td>
+                    <td className="py-3">{product.stok}</td>
+                    <td className="py-3">{product.status}</td>
+                    <td className="py-3">{product.kategori.nama}</td>
+                    <td className="py-3 font-semibold">Rp {product.harga.toLocaleString()}</td>
+
+                    <td className="py-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditClick(product, index)}
+                          className="p-2 bg-white border border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white rounded transition-colors"
+                        >
+                          <Edit size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteClick(product, index)}
+                          className="p-2 bg-white border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Modals */}
       <ReqPermission
