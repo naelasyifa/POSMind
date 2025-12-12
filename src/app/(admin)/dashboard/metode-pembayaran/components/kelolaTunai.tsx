@@ -95,7 +95,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                   checked={status}
                   onChange={(e) => setStatus(e.target.checked)}
                 />
-                <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#3ABAB4] transition-all"></div>
+                <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#52bfbe] transition-all"></div>
                 <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full peer-checked:translate-x-5 transition-all"></div>
               </label>
               <span className="text-sm text-gray-600">
@@ -117,7 +117,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                 type="text"
                 value={formatRupiah(minTransaksi)}
                 onChange={(e) => setMinTransaksi(e.target.value.replace(/\D/g, ''))}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
                 placeholder="0"
               />
             </div>
@@ -136,7 +136,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                 type="text"
                 value={formatRupiah(maxTransaksi)}
                 onChange={(e) => setMaxTransaksi(e.target.value.replace(/\D/g, ''))}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
                 placeholder="0"
               />
             </div>
@@ -155,7 +155,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                   checked={pembulatan}
                   onChange={(e) => setPembulatan(e.target.checked)}
                 />
-                <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#3ABAB4] transition-all"></div>
+                <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#52bfbe] transition-all"></div>
                 <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full peer-checked:translate-x-5 transition-all"></div>
               </label>
               <span className="text-sm text-gray-600">
@@ -176,7 +176,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                       value="100"
                       checked={nilaiPembulatan === '100'}
                       onChange={(e) => setNilaiPembulatan(e.target.value)}
-                      className="w-4 h-4 text-[#3ABAB4] focus:ring-[#3ABAB4]"
+                      className="w-4 h-4 text-[#52bfbe] focus:ring-[#52bfbe]"
                     />
                     <span className="text-sm">Rp 100</span>
                   </label>
@@ -187,7 +187,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                       value="500"
                       checked={nilaiPembulatan === '500'}
                       onChange={(e) => setNilaiPembulatan(e.target.value)}
-                      className="w-4 h-4 text-[#3ABAB4] focus:ring-[#3ABAB4]"
+                      className="w-4 h-4 text-[#52bfbe] focus:ring-[#52bfbe]"
                     />
                     <span className="text-sm">Rp 500</span>
                   </label>
@@ -198,7 +198,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
                       value="1000"
                       checked={nilaiPembulatan === '1000'}
                       onChange={(e) => setNilaiPembulatan(e.target.value)}
-                      className="w-4 h-4 text-[#3ABAB4] focus:ring-[#3ABAB4]"
+                      className="w-4 h-4 text-[#52bfbe] focus:ring-[#52bfbe]"
                     />
                     <span className="text-sm">Rp 1.000</span>
                   </label>
@@ -216,7 +216,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#52bfbe] resize-none"
               placeholder="Contoh: Mohon siapkan uang pas untuk mempercepat transaksi"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -235,7 +235,7 @@ export default function KelolaTunai({ isOpen, onClose }: KelolaProps) {
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-[#3ABAB4] text-white rounded-lg hover:bg-[#2da8a2] transition-all text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#52bfbe] text-white rounded-lg hover:bg-[#2da8a2] transition-all text-sm"
           >
             <Save size={16} />
             Simpan

@@ -151,7 +151,7 @@ export default function PenggunaPage() {
               <h2 className="text-xl font-semibold text-sm">Daftar Pengguna</h2>
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-[#3ABAB4] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                className="bg-[#52bfbe] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
               >
                 <UserPlus size={18} />
                 Tambah Pengguna
@@ -182,7 +182,7 @@ export default function PenggunaPage() {
                       <td className="py-4">
                         <span
                           className={`px-3 py-1 rounded-md text-white text-sm font-medium ${
-                            formatRole(user.role) === 'Admin' ? 'bg-[#3ABAB4]' : 'bg-[#66C7C2]'
+                            formatRole(user.role) === 'Admin' ? 'bg-[#52bfbe]' : 'bg-[#66C7C2]'
                           }`}
                         >
                           {formatRole(user.role)}
@@ -194,7 +194,7 @@ export default function PenggunaPage() {
                           <button
                             onClick={() => toggleAkses(userIndex, aksesIndex)}
                             className={`w-5 h-5 rounded-full border-2 transition-all ${
-                              val ? 'border-[#3ABAB4] bg-[#3ABAB4]' : 'border-gray-400 bg-gray-200'
+                              val ? 'border-[#52bfbe] bg-[#52bfbe]' : 'border-gray-400 bg-gray-200'
                             }`}
                           ></button>
                         </td>
@@ -204,7 +204,7 @@ export default function PenggunaPage() {
                         <div className="flex justify-center items-center space-x-2">
                           <button
                             onClick={() => handleEditClick(user, userIndex)}
-                            className="p-2 bg-white border-2 border-gray-300 hover:border-[#3ABAB4] hover:bg-[#3ABAB4] hover:text-white text-gray-700 rounded-lg transition-all"
+                            className="p-2 bg-white border-2 border-gray-300 hover:border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white text-gray-700 rounded-lg transition-all"
                           >
                             <Edit size={16} />
                           </button>

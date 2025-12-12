@@ -148,7 +148,7 @@ export default function KelolaQris({ isOpen, onClose }: KelolaProps) {
                               )
                             }}
                           />
-                          <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#3ABAB4] transition-all"></div>
+                          <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#52bfbe] transition-all"></div>
                           <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full peer-checked:translate-x-5 transition-all"></div>
                         </label>
                       </div>
@@ -161,7 +161,7 @@ export default function KelolaQris({ isOpen, onClose }: KelolaProps) {
                     <td className="py-3">
                       <button
                         onClick={() => handleEdit(item)}
-                        className="p-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-[#3ABAB4] hover:text-white transition"
+                        className="p-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-[#52bfbe] hover:text-white transition"
                       >
                         <Edit size={16} />
                       </button>

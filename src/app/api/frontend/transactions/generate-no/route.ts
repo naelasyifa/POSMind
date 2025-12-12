@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
-import { getPayloadClient } from '../../../payloadClient'
+import { getPayloadClient } from '../../../../payloadClient'
 
 export async function GET() {
   try {

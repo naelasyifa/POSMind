@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
-import { getPayloadClient } from '../../payloadClient'
+import { getPayloadClient } from '../../../payloadClient'
 
 async function adjustStock(payload: any, productId: string, qty: number, increment = false) {
   const product = await payload.findByID({ collection: 'products', id: productId })
@@ -34,6 +34,33 @@ export async function POST(req: Request) {
       body.status = 'selesai'
     }
 
+    // VALIDASI PROMO ID & KUOTA
+    let validPromo = null
+
+    if (body.promoId) {
+      const promo = await payload.findByID({
+        collection: 'promos',
+        id: body.promoId,
+      })
+      if (promo) {
+        const kuota = promo.kuota // bisa number / null / undefined / "-"
+
+        // Jika kuota null / "-" → promo dianggap tanpa kuota (bebas)
+        if (kuota === null || kuota === '-' || kuota === undefined) {
+          validPromo = promo
+        }
+        // Jika kuota ada dan > 0
+        else if (typeof kuota === 'number' && kuota > 0) {
+          validPromo = promo
+        }
+        // Jika kuota habis → promo diabaikan
+        else {
+          console.log('Promo habis → promo diabaikan')
+          body.promoId = null
+        }
+      }
+    }
+
     // Create transaction
     const trx = await payload.create({
       collection: 'transactions',
@@ -49,6 +76,26 @@ export async function POST(req: Request) {
         } else if (body.status === 'batal') {
           await adjustStock(payload, item.productId, item.qty, true) // kembalikan stok
         }
+      }
+    }
+
+    // Update kuota promo jika ada
+    if (validPromo) {
+      const kuota = validPromo.kuota
+
+      // Promo tanpa kuota → skip update
+      if (kuota === null || kuota === '-' || kuota === undefined) {
+        console.log('Promo tanpa kuota → tidak dikurangi')
+      }
+      // Promo punya kuota → kurangi
+      else if (typeof kuota === 'number') {
+        const newKuota = kuota - 1
+
+        await payload.update({
+          collection: 'promos',
+          id: validPromo.id,
+          data: { kuota: newKuota < 0 ? 0 : newKuota },
+        })
       }
     }
 

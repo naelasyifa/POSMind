@@ -13,13 +13,21 @@ export type CategoryItem = {
 
 type Props = {
   categories: CategoryItem[]
+  activeCategory: string
+  onCategoryClick: (name: string) => void
   onEdit: (cat: CategoryItem) => void
   onDelete: (cat: CategoryItem) => void
 }
 
-export default function CategoryList({ categories, onEdit, onDelete }: Props) {
-  const [active, setActive] = useState<number | null>(null)
-  const [menuOpen, setMenuOpen] = useState<number | null>(null)
+export default function CategoryList({
+  categories,
+  activeCategory,
+  onCategoryClick,
+  onEdit,
+  onDelete,
+}: Props) {
+  const [active, setActive] = useState<string>(categories[0]?.name || '')
+  const [menuOpen, setMenuOpen] = useState<string | null>(null)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
 
@@ -38,13 +46,12 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
   // SET DEFAULT ACTIVE WHEN DATA ARRIVES
   useEffect(() => {
     if (categories.length > 0 && active === null) {
-      setActive(categories[0].id)
+      setActive(categories[0].id.toString())
     }
   }, [categories])
 
   return (
     <div className="mb-6">
-
       {/* ========== EMPTY STATE ========== */}
       {categories.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 text-gray-500">
@@ -59,10 +66,13 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
         {categories.map((cat) => (
           <div key={cat.id} className="relative">
             <button
-              onClick={() => setActive(cat.id)}
+              onClick={() => {
+                setActive(cat.id.toString())
+                onCategoryClick(cat.name)
+              }}
               className={`rounded-xl p-4 w-28 h-28 shadow-sm transition cursor-pointer flex flex-col justify-between
                 ${
-                  active === cat.id
+                  active === cat.id.toString()
                     ? 'bg-[#737373] text-white scale-105 shadow-md'
                     : 'bg-white text-gray-700 hover:bg-[#737373]/70 hover:text-white'
                 }
@@ -72,7 +82,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
               <div className="w-full flex justify-end">
                 <cat.icon
                   size={28}
-                  className={active === cat.id ? 'text-white' : 'text-inherit'}
+                  className={active === cat.id.toString() ? 'text-white' : 'text-inherit'}
                 />
               </div>
 
@@ -82,28 +92,27 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
                   <div className="text-sm font-semibold">{cat.name}</div>
                   <div
                     className={`text-xs ${
-                      active === cat.id ? 'text-white/80' : 'text-inherit'
+                      active === cat.id.toString() ? 'text-white/80' : 'text-inherit'
                     }`}
                   >
                     {cat.count}
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="rounded py-1 hover:bg-gray-200"
+                <span
+                  className="rounded py-1 hover:bg-gray-200 cursor-pointer inline-flex items-center justify-center"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setMenuOpen(menuOpen === cat.id ? null : cat.id)
+                    setMenuOpen(menuOpen === cat.id.toString() ? null : cat.id.toString())
                   }}
                 >
                   <MoreVertical size={18} />
-                </button>
+                </span>
               </div>
             </button>
 
             {/* POPUP MENU */}
-            {menuOpen === cat.id && (
+            {menuOpen === cat.id.toString() && (
               <div
                 ref={menuRef}
                 className="absolute right-0 top-0 mt-10 mr-2 bg-white border shadow-md rounded-md z-50"

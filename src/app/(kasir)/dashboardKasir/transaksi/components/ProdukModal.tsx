@@ -44,8 +44,13 @@ export default function ProdukModal({ product, onClose, onAdd }: any) {
             <div className="flex-1">
               <h3 className="font-bold text-lg">{product.nama}</h3>
               <p className="text-sm text-gray-600 mb-2">
-                {product.deskripsi || product.desc || '-'}
+                {typeof product.deskripsi === 'string' && product.deskripsi.trim() !== ''
+                  ? product.deskripsi
+                  : typeof product.desc === 'string' && product.desc.trim() !== ''
+                    ? product.desc
+                    : '-'}
               </p>
+
               <div className="font-semibold text-teal-600 mb-3">
                 Rp {product.harga.toLocaleString()}
               </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { cetakDapurPdf } from '@/utils/cetakDapurPdf'
 
 type OptionKey =
   | 'noTransaksi'
@@ -18,8 +19,10 @@ export default function CetakTab() {
   // MODE STATE
   // -----------------------------------------
   const [isFirstTime, setIsFirstTime] = useState(true)
-  const [isEditing, setIsEditing] = useState(isFirstTime)
+  const [isEditing, setIsEditing] = useState(false)
   const readOnly = !isEditing
+
+  const [paperSize, setPaperSize] = useState<58 | 80>(80)
 
   // -----------------------------------------
   // MAIN DATA
@@ -35,6 +38,25 @@ export default function CetakTab() {
     infoTambahan: true,
     namaMeja: true,
   })
+
+  const [dapurSettings, setDapurSettings] = useState<any>(null)
+
+  // Ambil pengaturan dapur dari API
+  useEffect(() => {
+    fetch('/api/frontend/store-settings/cetak')
+      .then((res) => res.json())
+      .then((data) => {
+        setDapurSettings(data)
+        // Kalau data sudah ada, tandai sudah pernah tersimpan
+        setPaperSize(data.paperSize || 80)
+        setIsFirstTime(false)
+        // Set state options sesuai API
+        if (data.options) {
+          setOptions(data.options)
+        }
+      })
+      .catch((err) => console.error('Fetch error:', err))
+  }, [])
 
   const toggleList: [OptionKey, string][] = [
     ['noTransaksi', 'No. Transaksi'],
@@ -53,13 +75,45 @@ export default function CetakTab() {
     setOptions((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleSave = () => {
-    setIsFirstTime(false)
-    setIsEditing(false)
-    console.log('SAVED', { options })
+  // Save ke API
+  // Save ke API
+  const handleSave = async () => {
+    try {
+      const res = await fetch('/api/frontend/store-settings/cetak', {
+        method: 'PATCH', // wajib sesuai route API
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ options }), // kirim langsung objek options
+      })
+      if (!res.ok) throw new Error('Failed to save settings')
+      setIsEditing(false)
+      setIsFirstTime(false)
+      console.log('Settings saved:', options)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal menyimpan pengaturan.')
+    }
   }
 
   const handleCancel = () => setIsEditing(false)
+
+  // Preview / generate PDF
+  const handlePreviewPDF = () => {
+    if (!dapurSettings) return
+    const items = ['Paket Hemat', 'Nasi Putih', 'Air Putih', 'Kerupuk'] // contoh item dapur
+
+    const pdf = cetakDapurPdf({
+      storeName: dapurSettings.storeName,
+      tenantName: dapurSettings.tenant?.name || dapurSettings.tenant,
+      options,
+      items,
+      paperSize,
+    }) // 🟢 simpan ke pdf
+
+    const blob = pdf.output('blob')
+    const url = URL.createObjectURL(blob)
+
+    window.open(url, '_blank')
+  }
 
   return (
     <div className="flex gap-6 w-full">
@@ -67,6 +121,20 @@ export default function CetakTab() {
       <div className="w-2/3 bg-white p-6 rounded-xl shadow-sm max-h-[85vh] overflow-y-auto">
         <h3 className="font-semibold text-xl mb-6">Pengaturan Cetakan Dapur</h3>
 
+        {/* PAPER SIZE */}
+        <div className="grid grid-cols-2 gap-4 items-center">
+          <p className="font-medium">Ukuran Kertas</p>
+          <select
+            value={paperSize ?? 80}
+            disabled={readOnly}
+            onChange={(e) => setPaperSize(Number(e.target.value) as 58 | 80)}
+            className={`border p-2 rounded ${readOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          >
+            <option value={58}>Thermal 58mm</option>
+            <option value={80}>Thermal 80mm</option>
+          </select>
+        </div>
+        <div className="my-6" />
         <div className="grid grid-cols-1 gap-6">
           {/* TOGGLES (MATCH STRUKTAB STYLE) */}
           <div>
@@ -87,7 +155,7 @@ export default function CetakTab() {
                     >
                       <input
                         type="checkbox"
-                        checked={options[key]}
+                        checked={options[key] ?? false}
                         disabled={readOnly}
                         onChange={() => toggle(key)}
                         className="sr-only peer"
@@ -142,6 +210,16 @@ export default function CetakTab() {
                 Edit
               </button>
             )}
+            {/* TOMBOL PREVIEW HANYA MUNCUL KALAU SUDAH PERNAH TERSIMPAN */}
+            {!isEditing && !isFirstTime && (
+              <button
+                onClick={handlePreviewPDF}
+                className="bg-gray-700 text-white py-2 rounded hover:bg-gray-800"
+                style={{ width: '200px' }}
+              >
+                Preview PDF
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -150,7 +228,13 @@ export default function CetakTab() {
       <div className="w-1/3 bg-white p-6 rounded-xl shadow-sm">
         <h3 className="font-semibold text-lg mb-4">Tampilan Cetakan Dapur</h3>
 
-        <div className="text-sm text-gray-700 leading-relaxed p-4 rounded-lg border">
+        <div
+          className="text-sm text-gray-700 leading-relaxed p-4 rounded-lg border"
+          style={{
+            width: paperSize === 58 ? '230px' : '300px', // sesuaikan dengan thermal 58/80mm
+            margin: '0 auto',
+          }}
+        >
           {options.noTransaksi && <p>#ES421</p>}
           {options.tanggalTransaksi && <p>17-06-2021</p>}
           {options.jamTransaksi && <p>10:22</p>}

@@ -109,7 +109,7 @@ export default function EditEWallet({ isOpen, onClose, ewalletData, onSave }: Ed
                 <button
                   type="button"
                   onClick={() => setIsTipeDropdownOpen(!isTipeDropdownOpen)}
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] bg-white text-left ${tipe ? 'text-gray-900' : 'text-gray-500'}`}
+                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#52bfbe] bg-white text-left ${tipe ? 'text-gray-900' : 'text-gray-500'}`}
                 >
                   {tipe || 'Pilih Tipe'}
                 </button>
@@ -166,7 +166,7 @@ export default function EditEWallet({ isOpen, onClose, ewalletData, onSave }: Ed
                     checked={status}
                     onChange={(e) => setStatus(e.target.checked)}
                   />
-                  <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#3ABAB4] transition-all"></div>
+                  <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-[#52bfbe] transition-all"></div>
                   <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full peer-checked:translate-x-5 transition-all"></div>
                 </label>
               </div>
@@ -183,7 +183,7 @@ export default function EditEWallet({ isOpen, onClose, ewalletData, onSave }: Ed
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
               placeholder="10,000"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
             />
           </div>
 
@@ -194,7 +194,7 @@ export default function EditEWallet({ isOpen, onClose, ewalletData, onSave }: Ed
               <button
                 type="button"
                 onClick={() => setIsIntegrasiDropdownOpen(!isIntegrasiDropdownOpen)}
-                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] bg-white text-left ${integrasi ? 'text-gray-900' : 'text-gray-500'}`}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#52bfbe] bg-white text-left ${integrasi ? 'text-gray-900' : 'text-gray-500'}`}
               >
                 {integrasi || 'Pilih Status Integrasi'}
               </button>
@@ -251,7 +251,7 @@ export default function EditEWallet({ isOpen, onClose, ewalletData, onSave }: Ed
           <div className="pt-6">
             <button
               onClick={handleSubmit}
-              className="w-full bg-[#3ABAB4] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
+              className="w-full bg-[#52bfbe] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
             >
               Simpan
             </button>

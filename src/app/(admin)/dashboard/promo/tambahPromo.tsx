@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, ChevronDown, Camera, Plus } from 'lucide-react'
 
 interface TambahPromoProps {
   onClose: () => void
@@ -12,8 +12,31 @@ interface TambahPromoProps {
 /* ------------------------- */
 /*      CUSTOM SELECT        */
 /* ------------------------- */
-function CustomSelect({ label, value, options, onChange }: any) {
+function CustomSelect({ label, value, options, onChange, multiple = false }: any) {
   const [open, setOpen] = useState(false)
+
+  const handleSelect = (val: any) => {
+    if (multiple) {
+      if (Array.isArray(value)) {
+        if (value.includes(val)) onChange(value.filter((v: any) => v !== val))
+        else onChange([...value, val])
+      } else onChange([val])
+    } else {
+      onChange(val)
+      setOpen(false)
+    }
+  }
+
+  const displayLabel = () => {
+    if (multiple && Array.isArray(value)) {
+      if (value.length === 0) return 'Pilih'
+      return options
+        .filter((o: any) => value.includes(o.value))
+        .map((o: any) => o.label)
+        .join(', ')
+    }
+    return options.find((o: any) => o.value === value)?.label || 'Pilih Produk'
+  }
 
   return (
     <div className="relative">
@@ -24,7 +47,7 @@ function CustomSelect({ label, value, options, onChange }: any) {
         onClick={() => setOpen(!open)}
         className="bg-white rounded-xl py-3 px-4 text-gray-700 cursor-pointer flex justify-between items-center"
       >
-        <span>{options.find((o: any) => o.value === value)?.label || 'Pilih...'}</span>
+        <span>{displayLabel()}</span>
         <ChevronDown className="w-5 h-5 text-gray-500" />
       </div>
 
@@ -35,12 +58,16 @@ function CustomSelect({ label, value, options, onChange }: any) {
             <div
               key={o.value}
               className="px-4 py-3 hover:bg-gray-100 cursor-pointer transition"
-              onClick={() => {
-                onChange(o.value)
-                setOpen(false)
-              }}
+              onClick={() => handleSelect(o.value)}
             >
-              {o.label}
+              {multiple && (
+                <input
+                  type="checkbox"
+                  checked={Array.isArray(value) && value.includes(o.value)}
+                  readOnly
+                />
+              )}
+              <span>{o.label}</span>
             </div>
           ))}
         </div>
@@ -49,46 +76,182 @@ function CustomSelect({ label, value, options, onChange }: any) {
   )
 }
 
-export default function TambahPromo({ onClose, onSave, produkList = [] }: TambahPromoProps) {
+export default function TambahPromo({ onClose, onSave }: TambahPromoProps) {
   const [closing, setClosing] = useState(false)
 
-  const [form, setForm] = useState({
+  const [produkList, setProdukList] = useState<{ id: string; nama: string }[]>([])
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/frontend/products')
+        if (!res.ok) throw new Error('Failed to fetch products')
+
+        const data = await res.json()
+        console.log('RESPON PRODUK:', data)
+
+        const produkList = Array.isArray(data) ? data : Array.isArray(data?.docs) ? data.docs : []
+
+        setProdukList(produkList)
+      } catch (err) {
+        console.error(err)
+        setProdukList([])
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  const [form, setForm] = useState<{
+    nama: string
+    kode: string
+    mulai: string
+    akhir: string
+    startTime: string
+    endTime: string
+    availableDays: string[]
+    kategori: string
+    produkId: string | null
+    minPembelian: string
+    promoType: string
+    tipeDiskon: string
+    nilaiDiskon: string
+    buyQuantity: string
+    freeQuantity: string
+    applicableProducts: string[]
+    useQuota: boolean
+    kuota: string
+    stacking: string
+    orderType: string[]
+    limitCustomer: string
+    isMultiple: boolean
+    showOnDashboard: boolean
+    bannerImage: string | File | null
+    status: string
+  }>({
     nama: '',
     kode: '',
     mulai: '',
     akhir: '',
-    kuota: '',
-    status: 'Aktif',
-
+    startTime: '',
+    endTime: '',
+    availableDays: [],
     kategori: 'all',
     produkId: '',
     minPembelian: '',
-
+    promoType: 'discount',
     tipeDiskon: 'percent',
     nilaiDiskon: '',
-
+    buyQuantity: '',
+    freeQuantity: '',
+    applicableProducts: [],
+    isMultiple: true,
+    useQuota: false,
+    kuota: '',
     stacking: 'no',
     orderType: ['dinein', 'takeaway'],
     limitCustomer: 'unlimited',
+    showOnDashboard: false,
+    bannerImage: null,
+    status: 'Aktif',
   })
 
   const updateField = (name: string, val: any) => {
     setForm((prev) => ({ ...prev, [name]: val }))
   }
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault()
+  async function uploadFile(file: File) {
+    const formData = new FormData()
+    formData.append('banner', file)
 
-    const newPromo = {
-      id: Date.now(),
-      ...form,
-      kuota: Number(form.kuota),
-      minPembelian: Number(form.minPembelian || 0),
-      nilaiDiskon: Number(form.nilaiDiskon),
+    const res = await fetch('/api/frontend/upload-media', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      throw new Error('Upload gagal')
     }
 
-    setClosing(true)
-    setTimeout(() => onSave(newPromo), 250)
+    const data = await res.json()
+
+    if (!data?.url) {
+      throw new Error('URL upload tidak ditemukan')
+    }
+
+    return data
+  }
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return null
+    const [year, month, day] = dateStr.split('-').map(Number)
+    // month - 1 karena JS month = 0..11
+    const date = new Date(year, month - 1, day)
+    if (isNaN(date.getTime())) return null // cek validitas
+    return date.toISOString()
+  }
+
+  const formatTime = (timeStr: string) => (timeStr ? timeStr + ':00' : null)
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
+
+    // Upload banner
+    let bannerId: string | null = null
+    if (form.bannerImage instanceof File) {
+      const uploaded = await uploadFile(form.bannerImage)
+      bannerId = uploaded.id
+    } else if (typeof form.bannerImage === 'string') {
+      bannerId = form.bannerImage
+    }
+
+    // Validasi wajib
+    if (!form.nama || !form.kode || !form.mulai || !form.akhir) {
+      alert('Nama, kode, dan tanggal promo wajib diisi')
+      return
+    }
+
+    // Validasi BXGY
+    if (form.promoType === 'bxgy') {
+      const buy = Number(form.buyQuantity || 0)
+      const free = Number(form.freeQuantity || 0)
+      const products = Array.isArray(form.applicableProducts) ? form.applicableProducts : []
+
+      if (buy <= 0 || free <= 0 || products.length === 0) {
+        alert('Isi Beli X, Gratis Y, dan pilih Produk Gratis minimal 1')
+        return
+      }
+    }
+
+    // Payload
+    const tenantId = 1
+    const newPromo = {
+      tenant: tenantId,
+      ...form,
+      banner: bannerId,
+      mulai: formatDate(form.mulai),
+      akhir: formatDate(form.akhir),
+      startTime: form.startTime ? form.startTime + ':00' : null,
+      endTime: form.endTime ? form.endTime + ':00' : null,
+      kuota: Number(form.kuota || 0),
+      minPembelian: Number(form.minPembelian || 0),
+      nilaiDiskon: Number(form.nilaiDiskon || 0),
+      buyQuantity: Number(form.buyQuantity || 0),
+      freeQuantity: Number(form.freeQuantity || 0),
+      limitCustomer: form.limitCustomer || 'unlimited', // ✅ default valid
+      produk: form.produkId || null,
+      availableDays: Array.isArray(form.availableDays) ? form.availableDays : [],
+    }
+
+    const res = await fetch('/api/frontend/promos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPromo),
+    })
+
+    const saved = await res.json()
+    onSave(saved)
+    onClose()
   }
 
   const handleClose = () => {
@@ -120,6 +283,67 @@ export default function TambahPromo({ onClose, onSave, produkList = [] }: Tambah
 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-5 mt-5">
+          {/* Banner Promo */}
+          <div>
+            <label className="text-sm font-medium text-white block mb-2">Banner Promo</label>
+
+            <div className="relative w-40 h-40">
+              {/* Preview Circle */}
+              <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center overflow-hidden">
+                {form.bannerImage ? (
+                  typeof form.bannerImage === 'string' ? (
+                    <img
+                      src={form.bannerImage}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={URL.createObjectURL(form.bannerImage)}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="text-gray-400 flex items-center justify-center">
+                    <Camera className="w-12 h-12" />
+                  </div>
+                )}
+              </div>
+
+              {/* Label + Input file tersembunyi */}
+              <label className="absolute bottom-0 right-0 cursor-pointer">
+                <div className="bg-teal-500 p-2 rounded-full flex items-center justify-center relative">
+                  <Camera className="w-5 h-5 text-white" />
+                  <Plus className="w-3 h-3 text-white absolute bottom-3.5 left-2.5" />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    // Update preview langsung
+                    setForm((prev) => ({ ...prev, bannerImage: file }))
+
+                    try {
+                      const uploaded = await uploadFile(file) // simpan ke 'uploaded'
+                      setForm((prev) => ({
+                        ...prev,
+                        banner: uploaded.id, // ID untuk Payload
+                        bannerImage: file, // tetap untuk preview
+                      }))
+                    } catch (err) {
+                      console.error(err)
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
           {/* Nama Promo */}
           <div>
             <label className="text-sm font-medium text-white block mb-2">Nama Promo</label>
@@ -141,6 +365,66 @@ export default function TambahPromo({ onClose, onSave, produkList = [] }: Tambah
               placeholder="Masukkan Kode Promo"
             />
           </div>
+
+          {/* Tanggal & Jam */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-white block mb-2">Tanggal Mulai</label>
+              <input
+                type="date"
+                value={form.mulai}
+                onChange={(e) => updateField('mulai', e.target.value)}
+                className="bg-white rounded-lg w-full p-3"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-white block mb-2">Tanggal Akhir</label>
+              <input
+                type="date"
+                value={form.akhir}
+                onChange={(e) => updateField('akhir', e.target.value)}
+                className="bg-white rounded-lg w-full p-3"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-white block mb-2">Jam Mulai (HH:mm)</label>
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(e) => updateField('startTime', e.target.value)}
+                className="bg-white rounded-lg w-full p-3"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-white block mb-2">Jam Akhir (HH:mm)</label>
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(e) => updateField('endTime', e.target.value)}
+                className="bg-white rounded-lg w-full p-3"
+              />
+            </div>
+          </div>
+
+          {/* Hari Berlaku */}
+          <CustomSelect
+            label="Hari Berlaku"
+            value={form.availableDays}
+            onChange={(v: any) => updateField('availableDays', v)}
+            options={[
+              { label: 'Senin', value: 'monday' },
+              { label: 'Selasa', value: 'tuesday' },
+              { label: 'Rabu', value: 'wednesday' },
+              { label: 'Kamis', value: 'thursday' },
+              { label: 'Jumat', value: 'friday' },
+              { label: 'Sabtu', value: 'saturday' },
+              { label: 'Minggu', value: 'sunday' },
+            ]}
+            multiple
+          />
 
           {/* Kategori */}
           <CustomSelect
@@ -178,82 +462,122 @@ export default function TambahPromo({ onClose, onSave, produkList = [] }: Tambah
             </div>
           )}
 
-          {/* Tanggal Mulai / Akhir */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium text-white block mb-2">Tanggal Mulai</label>
-              <input
-                type="datetime-local"
-                value={form.mulai}
-                onChange={(e) => updateField('mulai', e.target.value)}
-                className="bg-white rounded-lg w-full p-3"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-white block mb-2">Tanggal Akhir</label>
-              <input
-                type="datetime-local"
-                value={form.akhir}
-                onChange={(e) => updateField('akhir', e.target.value)}
-                className="bg-white rounded-lg w-full p-3"
-              />
-            </div>
-          </div>
+          {/* Promo Type */}
+          <CustomSelect
+            label="Tipe Promo"
+            value={form.promoType}
+            onChange={(v: any) => updateField('promoType', v)}
+            options={[
+              { value: 'discount', label: 'Diskon' },
+              { value: 'bxgy', label: 'Beli X Gratis Y' },
+            ]}
+          />
 
           {/* Diskon */}
-          <div>
-            <label className="text-sm font-medium text-white block mb-2">Diskon</label>
+          {form.promoType === 'discount' && (
+            <div>
+              <label className="text-sm font-medium text-white block mb-2">Tipe Diskon</label>
 
-            <div className="flex gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => updateField('tipeDiskon', 'percent')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => updateField('tipeDiskon', 'percent')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                    form.tipeDiskon === 'percent'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  %
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateField('tipeDiskon', 'nominal')}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                    form.tipeDiskon === 'nominal'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  Rp
+                </button>
+              </div>
+
+              <input
+                type="number"
+                value={form.nilaiDiskon}
+                onChange={(e) => updateField('nilaiDiskon', e.target.value)}
+                placeholder={
                   form.tipeDiskon === 'percent'
-                    ? 'bg-gray-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                %
-              </button>
-
-              <button
-                type="button"
-                onClick={() => updateField('tipeDiskon', 'nominal')}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                  form.tipeDiskon === 'nominal'
-                    ? 'bg-gray-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Rp
-              </button>
+                    ? 'Masukkan persentase (contoh: 20)'
+                    : 'Masukkan nominal (contoh: 5000)'
+                }
+                className="bg-white rounded-lg w-full p-3"
+              />
             </div>
+          )}
 
+          {/* Beli X Gratis Y */}
+          {form.promoType === 'bxgy' && (
+            <>
+              <div>
+                <label className="text-sm font-medium text-white block mb-2">Beli X</label>
+                <input
+                  type="number"
+                  value={form.buyQuantity || ''}
+                  onChange={(e) => updateField('buyQuantity', e.target.value)}
+                  className="bg-white rounded-lg w-full p-3"
+                  placeholder="Jumlah beli"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-white block mb-2">Gratis Y</label>
+                <input
+                  type="number"
+                  value={form.freeQuantity || ''}
+                  onChange={(e) => updateField('freeQuantity', e.target.value)}
+                  className="bg-white rounded-lg w-full p-3"
+                  placeholder="Jumlah gratis"
+                />
+              </div>
+              <CustomSelect
+                label="Produk Gratis"
+                value={form.applicableProducts || []}
+                onChange={(v: any) => updateField('applicableProducts', v)}
+                options={produkList.map((p) => ({ value: p.id, label: p.nama }))}
+                multiple
+              />
+
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={form.isMultiple}
+                  onChange={(e) => updateField('isMultiple', e.target.checked)}
+                />
+                <label className="text-white">Berlaku Kelipatan</label>
+              </div>
+            </>
+          )}
+
+          {/* Kuota Opsional*/}
+          <div className="flex items-center gap-2">
             <input
-              type="number"
-              value={form.nilaiDiskon}
-              onChange={(e) => updateField('nilaiDiskon', e.target.value)}
-              placeholder={
-                form.tipeDiskon === 'percent'
-                  ? 'Masukkan persentase (contoh: 20)'
-                  : 'Masukkan nominal (contoh: 5000)'
-              }
-              className="bg-white rounded-lg w-full p-3"
+              type="checkbox"
+              checked={form.useQuota || false}
+              onChange={(e) => updateField('useQuota', e.target.checked)}
             />
+            <label className="text-white">Gunakan Kuota</label>
           </div>
-
-          {/* Kuota */}
-          <div>
-            <label className="text-sm font-medium text-white block mb-2">Kuota</label>
+          {form.useQuota && (
             <input
               type="number"
-              value={form.kuota}
+              value={form.kuota || ''}
               onChange={(e) => updateField('kuota', e.target.value)}
-              className="bg-white rounded-lg w-full p-3"
-              placeholder="Masukkan jumlah kuota"
+              className="bg-white rounded-lg w-full p-3 mt-2"
+              placeholder="Jumlah kuota"
             />
-          </div>
+          )}
 
           {/* Stacking */}
           <CustomSelect
@@ -326,6 +650,16 @@ export default function TambahPromo({ onClose, onSave, produkList = [] }: Tambah
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Tampil di Dashboard */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.showOnDashboard}
+              onChange={(e) => updateField('showOnDashboard', e.target.checked)}
+            />
+            <label className="text-white">Tampil di Dashboard</label>
           </div>
 
           {/* Tombol Simpan */}
