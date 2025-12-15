@@ -5,8 +5,6 @@ import HeaderAdmin from '@/components/HeaderAdmin'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-
-// Recharts — hanya komponen chart
 import {
   LineChart, Line,
   BarChart, Bar,
@@ -14,8 +12,6 @@ import {
   PieChart, Pie, Cell,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts'
-
-// Icons (lucide-react)
 import { Download, CalendarClock, AlertTriangle, Wallet, Users, ShoppingCart, BarChart2, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 import { downloadPDF } from "@/utils/downloadPDF";
@@ -329,7 +325,6 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
-
             </div>
           </section>
 
@@ -410,65 +405,65 @@ export default function DashboardPage() {
             </div>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
-<BarChart 
-  data={dataKinerjaKasir} 
-  layout="vertical" 
-  margin={{ top: -10, right: 30, left: -5, bottom: 5 }} /* Margin Top dinaikkan untuk sumbu atas */
->
-  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-  
-  {/* Sumbu Y (Category/Nama Kasir) tetap sama */}
-  <YAxis dataKey="name" type="category" width={80} />
-  
-<Tooltip 
-  // Perbaikan: Pastikan 'name' adalah string sebelum menggunakan 'includes()'
-  formatter={(value, name) => {
-    // Memastikan name adalah string (atau konversi ke string)
-    const seriesName = String(name); 
+                <BarChart 
+                  data={dataKinerjaKasir} 
+                  layout="vertical" 
+                  margin={{ top: -10, right: 30, left: -5, bottom: 5 }} /* Margin Top dinaikkan untuk sumbu atas */
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  
+                  {/* Sumbu Y (Category/Nama Kasir) tetap sama */}
+                  <YAxis dataKey="name" type="category" width={80} />
+                  
+                <Tooltip 
+                  // Perbaikan: Pastikan 'name' adalah string sebelum menggunakan 'includes()'
+                  formatter={(value, name) => {
+                    // Memastikan name adalah string (atau konversi ke string)
+                    const seriesName = String(name); 
 
-    if (seriesName.includes('Rp')) {
-      // Jika nama series mengandung 'Rp' (yaitu Total Penjualan), format sebagai Rupiah
-      return rupiah(value as number); 
-    }
-    // Jika tidak (yaitu Jumlah Transaksi), tampilkan nilai sebagai string biasa
-    return value?.toString();
-  }} 
-/>
-  <Legend />
+                    if (seriesName.includes('Rp')) {
+                      // Jika nama series mengandung 'Rp' (yaitu Total Penjualan), format sebagai Rupiah
+                      return rupiah(value as number); 
+                    }
+                    // Jika tidak (yaitu Jumlah Transaksi), tampilkan nilai sebagai string biasa
+                    return value?.toString();
+                  }} 
+                />
+                  <Legend />
 
-  {/* 1. XAxis untuk Total Penjualan (Rp) - Skala Besar (Jutaan) */}
-  <XAxis 
-      type="number" 
-      hide={false} // Tampilkan sumbu agar user tahu skalanya
-      height={25} 
-      stroke={THEME_PRIMARY}
-      tickFormatter={(value) => `Rp ${(value as number / 1000000).toFixed(1)} Jt`} // Format agar ringkas (Rp 4.5 Jt)
-  /> 
-  
-  {/* 2. XAxis untuk Jumlah Transaksi - Skala Kecil (Ratusan) */}
-  <XAxis 
-      type="number" 
-      orientation="top" // Letakkan di atas chart
-      xAxisId="transaksiId" // ID unik untuk Bar Transaksi
-      hide={false} // Tampilkan sumbu agar user tahu skalanya
-      stroke={THEME_ACCENT}
-      // Opsional: Pastikan nilai tampil sebagai bilangan bulat
-      tickFormatter={(value) => `${Math.round(value as number)}`} 
-  /> 
+                  {/* 1. XAxis untuk Total Penjualan (Rp) - Skala Besar (Jutaan) */}
+                  <XAxis 
+                      type="number" 
+                      hide={false} // Tampilkan sumbu agar user tahu skalanya
+                      height={25} 
+                      stroke={THEME_PRIMARY}
+                      tickFormatter={(value) => `Rp ${(value as number / 1000000).toFixed(1)} Jt`} // Format agar ringkas (Rp 4.5 Jt)
+                  /> 
+                  
+                  {/* 2. XAxis untuk Jumlah Transaksi - Skala Kecil (Ratusan) */}
+                  <XAxis 
+                      type="number" 
+                      orientation="top" // Letakkan di atas chart
+                      xAxisId="transaksiId" // ID unik untuk Bar Transaksi
+                      hide={false} // Tampilkan sumbu agar user tahu skalanya
+                      stroke={THEME_ACCENT}
+                      // Opsional: Pastikan nilai tampil sebagai bilangan bulat
+                      tickFormatter={(value) => `${Math.round(value as number)}`} 
+                  /> 
 
-  {/* Bar Total Penjualan menggunakan XAxis default */}
-  <Bar dataKey="total" name="Total Penjualan (Rp)" fill={THEME_PRIMARY} radius={[0, 4, 4, 0]} barSize={15} />
-  
-  {/* Bar Jumlah Transaksi - Hubungkan ke sumbu X yang skalanya ratusan */}
-  <Bar 
-      dataKey="transaksi" 
-      name="Jumlah Transaksi" 
-      fill={THEME_ACCENT} 
-      radius={[0, 4, 4, 0]} 
-      barSize={15} 
-      xAxisId="transaksiId" // PENTING: Gunakan ID sumbu yang berbeda
-  /> 
-</BarChart>
+                  {/* Bar Total Penjualan menggunakan XAxis default */}
+                  <Bar dataKey="total" name="Total Penjualan (Rp)" fill={THEME_PRIMARY} radius={[0, 4, 4, 0]} barSize={15} />
+                  
+                  {/* Bar Jumlah Transaksi - Hubungkan ke sumbu X yang skalanya ratusan */}
+                  <Bar 
+                      dataKey="transaksi" 
+                      name="Jumlah Transaksi" 
+                      fill={THEME_ACCENT} 
+                      radius={[0, 4, 4, 0]} 
+                      barSize={15} 
+                      xAxisId="transaksiId" // PENTING: Gunakan ID sumbu yang berbeda
+                  /> 
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>

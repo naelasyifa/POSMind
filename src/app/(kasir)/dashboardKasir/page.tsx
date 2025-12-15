@@ -1,3 +1,5 @@
+
+// DashboardKasir.tsx
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -30,14 +32,12 @@ import {
     Smartphone,
 } from 'lucide-react'
 
-import ShiftForm from './components/ShiftForm'
-
-// Asumsi komponen QuickActions dan SummaryCard diimpor di sini
-// import QuickActions from './components/QuickActions'
-// import SummaryCard from './components/SummaryCard'
+// PENTING: Import komponen Tutup Shift yang baru
+import CloseShiftForm from './components/TutupShift';
+import ShiftForm from './components/BukaShift'
 
 /* =============================
-    UTIL: FORMAT RUPIAH
+    UTIL: FORMAT RUPIAH
 ============================= */
 const formatNumber = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -48,9 +48,7 @@ const formatNumber = (num: number) => {
     }).format(num).replace('Rp', '').trim()
 }
 
-/* =============================
-    IMAGE MAP
-============================= */
+// ... (IMAGE MAP, PAYMENT ICON MAP, ORDER STATUS ICON MAP - Tetap sama) ...
 const PRODUCT_IMAGE_MAP: { [key: string]: string } = {
     'Nasi Goreng Spesial': '/images/nasi_goreng_spesial.jpg',
     'Es Kopi Susu': '/images/es_kopi_susu.jpg',
@@ -60,9 +58,6 @@ const PRODUCT_IMAGE_MAP: { [key: string]: string } = {
     'diskon 30 persen': '/images/promo_30.jpg',
 }
 
-/* =============================
-    PAYMENT ICON MAP
-============================= */
 const PAYMENT_METHOD_ICONS: { [key: string]: React.ReactElement } = {
     'QRIS': <ScanLine size={20} className="text-green-600" />,
     'Cash': <HandCoins size={20} className="text-blue-600" />,
@@ -72,24 +67,22 @@ const PAYMENT_METHOD_ICONS: { [key: string]: React.ReactElement } = {
     'Unknown': <Wallet size={20} className="text-gray-500" />,
 }
 
-/* =============================
-    ORDER STATUS ICON MAP
-============================= */
 const ORDER_STATUS_ICONS: { [key: string]: React.ReactElement } = {
     'dalam_proses': <Hourglass size={20} className="text-yellow-600" />,
     'selesai': <CheckCircle size={20} className="text-green-600" />,
     'dibatalkan': <Ban size={20} className="text-red-600" />,
 }
 
+
 /* =============================
-    MAIN COMPONENT
+    MAIN COMPONENT
 ============================= */
 export default function DashboardKasir() {
     const router = useRouter()
 
     /* =============================
-        SHIFT STATE (LOCAL STORAGE)
-    ============================== */
+        SHIFT STATE (LOCAL STORAGE)
+    ============================== */
     const [shiftOpen, setShiftOpen] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('shiftOpen') === 'true'
@@ -126,19 +119,21 @@ export default function DashboardKasir() {
     const [isClient, setIsClient] = useState(false)
 
     /* =============================
-        SHIFT FORM / ALERT STATE
-    ============================== */
+        SHIFT FORM / ALERT STATE
+    ============================== */
     const [showShiftAlert, setShowShiftAlert] = useState(() => !shiftOpen)
     const [showShiftForm, setShowShiftForm] = useState(false)
+    // STATE BARU UNTUK MODAL TUTUP SHIFT
+    const [showCloseShiftModal, setShowCloseShiftModal] = useState(false) 
 
     /* =============================
-        IDENTITAS KASIR
-    ============================== */
+        IDENTITAS KASIR
+    ============================== */
     const kasirName = 'Ruby Nana'
 
     /* =============================
-        DATA DUMMY (TRANSAKSI)
-    ============================== */
+        DATA DUMMY (TRANSAKSI)
+    ============================== */
     const staticNow = useMemo(() => new Date(), [])
 
     const [transactions, setTransactions] = useState<Array<any>>([
@@ -150,8 +145,8 @@ export default function DashboardKasir() {
     ])
 
     /* =============================
-        DATA MEJA (3 LANTAI)
-    ============================== */
+        DATA MEJA (3 LANTAI)
+    ============================== */
     const [selectedFloor, setSelectedFloor] = useState('Lantai 1')
     const [tables] = useState([
         { id: 1, floor: 'Lantai 1', name: 'Bar', status: 'terisi', pax: 1, customer: 'John Doe' },
@@ -161,8 +156,8 @@ export default function DashboardKasir() {
     ])
 
     /* =============================
-        STOK MENIPIS
-    ============================== */
+        STOK MENIPIS
+    ============================== */
     const [stocks] = useState([
         { id: 1, name: 'Chicken Parmesan', qty: 2, threshold: 5 },
         { id: 2, name: 'French Fries', qty: 0, threshold: 10 },
@@ -171,15 +166,15 @@ export default function DashboardKasir() {
     ])
 
     /* =============================
-        ACTIVITY LOG
-    ============================== */
+        ACTIVITY LOG
+    ============================== */
     const [activities, setActivities] = useState([
         { id: 1, text: 'Dashboard dibuka', time: staticNow }
     ])
 
     /* =============================
-        POPULAR PRODUCTS
-    ============================== */
+        POPULAR PRODUCTS
+    ============================== */
     const [popularProducts] = useState([
         { name: 'Nasi Goreng Spesial', timesOrdered: 125, imagePath: PRODUCT_IMAGE_MAP['Nasi Goreng Spesial'] },
         { name: 'Es Kopi Susu', timesOrdered: 98, imagePath: PRODUCT_IMAGE_MAP['Es Kopi Susu'] },
@@ -188,8 +183,8 @@ export default function DashboardKasir() {
     ])
 
     /* =============================
-        TIMER
-    ============================== */
+        TIMER
+    ============================== */
     useEffect(() => {
         setNow(new Date())
         // Mengatur isClient=true setelah komponen mount
@@ -199,8 +194,8 @@ export default function DashboardKasir() {
     }, [])
 
     /* =============================
-        LOCAL STORAGE SYNC
-    ============================== */
+        LOCAL STORAGE SYNC
+    ============================== */
     useEffect(() => {
         if (typeof window !== 'undefined') {
             localStorage.setItem('shiftOpen', shiftOpen.toString())
@@ -219,8 +214,8 @@ export default function DashboardKasir() {
 
 
     /* =============================
-        COMPUTED SUMMARY
-    ============================== */
+        COMPUTED SUMMARY
+    ============================== */
     const summary = useMemo(() => {
         const total = transactions.length
         const selesai = transactions.filter(t => t.status === 'selesai').length
@@ -240,8 +235,8 @@ export default function DashboardKasir() {
     }, [transactions, tables])
 
     /* =============================
-        PAYMENT DETAILS
-    ============================== */
+        PAYMENT DETAILS
+    ============================== */
     const paymentDetails = useMemo(() => {
         const map: Record<string, { count: number; total: number }> = {}
         transactions.forEach((t) => {
@@ -260,8 +255,8 @@ export default function DashboardKasir() {
     const lowStocks = stocks.filter((s) => s.qty <= s.threshold)
 
     /* =============================
-        SHIFT ACTIONS
-    ============================== */
+        SHIFT ACTIONS
+    ============================== */
     const pushActivity = (text: string) => {
         setActivities(prev => [
             { id: Date.now(), text, time: new Date() },
@@ -302,9 +297,13 @@ export default function DashboardKasir() {
         pushActivity(`Shift ditutup oleh ${kasirName} pada ${formatTime(ended)}`)
     }
 
+    // LOGIKA BARU: Jika shift terbuka, buka modal Tutup Shift
     const toggleShift = () => {
-        if (shiftOpen) closeShift()
-        else setShowShiftForm(true)
+        if (shiftOpen) {
+            setShowCloseShiftModal(true) // Buka modal Tutup Shift
+        } else {
+            setShowShiftForm(true) // Buka modal Buka Shift
+        }
     }
 
     const handleOpenShiftAlert = () => {
@@ -316,10 +315,31 @@ export default function DashboardKasir() {
         setShowShiftForm(false)
         if (!shiftOpen) setShowShiftAlert(true)
     }, [shiftOpen])
+    
+    // LOGIKA BARU: Handle submit dari modal Tutup Shift
+    const handleCloseShiftSubmit = (actualCash: number, note: string) => {
+        // Logika pengiriman data audit (simulasi)
+        console.log("AUDIT DATA SENT:", { 
+            shiftStart, 
+            initialCapital, 
+            expectedCash: totalCash, 
+            actualCash, 
+            note 
+        });
+        
+        // 1. Tutup modal
+        setShowCloseShiftModal(false);
+        
+        // 2. Jalankan fungsi penutupan shift lokal (membersihkan localStorage)
+        closeShift();
+        
+        // 3. Status 'Shift Belum Dibuka' akan otomatis muncul
+    }
+
 
     /* =============================
-        FORMAT TIME & DURATION
-    ============================== */
+        FORMAT TIME & DURATION
+    ============================== */
     const pad = (n: number) => n.toString().padStart(2, '0')
 
     const formatDuration = (from: Date | null, to: Date | null = now) => {
@@ -336,8 +356,8 @@ export default function DashboardKasir() {
     }
 
     /* =============================
-        ADD DUMMY TRANSACTION
-    ============================== */
+        ADD DUMMY TRANSACTION
+    ============================== */
     const addDummyTransaction = (opt: { status?: string; amount?: number; payment?: string; table?: number }) => {
         if (!shiftOpen) {
             alert('Shift belum dibuka.')
@@ -357,11 +377,9 @@ export default function DashboardKasir() {
         pushActivity(`Transaksi baru: ${t.id} (${t.payment}) Rp ${formatNumber(t.amount)}`)
     }
 
-    const totalCash = initialCapital + summary.cashIn
+    // Total Kas Expected (Modal Awal + Semua Cash In dari transaksi)
+    const totalCash = initialCapital + summary.cashIn 
 
-    /* =============================
-    SHIFT ALERT POPUP
-============================= */
     const ShiftAlert = () => (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
             <div className="bg-white rounded-xl shadow-2xl p-10 text-center w-full max-w-sm relative">
@@ -379,23 +397,29 @@ export default function DashboardKasir() {
         </div>
     )
 
-    const isLocked = showShiftForm || (showShiftAlert && !shiftOpen)
+    // PERBAIKAN: isLocked harus mencakup showCloseShiftModal
+    const isLocked = showShiftForm || (showShiftAlert && !shiftOpen) || showCloseShiftModal
 
-    /* =============================
-    === RENDER (JSX)
-============================= */
     return (
         <div className="flex min-h-screen bg-[#52bfbe] relative">
-
-            {/* === GLOBAL BLUR OVERLAY (Menutup Sidebar + Dashboard) === */}
-            {/* PERBAIKAN HYDRATION: Hanya render di client setelah isClient=true */}
             {isClient && isLocked && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-40"></div>
             )}
-
-            {/* POPUPS (SELALU DI DEPAN OVERLAY) */}
-            {/* PERBAIKAN HYDRATION: Hanya render di client setelah isClient=true */}
+            
+            {/* 1. Modal Buka Shift */}
             {isClient && showShiftForm && <ShiftForm onOpen={openShift} onClose={handleCloseShiftForm} />}
+            
+            {/* 2. Modal Tutup Shift (BARU) */}
+            {isClient && showCloseShiftModal && (
+                <CloseShiftForm 
+                    expectedCash={totalCash} // Menggunakan totalCash yang dihitung
+                    shiftId={`SH-${shiftStart?.toISOString().slice(0, 10) || '000'}-${currentShiftName}`} 
+                    onClose={() => setShowCloseShiftModal(false)}
+                    onSubmit={handleCloseShiftSubmit} // Panggil fungsi submit yang baru
+                />
+            )}
+            
+            {/* 3. Alert Shift Belum Dibuka */}
             {isClient && showShiftAlert && !shiftOpen && !showShiftForm && <ShiftAlert />}
 
             {/* MAIN CONTAINER */}
@@ -403,23 +427,16 @@ export default function DashboardKasir() {
 
                 {/* SIDEBAR */}
                 <Sidebar />
-
+                <HeaderKasir title="Dashboard" showBack={false} />
                 {/* MAIN CONTENT */}
                 <div className="flex-1 flex flex-col">
-
-                    {/* HEADER - Disesuaikan untuk menyejajarkan Judul dan Shift Panel */}
                     <div className="flex items-start justify-between pr-6 pt-10">
-                        
-                        {/* KONTEN KIRI: JUDUL DASHBOARD (Menggantikan HeaderKasir dan dipindahkan dari MAIN AREA) */}
-                        {/* Di sini ml-28 digunakan untuk menggeser judul agar sejajar dengan konten di bawahnya */}
                         <div className="pl-8 ml-28 flex flex-col justify-start">
-                             {/* Hapus HeaderKasir jika tidak diperlukan lagi */}
                             <h1 className="text-4xl font-extrabold text-white">
                                 Selamat Bertugas, {kasirName.split(' ')[0]}!
                             </h1>
                             <p className="text-lg text-white/80 mt-1">Siap melayani hari ini.</p>
                         </div>
-                        
 
                         {/* SHIFT PANEL (KONTEN KANAN) */}
                         <div className="flex items-center gap-5 bg-[#737373] px-5 py-2 rounded-xl shadow text-white">
@@ -452,10 +469,11 @@ export default function DashboardKasir() {
 
                             <div className="border-r h-6 opacity-40"></div>
 
-                            {/* SHIFT BUTTON */}
+                            {/* SHIFT BUTTON - MENGGUNAKAN toggleShift yang baru */}
                             <button
                                 onClick={toggleShift}
-                                disabled={showShiftForm}
+                                // Matikan tombol jika sedang ada modal buka/tutup shift yang aktif
+                                disabled={showShiftForm || showCloseShiftModal} 
                                 className={`px-4 py-1 rounded-md font-medium transition ${
                                     shiftOpen
                                         ? 'bg-white text-gray-700 border border-gray-300'
@@ -520,7 +538,6 @@ export default function DashboardKasir() {
                                     </div>
                                 </div>
                             </div>
-
 
                             {/* STATUS & PAYMENT DETAIL */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
