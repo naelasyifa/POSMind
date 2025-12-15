@@ -1,13 +1,11 @@
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@/payload.config'
+import { getPayloadClient } from '@/app/payloadClient'
 
 export async function GET() {
   try {
-    const payload = await getPayload({ config })
-
+    const payload = await getPayloadClient()
     const data = await payload.find({
       collection: 'transactions',
       sort: '-createdAt',

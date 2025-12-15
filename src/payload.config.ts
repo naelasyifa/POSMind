@@ -8,7 +8,6 @@ import sharp from 'sharp'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import type { Endpoint } from 'payload'
 
-
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -18,6 +17,9 @@ import Transactions from './collections/Transactions'
 import Notifications from './collections/Notifications'
 import Payments from './collections/Payments'
 import Reservations from './collections/Reservations'
+import { Cat } from 'lucide-react'
+import Categories from './collections/Categories'
+import StoreSettings from './collections/storeSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,6 +30,11 @@ console.log('Collections Loaded:', [
   Promos.slug,
   Products.slug,
   Transactions.slug,
+  Categories.slug,
+  Payments.slug,
+  Notifications.slug,
+  Reservations.slug,
+  StoreSettings.slug,
 ])
 
 const sendOtpEndpoint: any = {
@@ -35,16 +42,16 @@ const sendOtpEndpoint: any = {
   method: 'post',
   handler: async (context: any) => {
     const { req, payload, data } = context
-    const email = req.body.email;
-    if (!email) return Response.json({ error: 'Email kosong' }, { status: 400 });
+    const email = req.body.email
+    if (!email) return Response.json({ error: 'Email kosong' }, { status: 400 })
 
     const existing = await req.payload.find({
       collection: 'users',
       where: { email: { equals: email } },
       limit: 1,
-    });
+    })
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
     if (existing.totalDocs === 0) {
       await req.payload.create({
@@ -52,28 +59,27 @@ const sendOtpEndpoint: any = {
         data: {
           email,
           otp,
-          otpExpiration: new Date(Date.now() + 5*60*1000),
+          otpExpiration: new Date(Date.now() + 5 * 60 * 1000),
           isBusinessUser: true,
         },
-      });
+      })
     } else {
       await req.payload.update({
         collection: 'users',
         id: existing.docs[0].id,
-        data: { otp, otpExpiration: new Date(Date.now() + 5*60*1000) },
-      });
+        data: { otp, otpExpiration: new Date(Date.now() + 5 * 60 * 1000) },
+      })
     }
 
     await req.payload.sendEmail({
       to: email,
       subject: 'Kode OTP POS Mind',
       html: `<p>Kode OTP kamu adalah: <strong>${otp}</strong></p>`,
-    });
+    })
 
-    return Response.json({ success: true });
+    return Response.json({ success: true })
   },
-};
-
+}
 
 export default buildConfig({
   admin: {
@@ -93,6 +99,8 @@ export default buildConfig({
     Payments,
     Notifications,
     Reservations,
+    Categories,
+    StoreSettings,
   ],
 
   email: nodemailerAdapter({

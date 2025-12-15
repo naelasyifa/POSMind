@@ -5,13 +5,16 @@ export const Media: CollectionConfig = {
 
   access: {
     read: () => true,
+    create: () => true,
+    update: () => true,
+    delete: () => true,
   },
 
   upload: {
     mimeTypes: ['image/*'],
-    
+
     adminThumbnail: ({ doc }) => {
-      return typeof doc.url === 'string' ? doc.url : '';
+      return typeof doc.url === 'string' ? doc.url : ''
     },
   },
 

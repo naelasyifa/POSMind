@@ -2,22 +2,60 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { MoreVertical } from 'lucide-react'
+import {
+  Pizza,
+  Beef,
+  Drumstick,
+  Sandwich,
+  CupSoda,
+  Coffee,
+  IceCream,
+  Fish,
+  Utensils,
+  Croissant,
+  FlaskConical,
+  Package,
+} from 'lucide-react'
+
+const ICON_OPTIONS = [
+  { name: 'Pizza', icon: Pizza },
+  { name: 'Burger', icon: Beef },
+  { name: 'Ayam', icon: Drumstick },
+  { name: 'Roti', icon: Sandwich },
+  { name: 'Minuman', icon: CupSoda },
+  { name: 'Kopi', icon: Coffee },
+  { name: 'Dessert', icon: IceCream },
+  { name: 'Seafood', icon: Fish },
+  { name: 'Makanan Berat', icon: Utensils },
+  { name: 'Sarapan', icon: Croissant },
+  { name: 'Saus', icon: FlaskConical },
+  { name: 'Package', icon: Package },
+]
 
 export type CategoryItem = {
-  id: number
+  id: string | number
   name: string
   count: number
   icon: React.ComponentType<{ size?: number; className?: string }>
+  mediaId?: string
 }
 
 type Props = {
   categories: CategoryItem[]
   onEdit: (cat: CategoryItem) => void
   onDelete: (cat: CategoryItem) => void
+  activeCategory: string
+  onCategoryClick: (name: string) => void
 }
 
-export default function CategoryList({ categories, onEdit, onDelete }: Props) {
-  const [active, setActive] = useState<string>(categories[0]?.name || '')
+export default function CategoryList({
+  categories,
+  onEdit,
+  onDelete,
+  activeCategory,
+  onCategoryClick,
+}: Props) {
+  // const [active, setActive] = useState<string>(categories[0]?.name || '')
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -37,15 +75,15 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
     <div className="flex items-center justify-between mb-6">
       <div className="flex gap-4 flex-wrap">
         {categories.map((cat) => (
-          <div key={cat.id} className="relative">
+          <div key={`${cat.id}-${cat.name}`} className="relative">
             {/* CHANGE button -> div */}
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setActive(cat.name)}
+              onClick={() => onCategoryClick(cat.name)}
               className={`rounded-xl p-4 w-28 h-28 shadow-sm transition cursor-pointer flex flex-col justify-between
                 ${
-                  active === cat.name
+                  activeCategory === cat.name
                     ? 'bg-[#737373] text-white scale-105 shadow-md'
                     : 'bg-white text-gray-700 hover:bg-[#737373]/70 hover:text-white'
                 }
@@ -54,7 +92,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
               <div className="w-full flex justify-end">
                 <cat.icon
                   size={28}
-                  className={active === cat.name ? 'text-white' : 'text-inherit'}
+                  className={activeCategory === cat.name ? 'text-white' : 'text-inherit'}
                 />
               </div>
 
@@ -62,7 +100,7 @@ export default function CategoryList({ categories, onEdit, onDelete }: Props) {
                 <div className="text-left">
                   <div className="text-sm font-semibold">{cat.name}</div>
                   <div
-                    className={`text-xs ${active === cat.name ? 'text-white/80' : 'text-inherit'}`}
+                    className={`text-xs ${activeCategory === cat.name ? 'text-white/80' : 'text-inherit'}`}
                   >
                     {cat.count}
                   </div>

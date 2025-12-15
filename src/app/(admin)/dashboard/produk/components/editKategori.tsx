@@ -41,24 +41,61 @@ export default function EditKategori({ isOpen, onClose, category, onSave }: Edit
   const [name, setName] = useState('')
   const [selectedIcon, setSelectedIcon] = useState('Package')
   const [showIconPicker, setShowIconPicker] = useState(false)
+  const [iconFile, setIconFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
 
   // Load category on open
   useEffect(() => {
     if (category) {
       setName(category.name)
-      setSelectedIcon(category.icon.name || 'Package')
+      setSelectedIcon(category.icon?.name || 'Package')
+      setIconFile(null)
     }
   }, [category])
 
-  const handleSave = () => {
-    if (!name.trim() || !category) return
+  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setIconFile(e.target.files[0])
+    }
+  }
 
-    const newIcon = ICON_OPTIONS.find((i) => i.name === selectedIcon)?.icon || Package
+  const handleSave = async () => {
+    if (!name.trim() || !category) return
+    setLoading(true)
+
+    let ikonId = undefined
+
+    if (iconFile) {
+      const formData = new FormData()
+      formData.append('file', iconFile)
+      formData.append('alt', name)
+
+      // upload icon ke Payload media
+      const res = await fetch('/api/frontend/uploadMedia', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      ikonId = data.id
+    }
+
+    // PATCH category
+    await fetch('/api/frontend/categories', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: category.id,
+        nama: name,
+        ikonId,
+      }),
+    })
+
+    setLoading(false)
 
     onSave({
       ...category,
       name,
-      icon: newIcon,
+      icon: ICON_OPTIONS.find((i) => i.name === selectedIcon)?.icon || Package,
     })
 
     onClose()
@@ -100,8 +137,7 @@ export default function EditKategori({ isOpen, onClose, category, onSave }: Edit
 
             <div className="w-16 h-16 flex items-center justify-center rounded-xl border border-gray-300 bg-gray-50">
               {(() => {
-                const Icon =
-                  ICON_OPTIONS.find((ic) => ic.name === selectedIcon)?.icon || Package
+                const Icon = ICON_OPTIONS.find((ic) => ic.name === selectedIcon)?.icon || Package
                 return <Icon size={32} className="text-[#52BFBE]" />
               })()}
             </div>
@@ -132,9 +168,10 @@ export default function EditKategori({ isOpen, onClose, category, onSave }: Edit
         <div className="pt-6">
           <button
             onClick={handleSave}
-            className="w-full bg-[#52BFBE] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
+            disabled={loading}
+            className="w-full bg-[#52BFBE] hover:bg-[#32A9A4] text-white py-2 rounded-lg font-medium"
           >
-            Simpan Perubahan
+            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
 

@@ -6,22 +6,22 @@ interface EditProductProps {
   isOpen: boolean
   onClose: () => void
   productData: {
-    id: number
-    name: string
-    stock: number
+    id: string
+    nama: string
+    stok: number
     status: string
-    category: string
-    price: number
-    image: string
+    kategori: { nama: string }
+    harga: number
+    gambar?: { url: string }
   } | null
   onSave: (updatedProduct: {
-    id: number
-    name: string
-    stock: number
+    id: string
+    nama: string
+    stok: number
     status: string
-    category: string
-    price: number
-    image: string
+    kategori: { nama: string }
+    harga: number
+    gambar?: { url: string }
   }) => void
 }
 
@@ -29,8 +29,10 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
   const [harga, setHarga] = useState('')
-  const [kategori, setKategori] = useState<string[]>([])
-  const [selectedKategori, setSelectedKategori] = useState('')
+  const [kategori, setKategori] = useState<{ id: string; name: string }[]>([])
+  const [selectedKategori, setSelectedKategori] = useState<{ id: string; name: string } | null>(
+    null,
+  )
   const [newKategori, setNewKategori] = useState('')
   const [gambar, setGambar] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -39,19 +41,22 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
 
   useEffect(() => {
     if (productData) {
-      setNama(productData.name)
-      setKuantitas(productData.stock.toString())
-      setHarga(productData.price.toString())
-      setSelectedKategori(productData.category)
-      setGambar(productData.image)
+      setNama(productData.nama)
+      setKuantitas(productData.stok.toString())
+      setHarga(productData.harga.toString())
+      setSelectedKategori(
+        productData.kategori ? { id: '0', name: productData.kategori.nama } : null,
+      )
+      setGambar(productData.gambar?.url || null)
       setManualId(productData.id.toString()) // <-- load existing ID
       setUseAutoId(false) // <-- default: manual is enabled
     }
   }, [productData])
 
   const handleAddCategory = () => {
-    if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
-      setKategori([...kategori, newKategori])
+    if (newKategori.trim() !== '') {
+      const newCat = { id: Date.now().toString(), name: newKategori }
+      setKategori([...kategori, newCat])
       setNewKategori('')
     }
   }
@@ -70,13 +75,13 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
   const handleSubmit = () => {
     if (nama && selectedKategori && kuantitas && harga && productData) {
       onSave({
-        id: useAutoId ? Date.now() : Number(manualId),
-        name: nama,
-        stock: Number(kuantitas),
+        id: useAutoId ? Date.now().toString() : manualId,
+        nama: nama,
+        stok: Number(kuantitas),
         status: productData.status,
-        category: selectedKategori,
-        price: Number(harga),
-        image: gambar || productData.image,
+        kategori: { nama: selectedKategori.name },
+        harga: Number(harga),
+        gambar: gambar ? { url: gambar } : productData.gambar,
       })
       onClose()
     }
@@ -212,15 +217,18 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
             <p className="block text-sm font-medium text-gray-700 mb-1">Kategori</p>
             <select
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-              value={selectedKategori}
-              onChange={(e) => setSelectedKategori(e.target.value)}
+              value={selectedKategori?.id || ''}
+              onChange={(e) => {
+                const selected = kategori.find((k) => k.id === e.target.value) || null
+                setSelectedKategori(selected)
+              }}
             >
               <option value="" disabled>
                 Pilih kategori
               </option>
-              {kategori.map((kategori, index) => (
-                <option key={index} value={kategori}>
-                  {kategori}
+              {kategori.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.name}
                 </option>
               ))}
             </select>

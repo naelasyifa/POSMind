@@ -84,7 +84,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               placeholder="Nama Pengguna"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
             />
           </div>
 
@@ -96,7 +96,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Pengguna"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
             />
           </div>
 
@@ -108,7 +108,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
               <button
                 type="button"
                 onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] bg-white text-left ${role ? 'text-gray-900' : 'text-gray-500'}`}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-[#52bfbe] bg-white text-left ${role ? 'text-gray-900' : 'text-gray-500'}`}
               >
                 {getRoleLabel()}
               </button>
@@ -164,7 +164,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password login pengguna"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4]"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#52bfbe]"
               />
               {password !== '' && (
                 <button
@@ -200,7 +200,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
                   <button
                     type="button"
                     onClick={() => toggleAkses(index)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all ${akses[index] ? 'border-[#3ABAB4] bg-[#3ABAB4]' : 'border-gray-400 bg-gray-200'}`}
+                    className={`w-7 h-7 rounded-full border-2 transition-all ${akses[index] ? 'border-[#52bfbe] bg-[#52bfbe]' : 'border-gray-400 bg-gray-200'}`}
                     title={col}
                   />
                 </div>
@@ -212,7 +212,7 @@ export default function AddUser({ isOpen, onClose, onAdd }: AddUserProps) {
           <div className="pt-6">
             <button
               onClick={handleSubmit}
-              className="w-full bg-[#3ABAB4] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
+              className="w-full bg-[#52bfbe] hover:bg-[#32A9A4] text-white py-2 rounded-lg transition-all font-medium"
             >
               Tambah
             </button>

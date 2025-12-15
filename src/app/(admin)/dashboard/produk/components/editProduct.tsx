@@ -2,59 +2,52 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+interface Product {
+  id: string
+  nama: string
+  stok: number
+  status: string
+  kategori: { id:string; nama: string }
+  harga: number
+  gambar?: { id: string; url: string }
+  sku?: string
+  useAutoSku?: boolean
+}
+
 interface EditProductProps {
   isOpen: boolean
   onClose: () => void
-  productData: {
-    id: number
-    name: string
-    stock: number
-    status: string
-    category: string
-    price: number
-    image: string
-  } | null
-  onSave: (updatedProduct: {
-    id: number
-    name: string
-    stock: number
-    status: string
-    category: string
-    price: number
-    image: string
-  }) => void
+  productData: Product | null
+  onSave: (updatedProduct: Product) => void
 }
 
 export default function EditProduk({ isOpen, onClose, productData, onSave }: EditProductProps) {
   const [nama, setNama] = useState('')
   const [kuantitas, setKuantitas] = useState('')
   const [harga, setHarga] = useState('')
-  const [kategori, setKategori] = useState<string[]>([])
+  // const [kategori, setKategori] = useState<string[]>([])
   const [selectedKategori, setSelectedKategori] = useState('')
-  const [newKategori, setNewKategori] = useState('')
+  // const [newKategori, setNewKategori] = useState('')
   const [gambar, setGambar] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [useAutoId, setUseAutoId] = useState(false)
-  const [manualId, setManualId] = useState('')
+  // const [useAutoId, setUseAutoId] = useState(false)
+  // const [manualId, setManualId] = useState('')
 
+  const [useAutoSku, setUseAutoSku] = useState(true)
+  const [skuManual, setSkuManual] = useState('')
+
+  // Load data terbaru saat productData berubah
   useEffect(() => {
     if (productData) {
-      setNama(productData.name)
-      setKuantitas(productData.stock.toString())
-      setHarga(productData.price.toString())
-      setSelectedKategori(productData.category)
-      setGambar(productData.image)
-      setManualId(productData.id.toString()) // <-- load existing ID
-      setUseAutoId(false) // <-- default: manual is enabled
+      setNama(productData.nama)
+      setKuantitas(productData.stok.toString())
+      setHarga(productData.harga.toString())
+      setSelectedKategori(productData.kategori.nama)
+      setGambar(productData.gambar?.url || '/images/image-placeholder.png')
+      setUseAutoSku(productData.sku ? false : true)
+      setSkuManual(productData.sku || '')
     }
   }, [productData])
-
-  const handleAddCategory = () => {
-    if (newKategori.trim() !== '' && !kategori.includes(newKategori)) {
-      setKategori([...kategori, newKategori])
-      setNewKategori('')
-    }
-  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -67,20 +60,36 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
     }
   }
 
-  const handleSubmit = () => {
-    if (nama && selectedKategori && kuantitas && harga && productData) {
-      onSave({
-        id: useAutoId ? Date.now() : Number(manualId),
-        name: nama,
-        stock: Number(kuantitas),
-        status: productData.status,
-        category: selectedKategori,
-        price: Number(harga),
-        image: gambar || productData.image,
+  const handleSubmit = async () => {
+    if (!productData) return
+
+    const updated = {
+      id: productData.id,
+      name: nama,
+      stock: Number(kuantitas),
+      status: productData.status,
+      category: selectedKategori,
+      price: Number(harga),
+      image: gambar || productData.gambar,
+      useAutoSku,
+      sku: useAutoSku ? undefined : skuManual,
+    }
+
+    try {
+      const res = await fetch('/api/frontend/menu', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
       })
+      const data = await res.json()
+      onSave(data)
       onClose()
+    } catch (err) {
+      console.error(err)
     }
   }
+
+  if (!isOpen) return null
 
   return (
     <>
@@ -151,47 +160,35 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
 
           {/* Product ID */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product ID</label>
-
+            <label className="block text-sm font-medium text-gray-700 mb-1">SKU Produk</label>
             <div className="flex items-center gap-3">
-              {/* ID Input */}
               <input
-                type="number"
-                value={useAutoId ? '' : manualId}
-                onChange={(e) => setManualId(e.target.value)}
-                placeholder={useAutoId ? 'Auto Generated' : 'Enter Product ID'}
-                disabled={useAutoId}
-                className={`flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#3ABAB4] ${
-                  useAutoId ? 'bg-gray-100 cursor-not-allowed' : ''
+                type="text"
+                value={skuManual || (useAutoSku ? productData?.sku || '' : '')}
+                onChange={(e) => setSkuManual(e.target.value)}
+                placeholder={useAutoSku ? 'Auto Generated' : 'Enter SKU'}
+                disabled={useAutoSku}
+                className={`flex-1 border border-gray-300 rounded-lg px-3 py-2 ${
+                  useAutoSku ? 'bg-gray-100 cursor-not-allowed' : ''
                 }`}
               />
 
-              {/* Toggle Button */}
               <button
                 onClick={() => {
-                  const newState = !useAutoId
-                  setUseAutoId(newState)
-
-                  if (newState) {
-                    // Switched to auto → clear manual
-                    setManualId('')
-                  } else {
-                    // Switched back to manual → load existing ID
-                    if (productData?.id) setManualId(productData.id.toString())
-                  }
+                  const newState = !useAutoSku
+                  setUseAutoSku(newState)
+                  // Kalau pindah ke Auto, biarkan skuManual tetap tampil tapi disable
+                  // Kalau pindah ke Manual, biarkan skuManual bisa diedit
                 }}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  useAutoId ? 'bg-[#52BFBE] text-white' : 'bg-gray-200 text-gray-700'
+                className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                  useAutoSku ? 'bg-[#52BFBE] text-white' : 'bg-gray-200 text-gray-700'
                 }`}
               >
-                {useAutoId ? 'Auto' : 'Manual'}
+                {useAutoSku ? 'Manual' : 'Auto'}
               </button>
             </div>
-
-            {useAutoId && (
-              <p className="text-xs text-gray-500 mt-1">
-                Auto ID will be generated: <strong>{Date.now()}</strong>
-              </p>
+            {useAutoSku && (
+              <p className="text-xs text-gray-500 mt-1">SKU akan digenerate otomatis</p>
             )}
           </div>
 
@@ -208,38 +205,14 @@ export default function EditProduk({ isOpen, onClose, productData, onSave }: Edi
           </div>
 
           {/* Kategori */}
-          <div>
-            <p className="block text-sm font-medium text-gray-700 mb-1">Kategori</p>
-            <select
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+            <input
+              type="text"
               value={selectedKategori}
               onChange={(e) => setSelectedKategori(e.target.value)}
-            >
-              <option value="" disabled>
-                Pilih kategori
-              </option>
-              {kategori.map((kategori, index) => (
-                <option key={index} value={kategori}>
-                  {kategori}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex mt-2 gap-2">
-              <input
-                type="text"
-                value={newKategori}
-                onChange={(e) => setNewKategori(e.target.value)}
-                placeholder="Tambah kategori baru"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#52BFBE]"
-              />
-              <button
-                onClick={handleAddCategory}
-                className="bg-[#52BFBE] text-white px-3 py-2 rounded-lg text-sm hover:bg-[#43a9a8] transition"
-              >
-                +
-              </button>
-            </div>
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+            />
           </div>
 
           {/* Kuantitas */}
