@@ -5,8 +5,6 @@ import HeaderAdmin from '@/components/HeaderAdmin'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-
-// Recharts — hanya komponen chart
 import {
   LineChart,
   Line,

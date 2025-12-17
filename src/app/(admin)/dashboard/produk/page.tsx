@@ -62,7 +62,7 @@ export default function ProdukPage() {
             icon:
               ICON_OPTIONS.find((i) => i.name.toLowerCase() === c.name.toLowerCase())?.icon ||
               Package,
-            mediaId: c.ikon?.value?.id,
+            mediaId: c.ikon?.id,
           }))
 
         const totalCount = data.find((c: any) => c.id === 'all')?.count || 0

@@ -111,7 +111,7 @@ export default function MenuPage() {
           harga: p.harga,
           stok: p.stok,
           status: p.status,
-          gambar: p.gambar || { url: '/default.jpg' },
+          gambar: p.gambar || { url: '/images/image-placeholder.png' },
           sku: (p as any).sku || '',
         }))
 
@@ -139,7 +139,9 @@ export default function MenuPage() {
       stok: newProductInput.stock,
       harga: newProductInput.price,
       status: 'Aktif',
-      gambar: newProductInput.image ? { url: newProductInput.image } : { url: '/default.jpg' },
+      gambar: newProductInput.image
+        ? { url: newProductInput.image }
+        : { url: '/images/image-placeholder.png' },
     }
     setProduct((prev) => [...prev, newProduct])
     setIsAddProductOpen(false)
