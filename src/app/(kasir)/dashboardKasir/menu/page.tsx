@@ -61,7 +61,6 @@ export default function MenuPage() {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false)
   const [isAddKategoriOpen, setIsAddKategoriOpen] = useState(false)
 
-  const [product, setProduct] = useState<Product[]>([])
   const [search, setSearch] = useState('')
 
   const [editOpen, setEditOpen] = useState(false)
@@ -216,8 +215,8 @@ export default function MenuPage() {
 
           {/* Product List with Category Cards & Search */}
           <ProductList
-            products={product}
-            setProducts={setProduct}
+            products={products}
+            setProducts={setProducts}
             onModalChange={handleModalChange}
             hasPermission={hasPermission}
             activeCategory={activeCategory}

@@ -22,7 +22,7 @@ const ActionRequests: CollectionConfig = {
       return false
     },
 
-    create: ({ req }) => !!req.user,
+    create: ({ req }) => !!req.user && req.user.role === 'kasir',
 
     update: ({ req }) => req.user?.role === 'admintoko' || req.user?.role === 'superadmin',
 
@@ -96,61 +96,11 @@ const ActionRequests: CollectionConfig = {
         if (operation === 'create') {
           data.createdBy = req.user.id
           data.tenant = req.user.tenant
+          data.status = 'pending'
+          delete data.approvedBy
         }
 
         return data
-      },
-    ],
-
-    afterChange: [
-      async ({ doc, req, operation }) => {
-        if (operation !== 'update') return
-        if (!req.user) throw new Error('Unauthorized')
-        if (doc.status !== 'approved') return
-
-        const action = doc.actionType
-
-        // CREATE PRODUCT
-        if (action === 'create') {
-          await req.payload.create({
-            collection: 'products',
-            data: doc.payload,
-            overrideAccess: true,
-          })
-        }
-
-        // UPDATE PRODUCT
-        if (action === 'update') {
-          if (!doc.product) throw new Error('Missing product ID for update')
-
-          await req.payload.update({
-            collection: 'products',
-            id: doc.product,
-            data: doc.payload,
-            overrideAccess: true,
-          })
-        }
-
-        // DELETE PRODUCT
-        if (action === 'delete') {
-          if (!doc.product) throw new Error('Missing product ID for delete')
-
-          await req.payload.delete({
-            collection: 'products',
-            id: doc.product,
-            overrideAccess: true,
-          })
-        }
-
-        // Mark who approved it
-        await req.payload.update({
-          collection: 'action-requests',
-          id: doc.id,
-          data: {
-            approvedBy: req.user.id,
-          },
-          overrideAccess: true,
-        })
       },
     ],
   },

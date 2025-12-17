@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import type { Endpoint } from 'payload'
+import { approveActionRequest } from './endpoints/approve-action-request'
 
 import { Tenants } from './collections/Tenants'
 import { Users } from './collections/Users'
@@ -23,8 +24,8 @@ import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 console.log('Collections Loaded:', [
   Tenants.slug,
   Users.slug,
@@ -86,15 +87,10 @@ const sendOtpEndpoint: any = {
 }
 
 export default buildConfig({
-
-  typescript: {
-    outputFile: path.resolve(__dirname, 'payload-types.ts'),
-  },
-
   admin: {
     user: Users.slug,
     importMap: {
-      baseDir: path.resolve(__dirname),
+      baseDir: path.resolve(dirname),
     },
   },
 
@@ -108,15 +104,11 @@ export default buildConfig({
     Payments,
     Notifications,
     Reservations,
-    ActionRequests,
-    EmailOtps,
-  ],
-
-  endpoints: [
-    sendOtpEndpoint,
     Categories,
     StoreSettings,
   ],
+
+  endpoints: [approveActionRequest],
 
   email: nodemailerAdapter({
     defaultFromAddress: 'no-reply@pos-mind.com',
@@ -124,7 +116,7 @@ export default buildConfig({
     transportOptions: {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
-      secure: true, // kalau pakai TLS ubah jadi true
+      secure: false, // kalau pakai TLS ubah jadi true
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -136,10 +128,14 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
 
   db: postgresAdapter({
-    pool: {
-      connectionString: process.env.DATABASE_URI || '',
-    },
-  }),
+  pool: {
+    connectionString: process.env.DATABASE_URI || '',
+    max: 5,                  // VERY IMPORTANT
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,
+  },
+}),
+
 
   sharp,
 

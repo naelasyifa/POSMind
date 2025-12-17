@@ -1,4 +1,4 @@
-import { CollectionConfig } from 'payload';
+import { CollectionConfig } from 'payload'
 
 const Products: CollectionConfig = {
   slug: 'products',
@@ -6,43 +6,44 @@ const Products: CollectionConfig = {
   access: {
     // Everyone must filter by their own tenant
     read: ({ req }) => {
-      if (!req.user) return false;
+      if (!req.user) return false
+      if (req.user.role === 'superadmin') return true
 
       return {
         tenant: { equals: req.user.tenant },
-      };
+      }
     },
 
     // Only admintoko can create directly — kasir must use ActionRequests
     create: ({ req }) => {
-      if (!req.user) return false;
-      return req.user.role === 'admintoko' || req.user.role === 'superadmin';
+      if (!req.user) return false
+      return req.user.role === 'admintoko' || req.user.role === 'superadmin'
     },
 
     // Only admintoko can update directly — kasir must use ActionRequests
     update: ({ req }) => {
-      if (!req.user) return false;
+      if (!req.user) return false
 
       if (req.user.role === 'admintoko' || req.user.role === 'superadmin') {
         return {
           tenant: { equals: req.user.tenant },
-        };
+        }
       }
 
-      return false;
+      return false
     },
 
     // Only admintoko can delete directly
     delete: ({ req }) => {
-      if (!req.user) return false;
+      if (!req.user) return false
 
       if (req.user.role === 'admintoko' || req.user.role === 'superadmin') {
         return {
           tenant: { equals: req.user.tenant },
-        };
+        }
       }
 
-      return false;
+      return false
     },
   },
 
@@ -52,7 +53,7 @@ const Products: CollectionConfig = {
       name: 'tenant',
       type: 'relationship',
       relationTo: 'tenants',
-      required: false,
+      required: true,
       index: true,
     },
 
@@ -108,30 +109,39 @@ const Products: CollectionConfig = {
 
   hooks: {
     beforeChange: [
-      async ({ data, req, operation }) => {
-        if (operation === 'create' && data.useAutoSku !== false) {
-          const name = data.nama || ''
+  async ({ data, req, operation }) => {
+    if (!req.user) return data
 
-          const base = name
-            .toUpperCase()
-            .replace(/[^A-Z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+    // 🔒 FORCE tenant on create (override client input)
+    if (operation === 'create') {
+      data.tenant = req.user.tenant
+    }
 
-          const existing = await req.payload.find({
-            collection: 'products',
-            where: {
-              tenant: { equals: data.tenant },
-              sku: { like: `${base}` },
-            },
-          });
+    // 🔑 AUTO SKU
+    if (operation === 'create' && data.useAutoSku !== false) {
+      const name = data.nama || ''
 
-          const next = (existing.totalDocs + 1).toString().padStart(3, '0')
-          data.sku = `${base}-${next}`
-        }
-        // kalau manual, SKU tetap seperti yang diisi admin
-        return data
-      },
-    ],
+      const base = name
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+
+      const existing = await req.payload.find({
+        collection: 'products',
+        where: {
+          tenant: { equals: req.user.tenant },
+          sku: { like: `${base}` },
+        },
+      })
+
+      const next = String(existing.totalDocs + 1).padStart(3, '0')
+      data.sku = `${base}-${next}`
+    }
+
+    return data
+  },
+],
+
 
     afterChange: [
       async ({ req, doc, previousDoc }) => {
@@ -194,6 +204,6 @@ const Products: CollectionConfig = {
       },
     ],
   },
-};
+}
 
-export default Products;
+export default Products
