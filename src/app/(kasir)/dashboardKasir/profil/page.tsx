@@ -51,7 +51,6 @@ export default function ProfileKasir() {
 
         {/* Kontainer Tengah - Sudah Dinaikkan */}
         <div className="flex justify-center items-start py-0 -mt-2">
-
           <div className="bg-white rounded-lg shadow-md p-10 w-full max-w-2xl">
             <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">
               Informasi Pribadi
@@ -87,9 +86,7 @@ export default function ProfileKasir() {
             {/* Form Input */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                 <input
                   type="text"
                   value={name}
@@ -99,9 +96,7 @@ export default function ProfileKasir() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
@@ -111,9 +106,7 @@ export default function ProfileKasir() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Alamat
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
                 <input
                   type="text"
                   value={alamat}
@@ -188,9 +181,7 @@ export default function ProfileKasir() {
       </div>
 
       {/* Popup berhasil simpan */}
-      {showPopup && (
-        <BerhasilSimpanKasir isOpen={showPopup} onClose={() => setShowPopup(false)} />
-      )}
+      {showPopup && <BerhasilSimpanKasir isOpen={showPopup} onClose={() => setShowPopup(false)} />}
     </div>
   )
 }

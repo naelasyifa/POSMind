@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
 import { Edit, Trash2, UserPlus } from 'lucide-react'
@@ -9,100 +9,94 @@ import EditUser from './components/edituser'
 import HapusUser from './components/hapus'
 
 interface User {
+  id: string
   nama: string
   email?: string
   role: string
   akses: boolean[]
+  status: 'aktif' | 'nonaktif'
 }
 
 export default function PenggunaPage() {
-  const [data, setData] = useState<User[]>([
-    {
-      nama: 'Abubakar Sherazi',
-      email: 'abubakar@email.com',
-      role: 'Admin',
-      akses: [true, true, true, true, true],
-    },
-    {
-      nama: 'Anees Ansari',
-      email: 'anees@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-    {
-      nama: 'Lorem Ipsum',
-      email: 'lorem1@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-    {
-      nama: 'Lorem Ipsum',
-      email: 'lorem2@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-    {
-      nama: 'Lorem Ipsum',
-      email: 'lorem3@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-    {
-      nama: 'Lorem Ipsum',
-      email: 'lorem4@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-    {
-      nama: 'Lorem Ipsum',
-      email: 'lorem5@email.com',
-      role: 'Kasir',
-      akses: [true, true, true, false, false],
-    },
-  ])
+  /* =========================
+     STATE UTAMA
+  ========================== */
+  const [data, setData] = useState<User[]>([])
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [selectedUserIndex, setSelectedUserIndex] = useState<number | null>(null)
 
-  const columns = ['Dashboard', 'Laporan', 'Inventory', 'Pengguna', 'Settings']
+  /* =========================
+     FETCH DATA USER
+  ========================== */
+  const fetchUsers = async () => {
+    const res = await fetch('/api/pengguna')
+    const users = await res.json() // hasilnya array
 
-  // Fungsi untuk format role dengan kapitalisasi yang benar
-  const formatRole = (role: string) => {
-    if (!role) return role
-    const lowerRole = role.toLowerCase()
-    if (lowerRole === 'admin') return 'Admin'
-    if (lowerRole === 'sub admin') return 'Sub admin'
-    if (lowerRole === 'kasir') return 'Kasir'
-    // Jika sudah benar kapitalisasinya, return as is
-    return role
-  }
-
-  const toggleAkses = (userIndex: number, aksesIndex: number) => {
-    setData((prevData) =>
-      prevData.map((user, i) => {
-        if (i === userIndex) {
-          const newAkses = user.akses.map((val, j) => (j === aksesIndex ? !val : val))
-          return { ...user, akses: newAkses }
-        }
-        return user
-      }),
+    setData(
+      users.map((u: any) => ({
+        id: u.id,
+        nama: u.adminName || u.email,
+        email: u.email,
+        role: u.role,
+        akses: [true],
+        status: 'aktif',
+      })),
     )
   }
 
-  const handleDeleteClick = (user: User, index: number) => {
-    setSelectedUser(user)
-    setSelectedUserIndex(index)
-    setIsDeleteModalOpen(true)
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  /* =========================
+     HELPER
+  ========================== */
+  const formatRole = (role: string) => {
+    if (!role) return role
+
+    const r = role.toLowerCase()
+
+    if (r === 'admintoko' || r === 'admin_toko' || r === 'admin toko') {
+      return 'Admin Toko'
+    }
+
+    if (r === 'kasir') return 'Kasir'
+    if (r === 'superadmin') return 'Super Admin'
+
+    return role
   }
 
-  const handleConfirmDelete = () => {
-    if (selectedUserIndex !== null) {
-      setData((prevData) => prevData.filter((_, i) => i !== selectedUserIndex))
-      setSelectedUser(null)
-      setSelectedUserIndex(null)
+  /* =========================
+     HANDLER
+  ========================== */
+  const handleAddUser = async (newUser: {
+    nama: string
+    email: string
+    password: string
+    role: string
+    akses: boolean[]
+  }) => {
+    try {
+      const res = await fetch('/api/pengguna', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUser),
+      })
+
+      if (!res.ok) throw new Error('Gagal menambah pengguna')
+
+      await fetchUsers() // 🔥 refresh dari backend
+      setIsAddModalOpen(false)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal menambah pengguna')
     }
   }
 
@@ -112,43 +106,78 @@ export default function PenggunaPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleAddUser = (newUser: User) => {
-    // Pastikan role ter-format dengan benar saat menambah user
-    const formattedUser = {
-      ...newUser,
-      role: formatRole(newUser.role),
+  const handleSaveEdit = async (updatedUser: {
+    nama: string
+    email?: string
+    role: string
+    akses: boolean[]
+    password?: string
+  }) => {
+    if (!selectedUser) return
+
+    try {
+      const res = await fetch(`/api/pengguna/${selectedUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedUser),
+      })
+
+      if (!res.ok) throw new Error('Gagal update pengguna')
+
+      await fetchUsers()
+      setIsEditModalOpen(false)
+      setSelectedUser(null)
+      setSelectedUserIndex(null)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal update pengguna')
     }
-    setData((prevData) => [...prevData, formattedUser])
   }
 
-  const handleSaveEdit = (updatedUser: User) => {
-    if (selectedUserIndex !== null) {
-      // Pastikan role ter-format dengan benar saat edit user
-      const formattedUser = {
-        ...updatedUser,
-        role: formatRole(updatedUser.role),
-      }
-      setData((prevData) =>
-        prevData.map((user, i) => (i === selectedUserIndex ? formattedUser : user)),
-      )
-    }
-    setSelectedUser(null)
-    setSelectedUserIndex(null)
+  const handleDeleteClick = (user: User, index: number) => {
+    setSelectedUser(user)
+    setSelectedUserIndex(index)
+    setIsDeleteModalOpen(true)
   }
 
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return
+
+    try {
+      const res = await fetch(`/api/pengguna/${selectedUser.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) throw new Error('Gagal hapus pengguna')
+
+      await fetchUsers()
+      setIsDeleteModalOpen(false)
+      setSelectedUser(null)
+      setSelectedUserIndex(null)
+    } catch (err) {
+      console.error(err)
+      alert('Gagal menghapus pengguna')
+    }
+  }
+
+  /* =========================
+     RENDER
+  ========================== */
   return (
     <div className="flex min-h-screen bg-[#52BFBE] relative overflow-hidden">
       <Sidebar />
-      <div
-        className={`flex-1 flex flex-col ${isAddModalOpen || isEditModalOpen ? 'blur-sm' : ''}`}
-        style={{ marginLeft: '7rem' }}
-      >
+
+      <div className="flex-1 flex flex-col" style={{ marginLeft: '7rem' }}>
         <HeaderAdmin title="Pengguna" />
 
         <div className="flex-1 p-3">
           <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* Header */}
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-semibold text-sm">Daftar Pengguna</h2>
+
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="bg-[#52bfbe] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
@@ -158,58 +187,49 @@ export default function PenggunaPage() {
               </button>
             </div>
 
+            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b-2 border-gray-300 text-left text-sm">
-                    <th className="pb-3 pt-2">Nama</th>
-                    <th className="pb-3 pt-2">Role</th>
-                    {columns.map((col) => (
-                      <th key={col} className="pb-3 pt-2 text-center">
-                        {col}
-                      </th>
-                    ))}
+                  <tr className="border-b-2 border-gray-300 text-sm text-gray-700">
+                    <th className="pb-3 pt-2 w-[50px] text-center">No</th>
+                    <th className="pb-3 pt-2 text-left pl-6 w-[260px]">Nama</th>
+                    <th className="pb-3 pt-2 text-left pl-6">Role</th>
+                    <th className="pb-3 pt-2 text-left pl-6 w-[240px]">Email</th>
+                    <th className="pb-3 pt-2 text-center">Status</th>
                     <th className="pb-3 pt-2 text-center">Aksi</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {data.map((user, userIndex) => (
+                  {data.map((user, index) => (
                     <tr
-                      key={userIndex}
+                      key={user.id}
                       className="border-b border-gray-200 hover:bg-gray-50 transition"
                     >
-                      <td className="py-4 text-gray-800">{user.nama}</td>
-                      <td className="py-4">
-                        <span
-                          className={`px-3 py-1 rounded-md text-white text-sm font-medium ${
-                            formatRole(user.role) === 'Admin' ? 'bg-[#52bfbe]' : 'bg-[#66C7C2]'
-                          }`}
-                        >
+                      <td className="py-4 text-center">{index + 1}</td>
+                      <td className="py-4 pl-6 font-medium">{user.nama}</td>
+                      <td className="py-4 pl-6">
+                        <span className="px-3 py-1 rounded-md text-white text-sm bg-[#52bfbe]">
                           {formatRole(user.role)}
                         </span>
                       </td>
-
-                      {user.akses.map((val, aksesIndex) => (
-                        <td key={aksesIndex} className="text-center py-4">
-                          <button
-                            onClick={() => toggleAkses(userIndex, aksesIndex)}
-                            className={`w-5 h-5 rounded-full border-2 transition-all ${
-                              val ? 'border-[#52bfbe] bg-[#52bfbe]' : 'border-gray-400 bg-gray-200'
-                            }`}
-                          ></button>
-                        </td>
-                      ))}
-
+                      <td className="py-4 pl-6">{user.email}</td>
+                      <td className="py-4 text-center">
+                        <span className="px-4 py-1 rounded-full text-xs bg-green-100 text-green-600">
+                          Aktif
+                        </span>
+                      </td>
                       <td className="py-4">
-                        <div className="flex justify-center items-center space-x-2">
+                        <div className="flex justify-center gap-2">
                           <button
-                            onClick={() => handleEditClick(user, userIndex)}
+                            onClick={() => handleEditClick(user, index)}
                             className="p-2 bg-white border-2 border-gray-300 hover:border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white text-gray-700 rounded-lg transition-all"
                           >
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(user, userIndex)}
+                            onClick={() => handleDeleteClick(user, index)}
                             className="p-2 bg-white border-2 border-gray-300 hover:border-red-500 hover:bg-red-500 hover:text-white text-red-500 rounded-lg transition-all"
                           >
                             <Trash2 size={16} />
@@ -225,38 +245,21 @@ export default function PenggunaPage() {
         </div>
       </div>
 
-      {/* Overlay FIX — Menutupi Sidebar & Konten */}
-      {(isAddModalOpen || isEditModalOpen || isDeleteModalOpen) && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"></div>
-      )}
-
-      {/* Popup Add User */}
+      {/* MODALS */}
       <AddUser
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddUser}
       />
-
-      {/* Popup Edit User */}
       <EditUser
         isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false)
-          setSelectedUser(null)
-          setSelectedUserIndex(null)
-        }}
+        onClose={() => setIsEditModalOpen(false)}
         userData={selectedUser}
         onSave={handleSaveEdit}
       />
-
-      {/* Popup Hapus User */}
       <HapusUser
         isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false)
-          setSelectedUser(null)
-          setSelectedUserIndex(null)
-        }}
+        onClose={() => setIsDeleteModalOpen(false)}
         userName={selectedUser?.nama || ''}
         onConfirm={handleConfirmDelete}
       />

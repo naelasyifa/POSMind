@@ -26,26 +26,26 @@ export default function RegisterPage() {
   }
 
   const handleNext = async () => {
-    if (!formData.businessName || !formData.email) {
-      alert('Nama Bisnis dan Email wajib diisi')
-      return
-    }
-
     const res = await fetch('/api/auth/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: formData.email }),
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        businessName: formData.businessName,
+      }),
     })
 
     const data = await res.json()
-    if (data?.success) {
-      router.push(
-        `/daftarBisnis?businessName=${encodeURIComponent(formData.businessName)}&email=${encodeURIComponent(formData.email)}&phone=${encodeURIComponent(formData.phone)}`,
-      )
+
+    if (data.success) {
+      router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
     } else {
-      alert(data?.message || 'Gagal mengirim OTP')
+      alert(data.message || 'Gagal mengirim OTP')
     }
   }
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"

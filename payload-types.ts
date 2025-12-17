@@ -154,9 +154,10 @@ export interface User {
   role?: ('superadmin' | 'admintoko' | 'kasir') | null;
   tenant?: (number | null) | Tenant;
   emailVerified?: boolean | null;
-  verificationCode?: string | null;
   otp?: string | null;
   otpExpiration?: string | null;
+  phone?: string | null;
+  businessName: string;
   adminName?: string | null;
   businessField?: string | null;
   businessType?: string | null;
@@ -556,9 +557,10 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   tenant?: T;
   emailVerified?: T;
-  verificationCode?: T;
   otp?: T;
   otpExpiration?: T;
+  phone?: T;
+  businessName?: T;
   adminName?: T;
   businessField?: T;
   businessType?: T;

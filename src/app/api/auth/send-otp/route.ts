@@ -1,62 +1,90 @@
-import { NextResponse } from 'next/server'
-import payload from 'payload' // pastikan ini jalan di server
-import crypto from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
+import { getPayloadClient } from '@/lib/payload'
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json()
+    const payload = await getPayloadClient()
+    const body = await req.json()
+
+    const email = body.email
+    const password = body.password
+    const phone = body.phone
+    const businessName = body.businessName
+
     if (!email) {
-      return NextResponse.json(
-        { error: true, message: 'Email wajib diisi' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email wajib diisi' }, { status: 400 })
     }
 
-    // generate OTP 6 digit
-    const otp = crypto.randomInt(100000, 999999).toString()
-    const otpExpiration = new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 menit
-
-    // cek apakah email sudah ada
     const existing = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
       limit: 1,
     })
 
-    if (existing.totalDocs > 0) {
-      // update OTP jika email sudah ada
-      await payload.update({
-        collection: 'users',
-        id: existing.docs[0].id,
-        data: { otp, otpExpiration },
-      })
-    } else {
-      // buat user sementara
+    // ===============================
+    // 🚫 BLOK RESEND JIKA OTP MASIH AKTIF
+    // ===============================
+    if (
+      existing.totalDocs > 0 &&
+      existing.docs[0].otpExpiration &&
+      new Date(existing.docs[0].otpExpiration) > new Date()
+    ) {
+      return NextResponse.json({ error: 'OTP masih berlaku, silakan cek email' }, { status: 400 })
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiration = new Date(Date.now() + 5 * 60 * 1000)
+
+    // ===============================
+    // 👤 USER BARU (REGISTER)
+    // ===============================
+    if (existing.totalDocs === 0) {
+      if (!password) {
+        return NextResponse.json(
+          { error: 'Password wajib diisi saat pendaftaran' },
+          { status: 400 },
+        )
+      }
+
       await payload.create({
         collection: 'users',
         data: {
           email,
+          password,
+          phone,
+          businessName,
           otp,
-          otpExpiration,
+          otpExpiration: expiration,
           emailVerified: false,
           isBusinessUser: true,
+          role: 'admintoko',
         },
       })
     }
 
-    // kirim OTP ke email
+    // ===============================
+    // 🔁 RESEND OTP (USER SUDAH ADA)
+    // ===============================
+    else {
+      await payload.update({
+        collection: 'users',
+        id: existing.docs[0].id,
+        data: {
+          otp,
+          otpExpiration: expiration,
+        },
+      })
+    }
+
     await payload.sendEmail({
       to: email,
-      subject: 'Kode OTP POS Mind',
-      html: `<h3>Kode OTP kamu: ${otp}</h3>`,
+      subject: 'Kode OTP POSMind',
+      html: `<h2>${otp}</h2><p>Berlaku selama 5 menit</p>`,
     })
 
-    return NextResponse.json({ success: true, message: 'OTP terkirim!' })
+    return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[SEND-OTP ERROR]', err)
-    return NextResponse.json(
-      { error: true, message: 'Gagal mengirim OTP' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Gagal mengirim OTP' }, { status: 500 })
   }
 }

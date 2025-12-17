@@ -2,12 +2,61 @@ import type { CollectionConfig } from 'payload'
 
 export const Users: CollectionConfig = {
   slug: 'users',
-  auth: true,
+  auth: {
+    verify: false,
+    useAPIKey: false,
+
+    forgotPassword: {
+      generateEmailHTML: (args) => {
+        const token = args?.token
+        const user = args?.user
+
+        if (!token || !user) {
+          return `<p>Invalid reset password request</p>`
+        }
+
+        return `
+      <div style="font-family: Arial, sans-serif">
+        <h2>Reset Password POSMind</h2>
+
+        <p>Halo ${user.email},</p>
+        <p>Klik tombol di bawah untuk mengatur ulang password kamu:</p>
+
+        <a
+          href="${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}"
+          style="
+            display:inline-block;
+            padding:12px 20px;
+            background:#4DB8C4;
+            color:#fff;
+            text-decoration:none;
+            border-radius:8px;
+            margin-top:12px;
+          "
+        >
+          Reset Password
+        </a>
+
+        <p style="margin-top:20px;font-size:12px;color:#666">
+          Link ini hanya berlaku satu kali.
+        </p>
+      </div>
+    `
+      },
+    },
+  },
   admin: {
     useAsTitle: 'email',
   },
 
   fields: [
+    {
+      name: 'email',
+      type: 'text',
+      required: true,
+      unique: true,
+    },
+
     {
       name: 'role',
       type: 'select',
@@ -23,56 +72,61 @@ export const Users: CollectionConfig = {
       name: 'tenant',
       type: 'relationship',
       relationTo: 'tenants',
-      required: false, // WAJIB false untuk Supabase !!!
+      required: false,
     },
+
     {
       name: 'emailVerified',
       type: 'checkbox',
       defaultValue: false,
     },
-    {
-      name: 'verificationCode',
-      type: 'text',
-      required: false,
-      admin: { hidden: true },
-    },
+
     {
       name: 'otp',
       type: 'text',
       admin: { hidden: true },
     },
+
     {
       name: 'otpExpiration',
-      type: 'date',
+      type: 'date', // FIXED
       admin: { hidden: true },
     },
+
+    {
+      name: 'phone',
+      type: 'text',
+    },
+
+    {
+      name: 'businessName',
+      type: 'text',
+      required: true,
+    },
+
     {
       name: 'adminName',
       type: 'text',
-      required: false,
     },
     {
       name: 'businessField',
       type: 'text',
-      required: false,
     },
     {
       name: 'businessType',
       type: 'text',
-      required: false,
     },
     {
       name: 'address',
       type: 'text',
-      required: false,
     },
     {
       name: 'isBusinessUser',
       type: 'checkbox',
-      required: false,
       defaultValue: true,
     },
   ],
+
   access: {
     read: ({ req }) => {
       if (req.user?.role === 'superadmin') return true
@@ -80,35 +134,34 @@ export const Users: CollectionConfig = {
         tenant: { equals: req.user?.tenant },
       }
     },
+    update: () => true,
   },
 
-  hooks: {
-    afterChange: [
-      async ({ req, operation, doc }) => {
-        if (operation === 'create') {
-          const code = Math.floor(100000 + Math.random() * 900000).toString() // kode 6 digit
+  // hooks: {
+  //   beforeChange: [
+  //     async ({ data, operation }) => {
+  //       if (operation === 'create') {
+  //         const code = Math.floor(100000 + Math.random() * 900000).toString()
+  //         data.verificationCode = code
+  //       }
+  //       return data
+  //     },
+  //   ],
 
-          await req.payload.update({
-            collection: 'users',
-            id: doc.id,
-            data: {
-              verificationCode: code,
-            },
-          })
-
-          await req.payload.sendEmail({
-            to: doc.email,
-            subject: 'Verifikasi Email POS-Mind',
-            html: `
-            <h2>Kode Verifikasi</h2>
-            <p>Gunakan kode berikut untuk verifikasi email Anda:</p>
-            <h3>${code}</h3>
-          `,
-          })
-
-          console.log('Kode verifikasi dikirim:', code)
-        }
-      },
-    ],
-  },
+  //   afterChange: [
+  //     async ({ doc, operation, req }) => {
+  //       if (operation === 'create') {
+  //         await req.payload.sendEmail({
+  //           to: doc.email,
+  //           subject: 'Verifikasi Email POS-Mind',
+  //           html: `
+  //             <h2>Kode Verifikasi</h2>
+  //             <p>Kode verifikasi Anda:</p>
+  //             <h3>${doc.verificationCode}</h3>
+  //           `,
+  //         })
+  //       }
+  //     },
+  //   ],
+  // },
 }
