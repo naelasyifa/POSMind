@@ -154,18 +154,20 @@ export default function DashboardPage() {
                     </h3>
                     <p className="text-sm text-gray-500 mt-1">Kapasitas Terisi: <span className="font-bold text-blue-600">85%</span></p>
 
-                    <div className="mt-3">
-                      <Link href="/dashboard/reservation/layout" className="flex items-center gap-2 text-sm font-semibold text-[#5D3FD3] hover:text-[#8A6BEE] transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="3" x2="21" y1="9" y2="9" /><line x1="3" x2="21" y1="15" y2="15" /><line x1="9" x2="9" y1="9" y2="15" /><line x1="15" x2="15" y1="9" y2="15" /></svg>
-                        Atur Tata Letak Meja
-                      </Link>
-                      <p className="text-xs text-gray-400 mt-1">Lihat status meja secara visual</p>
-                    </div>
+                      <div className="mt-3">
+                        <Link href="/dashboard/tables" className="flex items-center gap-2 text-sm font-semibold text-[#5D3FD3] hover:text-[#8A6BEE] transition">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="3" x2="21" y1="9" y2="9" /><line x1="3" x2="21" y1="15" y2="15" /><line x1="9" x2="9" y1="9" y2="15" /><line x1="15" x2="15" y1="9" y2="15" /></svg>
+                          Atur Tata Letak Meja
+                        </Link>
+                        <p className="text-xs text-gray-400 mt-1">Lihat status meja secara visual</p>
+                      </div>
 
-                  </div>
-                  <button className="bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-blue-200 transition">
-                    + Reservasi Baru
-                  </button>
+                      </div> {/* Penutup div konten */}
+
+                      {/* PERUBAHAN DI SINI: Membungkus button dengan Link ke /dashboard/tables */}
+                        <button className="bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-blue-200 transition">
+                          + Status Meja
+                        </button>
                 </div>
               </div>
 
