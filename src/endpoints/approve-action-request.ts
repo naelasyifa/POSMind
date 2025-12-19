@@ -5,20 +5,13 @@ export const approveActionRequest: Endpoint = {
   method: 'post',
 
   handler: async (req) => {
-    const { payload, user } = req
+    const { payload, user, routeParams } = req
+    const id = routeParams?.id as string
+    if (!id) return Response.json({ error: 'Missing request ID' }, { status: 400 })
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
     if (user.role !== 'admintoko' && user.role !== 'superadmin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    // ✅ Payload v3 way
-    const id = req.url.split('/').pop()
-    if (!id) {
-      return Response.json({ error: 'Missing request ID' }, { status: 400 })
     }
 
     const actionRequest = await payload.findByID({
@@ -26,57 +19,40 @@ export const approveActionRequest: Endpoint = {
       id,
     })
 
-    if (!actionRequest) {
-      return Response.json({ error: 'Not found' }, { status: 404 })
-    }
-
-    // Tenant isolation
-    if (
-      user.role !== 'superadmin' &&
-      String(actionRequest.tenant) !== String(user.tenant)
-    ) {
-      return Response.json({ error: 'Cross-tenant access denied' }, { status: 403 })
-    }
+    if (actionRequest.tenant !== user.tenant && user.role !== 'superadmin') {
+  return Response.json({ error: 'Cross-tenant access denied' }, { status: 403 })
+}
 
     if (actionRequest.status !== 'pending') {
       return Response.json({ error: 'Already processed' }, { status: 409 })
     }
 
-    const action = actionRequest.actionType
-    const data = actionRequest.payload as Record<string, any>
-
+    const data = actionRequest.payload as any
     const productId =
       typeof actionRequest.product === 'object'
         ? actionRequest.product?.id
         : actionRequest.product
 
-    // === EXECUTE ===
-    if (action === 'create') {
+    if (actionRequest.actionType === 'create') {
       await payload.create({
         collection: 'products',
         data,
+        draft: false,
         overrideAccess: true,
       })
     }
 
-    if (action === 'update') {
-      if (!productId) {
-        return Response.json({ error: 'Missing product ID' }, { status: 400 })
-      }
-
+    if (actionRequest.actionType === 'update' && productId) {
       await payload.update({
         collection: 'products',
         id: productId,
         data,
+        draft: false,
         overrideAccess: true,
       })
     }
 
-    if (action === 'delete') {
-      if (!productId) {
-        return Response.json({ error: 'Missing product ID' }, { status: 400 })
-      }
-
+    if (actionRequest.actionType === 'delete' && productId) {
       await payload.delete({
         collection: 'products',
         id: productId,
@@ -84,7 +60,6 @@ export const approveActionRequest: Endpoint = {
       })
     }
 
-    // === MARK APPROVED ===
     await payload.update({
       collection: 'action-requests',
       id,

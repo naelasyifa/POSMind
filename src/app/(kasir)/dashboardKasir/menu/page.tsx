@@ -40,6 +40,12 @@ type CategoryItem = {
   mediaId?: string
 }
 
+type PendingAction = {
+  type: 'create' | 'update' | 'delete'
+  label: string
+  payload?: any
+}
+
 const ICON_OPTIONS: { name: string; icon: any }[] = [
   { name: 'Pizza', icon: Pizza },
   { name: 'Burger', icon: Sandwich },
@@ -54,7 +60,8 @@ export default function MenuPage() {
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [activeCategory, setActiveCategory] = useState<string>('Semua')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [hasPermission] = useState(false)
+  const [hasPermission, setHasPermission] = useState(false)
+  const [permissionChecked, setPermissionChecked] = useState(false)
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -62,6 +69,8 @@ export default function MenuPage() {
   const [isAddKategoriOpen, setIsAddKategoriOpen] = useState(false)
 
   const [search, setSearch] = useState('')
+
+  const [requestedAction, setRequestedAction] = useState<'product' | 'category' | null>(null)
 
   const [editOpen, setEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -120,10 +129,25 @@ export default function MenuPage() {
       .catch(console.error)
   }, [])
 
+  useEffect(() => {
+    fetch('/api/frontend/permission/products') // temporary endpoint
+      .then((res) => res.json())
+      .then((data) => {
+        setHasPermission(data.allowed === true)
+        setPermissionChecked(true)
+      })
+      .catch(() => {
+        setHasPermission(false)
+        setPermissionChecked(true)
+      })
+  }, [])
+
   const handleModalChange = (open: boolean) => {
     console.log('Modal status:', open)
     setIsModalOpen(open)
   }
+
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
   const handleAddProduct = (newProductInput: {
     id: string
@@ -150,13 +174,42 @@ export default function MenuPage() {
     setIsAddProductOpen(false)
   }
 
-  const handleEditProduct = (updated: Product) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+  const handleOpenAddProduct = () => {
+    if (!hasPermission) {
+      setPendingAction({ type: 'create', label: 'menambah produk' })
+      setIsPermissionModalOpen(true)
+      return
+    }
+    setIsAddProductOpen(true)
   }
 
-  const handleDeleteProduct = (id: number) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id.toString()))
+  const handleEditProduct = (product: Product) => {
+  if (!hasPermission) {
+    setPendingAction({
+      type: 'update',
+      label: 'mengubah produk',
+      payload: product,
+    })
+    setIsPermissionModalOpen(true)
+    return
   }
+
+  // real edit later
+}
+
+  const handleDeleteProduct = (product: Product) => {
+  if (!hasPermission) {
+    setPendingAction({
+      type: 'delete',
+      label: 'menghapus produk',
+      payload: product,
+    })
+    setIsPermissionModalOpen(true)
+    return
+  }
+
+  // real edit later
+}
 
   const handleEditCategory = (cat: CategoryItem) => {
     if (!hasPermission) {
@@ -226,19 +279,27 @@ export default function MenuPage() {
             categories={categories}
             onEditCategory={handleEditCategory}
             onDeleteCategory={handleDeleteCategory}
-            setIsAddProductOpen={setIsAddProductOpen}
+            onOpenAddProduct={handleOpenAddProduct}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
+            setIsAddProductOpen={setIsAddProductOpen}
           />
         </div>
       </div>
 
       {/* Modals */}
-      <ReqPermission
-        isOpen={isPermissionModalOpen}
-        onClose={() => setIsPermissionModalOpen(false)}
-        actionName=" "
-      />
+      {pendingAction && (
+  <ReqPermission
+    isOpen={isPermissionModalOpen}
+    onClose={() => {
+      setIsPermissionModalOpen(false)
+      setPendingAction(null)
+    }}
+    actionType={pendingAction.type}
+    actionLabel={pendingAction.label}
+    payload={pendingAction.payload}
+  />
+)}
 
       <AddProduct
         isOpen={isAddProductOpen}

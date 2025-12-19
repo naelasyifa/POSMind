@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false) //tambahan simulasi
   const [formData, setFormData] = useState({ email: '', password: '' })
+  const [rememberMe, setRememberMe] = useState(false)
 
   // =============== HANDLE LOGIN ===============
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,8 +31,15 @@ export default function LoginPage() {
     }
 
     // Simpan JWT token (localStorage / cookie)
-    localStorage.setItem('token', data.token)
-    document.cookie = `token=${data.token}; path=/`
+    if (rememberMe) {
+      // Ingat saya → simpan lama
+      localStorage.setItem('token', data.token)
+      document.cookie = `token=${data.token}; path=/; max-age=${60 * 60 * 24 * 7}` // 7 hari
+    } else {
+      // Tidak ingat → session saja
+      sessionStorage.setItem('token', data.token)
+      document.cookie = `token=${data.token}; path=/`
+    }
 
     // Redirect sesuai role
     if (data.role === 'kasir') router.push('/dashboardKasir')
@@ -131,8 +139,9 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 accent-[#4DB8C4]"
-                  onChange={(e) => console.log('ingat saya:', e.target.checked)}
                 />
                 Ingat Saya
               </label>

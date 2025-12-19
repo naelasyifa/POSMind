@@ -5,24 +5,45 @@ import HeaderAdmin from '@/components/HeaderAdmin'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-
-// Recharts — hanya komponen chart
 import {
-  LineChart, Line,
-  BarChart, Bar,
-  CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from 'recharts'
 
 // Icons (lucide-react)
-import { Download, CalendarClock, AlertTriangle, Wallet, Users, ShoppingCart, BarChart2, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import {
+  Download,
+  CalendarClock,
+  AlertTriangle,
+  Wallet,
+  Users,
+  ShoppingCart,
+  BarChart2,
+  FileText,
+  ArrowUpRight,
+  ArrowDownRight,
+} from 'lucide-react'
 
-import { downloadPDF } from "@/utils/downloadPDF";
-import { downloadDataPDF } from "@/utils/downloadDataPDF";
+import { downloadPDF } from '@/utils/downloadPDF'
+import { downloadDataPDF } from '@/utils/downloadDataPDF'
 
-
-type GranularityType = 'daily' | 'weekly' | 'monthly' | 'yearly';
+type GranularityType = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 const data = [
   { name: 'JAN', penjualan: 4000, pendapatan: 2400 },
@@ -108,12 +129,8 @@ function rupiah(val: number) {
 }
 
 /* Simple Card wrapper component */
-function Card({ children, className = '' }: { children: React.ReactNode, className?: string }) {
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  )
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <div className={className}>{children}</div>
 }
 
 export default function DashboardPage() {
@@ -130,7 +147,7 @@ export default function DashboardPage() {
   const filteredProducts = useMemo(() => productTop, [startDate, endDate, granularity])
   const filteredReservations = useMemo(() => reservation30, [startDate, endDate, granularity])
   const filteredRadar = useMemo(() => {
-    const found = dataKinerjaKasir.find(k => k.name === radarKasir) || dataKinerjaKasir[0]
+    const found = dataKinerjaKasir.find((k) => k.name === radarKasir) || dataKinerjaKasir[0]
     return [
       { subject: 'Speed', A: found.speed },
       { subject: 'Accuracy', A: found.accuracy },
@@ -146,7 +163,6 @@ export default function DashboardPage() {
         <HeaderAdmin title="Dashboard" showBack={false} />
 
         <div className="p-6 space-y-6">
-
           {/* URGENT / SUMMARY CARDS (original kept) */}
           <section>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -156,16 +172,37 @@ export default function DashboardPage() {
                     <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
                       <CalendarClock size={18} className="text-blue-500" /> Reservasi
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1">Kapasitas Terisi: <span className="font-bold text-blue-600">85%</span></p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Kapasitas Terisi: <span className="font-bold text-blue-600">85%</span>
+                    </p>
 
                     <div className="mt-3">
-                      <Link href="/dashboard/reservation/layout" className="flex items-center gap-2 text-sm font-semibold text-[#5D3FD3] hover:text-[#8A6BEE] transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line x1="3" x2="21" y1="9" y2="9" /><line x1="3" x2="21" y1="15" y2="15" /><line x1="9" x2="9" y1="9" y2="15" /><line x1="15" x2="15" y1="9" y2="15" /></svg>
+                      <Link
+                        href="/dashboard/tables"
+                        className="flex items-center gap-2 text-sm font-semibold text-[#5D3FD3] hover:text-[#8A6BEE] transition"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-layout-grid"
+                        >
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                          <line x1="3" x2="21" y1="9" y2="9" />
+                          <line x1="3" x2="21" y1="15" y2="15" />
+                          <line x1="9" x2="9" y1="9" y2="15" />
+                          <line x1="15" x2="15" y1="9" y2="15" />
+                        </svg>
                         Atur Tata Letak Meja
                       </Link>
                       <p className="text-xs text-gray-400 mt-1">Lihat status meja secara visual</p>
                     </div>
-
                   </div>
                   <button className="bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-blue-200 transition">
                     + Reservasi Baru
@@ -179,10 +216,15 @@ export default function DashboardPage() {
                     <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
                       <AlertTriangle size={18} className="text-red-500" /> Stok Kritis
                     </h3>
-                    <p className="text-3xl font-bold text-red-600 mt-2">5 <span className="text-sm text-gray-500 font-normal">Produk</span></p>
+                    <p className="text-3xl font-bold text-red-600 mt-2">
+                      5 <span className="text-sm text-gray-500 font-normal">Produk</span>
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">Perlu restock segera</p>
                   </div>
-                  <Link href="/dashboard/stok" className="bg-red-100 text-red-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-red-200 transition">
+                  <Link
+                    href="/dashboard/stok"
+                    className="bg-red-100 text-red-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-red-200 transition"
+                  >
                     Cek Stok
                   </Link>
                 </div>
@@ -209,7 +251,6 @@ export default function DashboardPage() {
           {/* SUMMARY METRICS (Kuning / Ungu / Pink) */}
           <section>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
               {/* PENJUALAN HARIAN */}
               <div className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-yellow-500 relative overflow-hidden">
                 <div className="flex justify-between items-start">
@@ -222,7 +263,8 @@ export default function DashboardPage() {
                     <div className="flex items-baseline gap-3 mt-2">
                       <p className="text-3xl font-bold text-yellow-600 leading-none">123</p>
                       <span className="inline-flex items-center text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-md">
-                        <ArrowUpRight size={14} className="mr-1" />+4.1%
+                        <ArrowUpRight size={14} className="mr-1" />
+                        +4.1%
                       </span>
                     </div>
 
@@ -262,7 +304,8 @@ export default function DashboardPage() {
                     <div className="flex items-baseline gap-3 mt-2">
                       <p className="text-2xl font-bold text-purple-600 leading-none">Rp 10.000</p>
                       <span className="inline-flex items-center text-sm font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-md">
-                        <ArrowDownRight size={12} className="mr-1" />-2.3%
+                        <ArrowDownRight size={12} className="mr-1" />
+                        -2.3%
                       </span>
                     </div>
 
@@ -302,7 +345,8 @@ export default function DashboardPage() {
                     <div className="flex items-baseline gap-3 mt-2">
                       <p className="text-3xl font-bold text-pink-600 leading-none">354</p>
                       <span className="inline-flex items-center text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-md">
-                        <ArrowUpRight size={14} className="mr-1" />+6.8%
+                        <ArrowUpRight size={14} className="mr-1" />
+                        +6.8%
                       </span>
                     </div>
 
@@ -329,7 +373,6 @@ export default function DashboardPage() {
                   </button>
                 </div>
               </div>
-
             </div>
           </section>
 
@@ -338,14 +381,16 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-[#3FA3A2]">Ringkasan Reservasi & Filter</h3>
-                <p className="text-xs text-gray-500">Gunakan filter tanggal untuk menyesuaikan data chart</p>
+                <p className="text-xs text-gray-500">
+                  Gunakan filter tanggal untuk menyesuaikan data chart
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <input
                   type="date"
                   value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
+                  onChange={(e) => setStartDate(e.target.value)}
                   className="border p-1 rounded-md text-sm text-gray-700"
                   title="Tanggal Mulai"
                 />
@@ -355,14 +400,14 @@ export default function DashboardPage() {
                 <input
                   type="date"
                   value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
+                  onChange={(e) => setEndDate(e.target.value)}
                   className="border p-1 rounded-md text-sm text-gray-700"
                   title="Tanggal Akhir"
                 />
 
                 <select
                   value={granularity}
-                  onChange={e => setGranularity(e.target.value as GranularityType)}
+                  onChange={(e) => setGranularity(e.target.value as GranularityType)}
                   className="border p-1 rounded-md text-sm bg-white text-gray-700 font-semibold"
                 >
                   <option value="daily">Harian</option>
@@ -372,7 +417,9 @@ export default function DashboardPage() {
                 </select>
 
                 <button
-                  onClick={() => downloadDataPDF('reservasi', { start: startDate, end: endDate, granularity })}
+                  onClick={() =>
+                    downloadDataPDF('reservasi', { start: startDate, end: endDate, granularity })
+                  }
                   className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition ml-2"
                 >
                   <Download size={16} /> Unduh Snapshot
@@ -410,65 +457,76 @@ export default function DashboardPage() {
             </div>
             <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
-<BarChart 
-  data={dataKinerjaKasir} 
-  layout="vertical" 
-  margin={{ top: -10, right: 30, left: -5, bottom: 5 }} /* Margin Top dinaikkan untuk sumbu atas */
->
-  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-  
-  {/* Sumbu Y (Category/Nama Kasir) tetap sama */}
-  <YAxis dataKey="name" type="category" width={80} />
-  
-<Tooltip 
-  // Perbaikan: Pastikan 'name' adalah string sebelum menggunakan 'includes()'
-  formatter={(value, name) => {
-    // Memastikan name adalah string (atau konversi ke string)
-    const seriesName = String(name); 
+                <BarChart
+                  data={dataKinerjaKasir}
+                  layout="vertical"
+                  margin={{
+                    top: -10,
+                    right: 30,
+                    left: -5,
+                    bottom: 5,
+                  }} /* Margin Top dinaikkan untuk sumbu atas */
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
 
-    if (seriesName.includes('Rp')) {
-      // Jika nama series mengandung 'Rp' (yaitu Total Penjualan), format sebagai Rupiah
-      return rupiah(value as number); 
-    }
-    // Jika tidak (yaitu Jumlah Transaksi), tampilkan nilai sebagai string biasa
-    return value?.toString();
-  }} 
-/>
-  <Legend />
+                  {/* Sumbu Y (Category/Nama Kasir) tetap sama */}
+                  <YAxis dataKey="name" type="category" width={80} />
 
-  {/* 1. XAxis untuk Total Penjualan (Rp) - Skala Besar (Jutaan) */}
-  <XAxis 
-      type="number" 
-      hide={false} // Tampilkan sumbu agar user tahu skalanya
-      height={25} 
-      stroke={THEME_PRIMARY}
-      tickFormatter={(value) => `Rp ${(value as number / 1000000).toFixed(1)} Jt`} // Format agar ringkas (Rp 4.5 Jt)
-  /> 
-  
-  {/* 2. XAxis untuk Jumlah Transaksi - Skala Kecil (Ratusan) */}
-  <XAxis 
-      type="number" 
-      orientation="top" // Letakkan di atas chart
-      xAxisId="transaksiId" // ID unik untuk Bar Transaksi
-      hide={false} // Tampilkan sumbu agar user tahu skalanya
-      stroke={THEME_ACCENT}
-      // Opsional: Pastikan nilai tampil sebagai bilangan bulat
-      tickFormatter={(value) => `${Math.round(value as number)}`} 
-  /> 
+                  <Tooltip
+                    // Perbaikan: Pastikan 'name' adalah string sebelum menggunakan 'includes()'
+                    formatter={(value, name) => {
+                      // Memastikan name adalah string (atau konversi ke string)
+                      const seriesName = String(name)
 
-  {/* Bar Total Penjualan menggunakan XAxis default */}
-  <Bar dataKey="total" name="Total Penjualan (Rp)" fill={THEME_PRIMARY} radius={[0, 4, 4, 0]} barSize={15} />
-  
-  {/* Bar Jumlah Transaksi - Hubungkan ke sumbu X yang skalanya ratusan */}
-  <Bar 
-      dataKey="transaksi" 
-      name="Jumlah Transaksi" 
-      fill={THEME_ACCENT} 
-      radius={[0, 4, 4, 0]} 
-      barSize={15} 
-      xAxisId="transaksiId" // PENTING: Gunakan ID sumbu yang berbeda
-  /> 
-</BarChart>
+                      if (seriesName.includes('Rp')) {
+                        // Jika nama series mengandung 'Rp' (yaitu Total Penjualan), format sebagai Rupiah
+                        return rupiah(value as number)
+                      }
+                      // Jika tidak (yaitu Jumlah Transaksi), tampilkan nilai sebagai string biasa
+                      return value?.toString()
+                    }}
+                  />
+                  <Legend />
+
+                  {/* 1. XAxis untuk Total Penjualan (Rp) - Skala Besar (Jutaan) */}
+                  <XAxis
+                    type="number"
+                    hide={false} // Tampilkan sumbu agar user tahu skalanya
+                    height={25}
+                    stroke={THEME_PRIMARY}
+                    tickFormatter={(value) => `Rp ${((value as number) / 1000000).toFixed(1)} Jt`} // Format agar ringkas (Rp 4.5 Jt)
+                  />
+
+                  {/* 2. XAxis untuk Jumlah Transaksi - Skala Kecil (Ratusan) */}
+                  <XAxis
+                    type="number"
+                    orientation="top" // Letakkan di atas chart
+                    xAxisId="transaksiId" // ID unik untuk Bar Transaksi
+                    hide={false} // Tampilkan sumbu agar user tahu skalanya
+                    stroke={THEME_ACCENT}
+                    // Opsional: Pastikan nilai tampil sebagai bilangan bulat
+                    tickFormatter={(value) => `${Math.round(value as number)}`}
+                  />
+
+                  {/* Bar Total Penjualan menggunakan XAxis default */}
+                  <Bar
+                    dataKey="total"
+                    name="Total Penjualan (Rp)"
+                    fill={THEME_PRIMARY}
+                    radius={[0, 4, 4, 0]}
+                    barSize={15}
+                  />
+
+                  {/* Bar Jumlah Transaksi - Hubungkan ke sumbu X yang skalanya ratusan */}
+                  <Bar
+                    dataKey="transaksi"
+                    name="Jumlah Transaksi"
+                    fill={THEME_ACCENT}
+                    radius={[0, 4, 4, 0]}
+                    barSize={15}
+                    xAxisId="transaksiId" // PENTING: Gunakan ID sumbu yang berbeda
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -478,23 +536,37 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl shadow p-5">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-[#3FA3A2]">Produk Terlaris</h3>
-                <Link href="/dashboard/produk-terlaris" className="text-[#52BFBE] text-sm font-medium hover:underline">
+                <Link
+                  href="/dashboard/produk-terlaris"
+                  className="text-[#52BFBE] text-sm font-medium hover:underline"
+                >
                   Lihat Semua →
                 </Link>
               </div>
 
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                 {productTop.map((item, i) => (
-                  <div key={item.product} className="flex items-center justify-between border rounded-lg p-3 hover:bg-[#E8F9F9] transition">
+                  <div
+                    key={item.product}
+                    className="flex items-center justify-between border rounded-lg p-3 hover:bg-[#E8F9F9] transition"
+                  >
                     <div className="flex items-center gap-3">
-                      <Image src="/images/chicken_parmesan.jpg" alt="Produk" width={45} height={45} className="rounded object-cover" />
+                      <Image
+                        src="/images/chicken_parmesan.jpg"
+                        alt="Produk"
+                        width={45}
+                        height={45}
+                        className="rounded object-cover"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 text-sm">{item.product}</p>
                         <p className="text-xs text-gray-500">Terjual: {item.jumlah} Pcs</p>
                       </div>
                     </div>
 
-                    <span className={`text-sm font-semibold ${i === 3 ? 'text-red-500' : 'text-[#52BFBE]'}`}>
+                    <span
+                      className={`text-sm font-semibold ${i === 3 ? 'text-red-500' : 'text-[#52BFBE]'}`}
+                    >
                       {i === 3 ? 'Stok Rendah' : 'Tersedia'}
                     </span>
                   </div>
@@ -505,16 +577,28 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl shadow p-5">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-[#3FA3A2]">Produk Populer</h3>
-                <Link href="/dashboard/produk-populer" className="text-[#52BFBE] text-sm font-medium hover:underline">
+                <Link
+                  href="/dashboard/produk-populer"
+                  className="text-[#52BFBE] text-sm font-medium hover:underline"
+                >
                   Lihat Semua →
                 </Link>
               </div>
 
               <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                 {productTop.map((item, i) => (
-                  <div key={item.product} className="flex items-center justify-between border rounded-lg p-3 hover:bg-[#E8F9F9] transition">
+                  <div
+                    key={item.product}
+                    className="flex items-center justify-between border rounded-lg p-3 hover:bg-[#E8F9F9] transition"
+                  >
                     <div className="flex items-center gap-3">
-                      <Image src="/images/beef_steak.jpg" alt="Produk" width={45} height={45} className="rounded object-cover" />
+                      <Image
+                        src="/images/beef_steak.jpg"
+                        alt="Produk"
+                        width={45}
+                        height={45}
+                        className="rounded object-cover"
+                      />
                       <div>
                         <p className="font-medium text-gray-800 text-sm">{item.product}</p>
                         <p className="text-xs text-gray-500">Dilihat {i + 5} kali</p>
@@ -534,14 +618,35 @@ export default function DashboardPage() {
               <h3 className="font-semibold text-[#3FA3A2]">Analisis Penjualan & Pendapatan</h3>
 
               <div className="flex gap-2 items-center">
-                <button onClick={() => setMode('bulanan')} className={`text-sm px-3 py-1 rounded-md ${mode === 'bulanan' ? 'bg-[#52BFBE] text-white' : 'text-gray-600'}`}>Bulanan</button>
-                <button onClick={() => setMode('mingguan')} className={`text-sm px-3 py-1 rounded-md ${mode === 'mingguan' ? 'bg-[#52BFBE] text-white' : 'text-gray-600'}`}>Mingguan</button>
+                <button
+                  onClick={() => setMode('bulanan')}
+                  className={`text-sm px-3 py-1 rounded-md ${mode === 'bulanan' ? 'bg-[#52BFBE] text-white' : 'text-gray-600'}`}
+                >
+                  Bulanan
+                </button>
+                <button
+                  onClick={() => setMode('mingguan')}
+                  className={`text-sm px-3 py-1 rounded-md ${mode === 'mingguan' ? 'bg-[#52BFBE] text-white' : 'text-gray-600'}`}
+                >
+                  Mingguan
+                </button>
 
-                <button onClick={() => downloadPDF("chart_overview", mode === "bulanan" ? "laporan-bulanan" : "laporan-mingguan")} className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition">
+                <button
+                  onClick={() =>
+                    downloadPDF(
+                      'chart_overview',
+                      mode === 'bulanan' ? 'laporan-bulanan' : 'laporan-mingguan',
+                    )
+                  }
+                  className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition"
+                >
                   <Download size={18} /> Unduh Chart
                 </button>
 
-                <button onClick={() => downloadDataPDF(mode, chartData)} className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition">
+                <button
+                  onClick={() => downloadDataPDF(mode, chartData)}
+                  className="flex items-center gap-2 border border-[#52BFBE] text-[#52BFBE] text-sm px-3 py-1 rounded-md hover:bg-[#E8F9F9] transition"
+                >
                   <Download size={18} /> Unduh Data
                 </button>
               </div>
@@ -553,10 +658,26 @@ export default function DashboardPage() {
                   <CartesianGrid stroke="#ccc" strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => typeof value === 'number' ? `${value}` : `${value}`} />
+                  <Tooltip
+                    formatter={(value: number) =>
+                      typeof value === 'number' ? `${value}` : `${value}`
+                    }
+                  />
                   <Legend />
-                  <Line type="monotone" dataKey="penjualan" name="Total Penjualan (Qty)" stroke={THEME_PRIMARY} strokeWidth={3} />
-                  <Line type="monotone" dataKey="pendapatan" name="Pendapatan (Rp)" stroke="#A0E3E3" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="penjualan"
+                    name="Total Penjualan (Qty)"
+                    stroke={THEME_PRIMARY}
+                    strokeWidth={3}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="pendapatan"
+                    name="Pendapatan (Rp)"
+                    stroke="#A0E3E3"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -569,8 +690,18 @@ export default function DashboardPage() {
               <div className="w-full h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={filteredOrderType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                      {filteredOrderType.map((entry, idx) => <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}
+                    <Pie
+                      data={filteredOrderType}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {filteredOrderType.map((entry, idx) => (
+                        <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                      ))}
                     </Pie>
                     <Tooltip />
                     <Legend />
@@ -578,18 +709,30 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
               <div className="mt-3 text-sm text-gray-600">
-                {filteredOrderType.map((p) => <div key={p.name} className="flex justify-between py-1"><span>{p.name}</span><span className="font-semibold">{p.value}%</span></div>)}
+                {filteredOrderType.map((p) => (
+                  <div key={p.name} className="flex justify-between py-1">
+                    <span>{p.name}</span>
+                    <span className="font-semibold">{p.value}%</span>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="bg-white rounded-xl shadow p-5 lg:col-span-2">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-semibold text-[#3FA3A2]">Aktivitas Reservasi per Hari (30 Hari)</h4>
-                <div className="text-xs text-gray-500">Granularity: {granularity.toUpperCase()} (Dummy)</div>
+                <h4 className="font-semibold text-[#3FA3A2]">
+                  Aktivitas Reservasi per Hari (30 Hari)
+                </h4>
+                <div className="text-xs text-gray-500">
+                  Granularity: {granularity.toUpperCase()} (Dummy)
+                </div>
               </div>
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={filteredReservations} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <BarChart
+                    data={filteredReservations}
+                    margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tickFormatter={(d: string) => d.slice(5)} />
                     <YAxis />
@@ -610,7 +753,11 @@ export default function DashboardPage() {
 
               <div className="w-full h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={penjualanKategori} margin={{ left: 5, right: 20 }}>
+                  <BarChart
+                    layout="vertical"
+                    data={penjualanKategori}
+                    margin={{ left: 5, right: 20 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis dataKey="nama" type="category" width={100} />
@@ -633,7 +780,13 @@ export default function DashboardPage() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="jumlah" name="Penjualan (Qty)" stroke={THEME_PRIMARY} strokeWidth={3} />
+                    <Line
+                      type="monotone"
+                      dataKey="jumlah"
+                      name="Penjualan (Qty)"
+                      stroke={THEME_PRIMARY}
+                      strokeWidth={3}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -645,8 +798,16 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-[#3FA3A2]">Performa Kasir (Radar)</h4>
               <div className="flex items-center gap-3">
-                <select value={radarKasir} onChange={e => setRadarKasir(e.target.value)} className="border px-2 py-1 rounded text-sm">
-                  {dataKinerjaKasir.map(k => <option key={k.name} value={k.name}>{k.name}</option>)}
+                <select
+                  value={radarKasir}
+                  onChange={(e) => setRadarKasir(e.target.value)}
+                  className="border px-2 py-1 rounded text-sm"
+                >
+                  {dataKinerjaKasir.map((k) => (
+                    <option key={k.name} value={k.name}>
+                      {k.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -657,13 +818,18 @@ export default function DashboardPage() {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="subject" />
                   <PolarRadiusAxis angle={30} />
-                  <Radar name={radarKasir} dataKey="A" stroke={THEME_PRIMARY} fill={THEME_PRIMARY} fillOpacity={0.3} />
+                  <Radar
+                    name={radarKasir}
+                    dataKey="A"
+                    stroke={THEME_PRIMARY}
+                    fill={THEME_PRIMARY}
+                    fillOpacity={0.3}
+                  />
                   <Legend />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
-
         </div>
       </div>
     </div>

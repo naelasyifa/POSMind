@@ -2,16 +2,22 @@
 
 import { LockKeyhole } from 'lucide-react'
 
+type ActionType = 'create' | 'update' | 'delete'
+
 type PermissionRequestProps = {
   isOpen: boolean
   onClose: () => void
-  actionName?: string
+  actionType: 'create' | 'update' | 'delete'
+  actionLabel: string
+  payload?: any
 }
 
 export default function PermissionRequest({
   isOpen,
   onClose,
-  actionName,
+  actionType,
+  actionLabel,
+  payload,
 }: PermissionRequestProps) {
   if (!isOpen) return null
 
@@ -30,31 +36,36 @@ export default function PermissionRequest({
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-center text-gray-800 mb-3">
-          Akses Diperlukan
-        </h2>
+        <h2 className="text-xl font-bold text-center text-gray-800 mb-3">Akses Diperlukan</h2>
 
         <p className="text-sm text-center text-gray-600 mb-6">
-          Anda memerlukan izin Admin untuk melakukan aksi {actionName ?? 'ini'}
+          Anda memerlukan izin Admin untuk melakukan aksi ini
         </p>
 
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 bg-gray-200 py-3 rounded-lg"
-          >
+          <button onClick={onClose} className="flex-1 bg-gray-200 py-3 rounded-lg">
             Batal
           </button>
 
           <button
-            onClick={() => {
-              alert('Permintaan izin dikirim ke Admin')
-              onClose()
-            }}
-            className="flex-1 bg-[#52bfbe] text-white py-3 rounded-lg"
-          >
-            Minta Izin
-          </button>
+  onClick={async () => {
+    await fetch('/api/action-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actionType,
+        payloadData: payload,
+      }),
+    })
+
+    alert('Permintaan izin dikirim ke Admin')
+    onClose()
+  }}
+  className="flex-1 bg-[#52bfbe] text-white py-3 rounded-lg"
+>
+  Minta Izin
+</button>
+
         </div>
       </div>
     </div>

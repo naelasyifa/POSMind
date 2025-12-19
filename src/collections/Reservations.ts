@@ -15,23 +15,128 @@ const Reservations: CollectionConfig = {
       type: 'relationship',
       relationTo: 'tenants',
       required: true,
-      index: true,
     },
 
-    { name: 'namaPelanggan', type: 'text', required: true },
-    { name: 'nomorMeja', type: 'text' },
-    { name: 'tanggal', type: 'date', required: true },
+    {
+      name: 'nama_pelanggan',
+      type: 'text',
+      required: true,
+    },
 
     {
-      name: 'status',
-      type: 'select',
+      name: 'tanggal',
+      type: 'date',
       required: true,
-      defaultValue: 'pending',
+    },
+
+    {
+  name: 'status',
+  type: 'select',
+  required: false,
+  options: [
+    { label: 'Pending', value: 'pending' },
+    { label: 'Confirmed', value: 'confirmed' },
+    { label: 'Check In', value: 'checkin' },
+  ],
+  defaultValue: 'pending',
+},
+
+
+    {
+      name: 'pax',
+      type: 'number',
+      required: true,
+    },
+
+    {
+      name: 'deposit',
+      type: 'number',
+      required: false,
+    },
+
+    {
+      name: 'kode_reservasi',
+      type: 'text',
+      required: false,
+    },
+
+    {
+      name: 'no_telepon',
+      type: 'text',
+      required: false,
+    },
+
+    {
+      name: 'email',
+      type: 'email',
+      required: false,
+    },
+
+    {
+      name: 'jam_mulai',
+      type: 'text',
+      required: true,
+    },
+
+    {
+      name: 'jam_selesai',
+      type: 'text',
+      required: true,
+    },
+
+    {
+      name: 'durasi_menit',
+      type: 'number',
+      required: false,
+    },
+
+    {
+      name: 'total_tagihan',
+      type: 'number',
+      required: false,
+    },
+
+    {
+      name: 'status_pembayaran',
+      type: 'select',
+      required: false,
       options: [
-        { label: 'Pending', value: 'pending' },
-        { label: 'Dikonfirmasi', value: 'confirmed' },
-        { label: 'Dibatalkan', value: 'cancelled' },
+        { label: 'Unpaid', value: 'unpaid' },
+        { label: 'Paid', value: 'paid' },
+        { label: 'Refunded', value: 'refunded' },
       ],
+    },
+
+    {
+      name: 'kasir',
+      type: 'relationship',
+      relationTo: 'users',
+      required: false,
+    },
+
+    {
+      name: 'check_in_at',
+      type: 'date',
+      required: false,
+    },
+
+    {
+      name: 'check_out_at',
+      type: 'date',
+      required: false,
+    },
+
+    {
+      name: 'catatan',
+      type: 'textarea',
+      required: false,
+    },
+
+    {
+      name: 'meja',
+      type: 'relationship',
+      relationTo: 'tables',
+      required: false,
     },
   ],
 

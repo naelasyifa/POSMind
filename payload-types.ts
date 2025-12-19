@@ -77,7 +77,9 @@ export interface Config {
     notifications: Notification;
     reservations: Reservation;
     'action-requests': ActionRequest;
-    emailOtps: EmailOtp;
+    categories: Category;
+    storeSettings: StoreSetting;
+    tables: Table;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -95,7 +97,9 @@ export interface Config {
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     reservations: ReservationsSelect<false> | ReservationsSelect<true>;
     'action-requests': ActionRequestsSelect<false> | ActionRequestsSelect<true>;
-    emailOtps: EmailOtpsSelect<false> | EmailOtpsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    storeSettings: StoreSettingsSelect<false> | StoreSettingsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -139,12 +143,8 @@ export interface UserAuthOperations {
  */
 export interface Tenant {
   id: number;
-  businessName: string;
-  businessField?: string | null;
-  businessType?: string | null;
-  address?: string | null;
+  name: string;
   domain?: string | null;
-  owner: number | User;
   createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
@@ -160,12 +160,12 @@ export interface User {
   emailVerified?: boolean | null;
   otp?: string | null;
   otpExpiration?: string | null;
-  adminName?: string | null;
+  phone?: string | null;
   businessName?: string | null;
+  adminName?: string | null;
   businessField?: string | null;
   businessType?: string | null;
   address?: string | null;
-  phone?: string | null;
   isBusinessUser?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -214,14 +214,44 @@ export interface Promo {
   tenant?: (number | null) | Tenant;
   nama: string;
   kode: string;
+  /**
+   * Jika dicentang, promo muncul di dashboard kasir
+   */
+  showOnDashboard?: boolean | null;
+  /**
+   * Jika kosong, gunakan gambar default di dashboard
+   */
+  banner?: (number | null) | Media;
   mulai: string;
   akhir: string;
+  /**
+   * Kosong = semua hari berlaku
+   */
+  availableDays?: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[] | null;
+  /**
+   * HH:mm, optional
+   */
+  startTime?: string | null;
+  /**
+   * HH:mm, optional
+   */
+  endTime?: string | null;
   kategori: 'all' | 'product' | 'min_purchase';
   produk?: (number | null) | Product;
   minPembelian?: number | null;
-  tipeDiskon: 'percent' | 'nominal';
-  nilaiDiskon: number;
-  kuota: number;
+  promoType: 'discount' | 'bxgy';
+  tipeDiskon?: ('percent' | 'nominal') | null;
+  nilaiDiskon?: number | null;
+  buyQuantity?: number | null;
+  freeQuantity?: number | null;
+  applicableProducts?: (number | Product)[] | null;
+  /**
+   * Berlaku kelipatan? Contoh: beli 4 gratis 2. Jika dimatikan → hanya 1x: beli 4 gratis tetap 1.
+   */
+  isMultiple?: boolean | null;
+  useQuota?: boolean | null;
+  kuota?: number | null;
+  kuotaUsed?: number | null;
   stacking?: ('no' | 'yes' | 'single') | null;
   orderType?: ('dinein' | 'takeaway' | 'delivery')[] | null;
   limitCustomer?: ('unlimited' | 'one' | 'multiple') | null;
@@ -235,15 +265,27 @@ export interface Promo {
  */
 export interface Product {
   id: number;
-  tenant?: (number | null) | Tenant;
+  tenant: number | Tenant;
   nama: string;
+  useAutoSku?: boolean | null;
   sku?: string | null;
-  kategori: 'makanan' | 'minuman' | 'snack' | 'other';
+  kategori: number | Category;
   harga: number;
   stok: number;
   gambar?: (number | null) | Media;
   deskripsi?: string | null;
   status: 'aktif' | 'nonaktif';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  nama: string;
+  ikon?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -292,6 +334,22 @@ export interface Payment {
  */
 export interface Notification {
   id: number;
+  type: 'transaksi' | 'produk' | 'promo' | 'reservasi' | 'peringatan';
+  icon: 'berhasil' | 'gagal' | 'warning' | 'baru';
+  tipe:
+    | 'low_stock'
+    | 'out_of_stock'
+    | 'promo_low_quota'
+    | 'promo_out_quota'
+    | 'trx_success'
+    | 'trx_cancel'
+    | 'reservation_new'
+    | 'reservation_confirm'
+    | 'reservation_cancel'
+    | 'product_new';
+  title: string;
+  message: string;
+  isRead?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -301,6 +359,46 @@ export interface Notification {
  */
 export interface Reservation {
   id: number;
+  tenant: number | Tenant;
+  nama_pelanggan: string;
+  tanggal: string;
+  status?: ('pending' | 'confirmed' | 'checkin') | null;
+  pax: number;
+  deposit?: number | null;
+  kode_reservasi?: string | null;
+  no_telepon?: string | null;
+  email?: string | null;
+  jam_mulai: string;
+  jam_selesai: string;
+  durasi_menit?: number | null;
+  total_tagihan?: number | null;
+  status_pembayaran?: ('unpaid' | 'paid' | 'refunded') | null;
+  kasir?: (number | null) | User;
+  check_in_at?: string | null;
+  check_out_at?: string | null;
+  catatan?: string | null;
+  meja?: (number | null) | Table;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables".
+ */
+export interface Table {
+  id: number;
+  tenant: number | Tenant;
+  nama_meja: string;
+  kapasitas: number;
+  lantai: 'lantai_1' | 'lantai_2' | 'lantai_3';
+  area?: ('indoor' | 'outdoor' | 'vip' | 'smoking') | null;
+  bentuk?: ('kotak' | 'bulat') | null;
+  posisi_x: number;
+  posisi_y: number;
+  status?: ('available' | 'reserved' | 'disabled') | null;
+  catatan?: string | null;
+  dp_meja?: number | null;
+  is_highlight?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -330,13 +428,66 @@ export interface ActionRequest {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "emailOtps".
+ * via the `definition` "storeSettings".
  */
-export interface EmailOtp {
+export interface StoreSetting {
   id: number;
-  email: string;
-  otp: string;
-  expiresAt: string;
+  tenant: number | Tenant;
+  storeName: string;
+  serviceCharge?: boolean | null;
+  serviceChargePercentage?: number | null;
+  pajak?: boolean | null;
+  pajakPercentage?: number | null;
+  jamBuka?:
+    | {
+        hari?: string | null;
+        buka?: boolean | null;
+        fullDay?: boolean | null;
+        jamBuka?: string | null;
+        jamTutup?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  struk?: {
+    header?: string | null;
+    footer?: string | null;
+    logo?: (number | null) | Media;
+    paperSize?: number | null;
+    options?: {
+      infoToko?: boolean | null;
+      noNota?: boolean | null;
+      noTransaksi?: boolean | null;
+      jamTransaksi?: boolean | null;
+      jamBuka?: boolean | null;
+      infoTambahan?: boolean | null;
+      namaMeja?: boolean | null;
+      modePenjualan?: boolean | null;
+      pax?: boolean | null;
+      namaKasir?: boolean | null;
+      posmindOrder?: boolean | null;
+      cetakKe?: boolean | null;
+      promoMenu?: boolean | null;
+      pembulatan?: boolean | null;
+      pajak?: boolean | null;
+      service?: boolean | null;
+      wifi?: boolean | null;
+      powered?: boolean | null;
+    };
+  };
+  dapur?: {
+    paperSize?: number | null;
+    options?: {
+      noTransaksi?: boolean | null;
+      tanggalTransaksi?: boolean | null;
+      jamTransaksi?: boolean | null;
+      modePenjualan?: boolean | null;
+      namaWaiter?: boolean | null;
+      namaWaiter2?: boolean | null;
+      namaSender?: boolean | null;
+      infoTambahan?: boolean | null;
+      namaMeja?: boolean | null;
+    };
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -405,8 +556,16 @@ export interface PayloadLockedDocument {
         value: number | ActionRequest;
       } | null)
     | ({
-        relationTo: 'emailOtps';
-        value: number | EmailOtp;
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'storeSettings';
+        value: number | StoreSetting;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: number | Table;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -455,12 +614,8 @@ export interface PayloadMigration {
  * via the `definition` "tenants_select".
  */
 export interface TenantsSelect<T extends boolean = true> {
-  businessName?: T;
-  businessField?: T;
-  businessType?: T;
-  address?: T;
+  name?: T;
   domain?: T;
-  owner?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -475,12 +630,12 @@ export interface UsersSelect<T extends boolean = true> {
   emailVerified?: T;
   otp?: T;
   otpExpiration?: T;
-  adminName?: T;
+  phone?: T;
   businessName?: T;
+  adminName?: T;
   businessField?: T;
   businessType?: T;
   address?: T;
-  phone?: T;
   isBusinessUser?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -526,14 +681,26 @@ export interface PromosSelect<T extends boolean = true> {
   tenant?: T;
   nama?: T;
   kode?: T;
+  showOnDashboard?: T;
+  banner?: T;
   mulai?: T;
   akhir?: T;
+  availableDays?: T;
+  startTime?: T;
+  endTime?: T;
   kategori?: T;
   produk?: T;
   minPembelian?: T;
+  promoType?: T;
   tipeDiskon?: T;
   nilaiDiskon?: T;
+  buyQuantity?: T;
+  freeQuantity?: T;
+  applicableProducts?: T;
+  isMultiple?: T;
+  useQuota?: T;
   kuota?: T;
+  kuotaUsed?: T;
   stacking?: T;
   orderType?: T;
   limitCustomer?: T;
@@ -548,6 +715,7 @@ export interface PromosSelect<T extends boolean = true> {
 export interface ProductsSelect<T extends boolean = true> {
   tenant?: T;
   nama?: T;
+  useAutoSku?: T;
   sku?: T;
   kategori?: T;
   harga?: T;
@@ -600,6 +768,12 @@ export interface PaymentsSelect<T extends boolean = true> {
  * via the `definition` "notifications_select".
  */
 export interface NotificationsSelect<T extends boolean = true> {
+  type?: T;
+  icon?: T;
+  tipe?: T;
+  title?: T;
+  message?: T;
+  isRead?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -608,6 +782,25 @@ export interface NotificationsSelect<T extends boolean = true> {
  * via the `definition` "reservations_select".
  */
 export interface ReservationsSelect<T extends boolean = true> {
+  tenant?: T;
+  nama_pelanggan?: T;
+  tanggal?: T;
+  status?: T;
+  pax?: T;
+  deposit?: T;
+  kode_reservasi?: T;
+  no_telepon?: T;
+  email?: T;
+  jam_mulai?: T;
+  jam_selesai?: T;
+  durasi_menit?: T;
+  total_tagihan?: T;
+  status_pembayaran?: T;
+  kasir?: T;
+  check_in_at?: T;
+  check_out_at?: T;
+  catatan?: T;
+  meja?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -628,12 +821,103 @@ export interface ActionRequestsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "emailOtps_select".
+ * via the `definition` "categories_select".
  */
-export interface EmailOtpsSelect<T extends boolean = true> {
-  email?: T;
-  otp?: T;
-  expiresAt?: T;
+export interface CategoriesSelect<T extends boolean = true> {
+  nama?: T;
+  ikon?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "storeSettings_select".
+ */
+export interface StoreSettingsSelect<T extends boolean = true> {
+  tenant?: T;
+  storeName?: T;
+  serviceCharge?: T;
+  serviceChargePercentage?: T;
+  pajak?: T;
+  pajakPercentage?: T;
+  jamBuka?:
+    | T
+    | {
+        hari?: T;
+        buka?: T;
+        fullDay?: T;
+        jamBuka?: T;
+        jamTutup?: T;
+        id?: T;
+      };
+  struk?:
+    | T
+    | {
+        header?: T;
+        footer?: T;
+        logo?: T;
+        paperSize?: T;
+        options?:
+          | T
+          | {
+              infoToko?: T;
+              noNota?: T;
+              noTransaksi?: T;
+              jamTransaksi?: T;
+              jamBuka?: T;
+              infoTambahan?: T;
+              namaMeja?: T;
+              modePenjualan?: T;
+              pax?: T;
+              namaKasir?: T;
+              posmindOrder?: T;
+              cetakKe?: T;
+              promoMenu?: T;
+              pembulatan?: T;
+              pajak?: T;
+              service?: T;
+              wifi?: T;
+              powered?: T;
+            };
+      };
+  dapur?:
+    | T
+    | {
+        paperSize?: T;
+        options?:
+          | T
+          | {
+              noTransaksi?: T;
+              tanggalTransaksi?: T;
+              jamTransaksi?: T;
+              modePenjualan?: T;
+              namaWaiter?: T;
+              namaWaiter2?: T;
+              namaSender?: T;
+              infoTambahan?: T;
+              namaMeja?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  tenant?: T;
+  nama_meja?: T;
+  kapasitas?: T;
+  lantai?: T;
+  area?: T;
+  bentuk?: T;
+  posisi_x?: T;
+  posisi_y?: T;
+  status?: T;
+  catatan?: T;
+  dp_meja?: T;
+  is_highlight?: T;
   updatedAt?: T;
   createdAt?: T;
 }

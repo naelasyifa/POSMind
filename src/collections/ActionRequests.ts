@@ -89,21 +89,26 @@ const ActionRequests: CollectionConfig = {
   ],
 
   hooks: {
-    beforeChange: [
-      async ({ data, req, operation }) => {
-        if (!req.user) throw new Error('Unauthorized')
+  beforeChange: [
+    async ({ data, req, operation, originalDoc }) => {
+      if (!req.user) throw new Error('Unauthorized')
 
-        if (operation === 'create') {
-          data.createdBy = req.user.id
-          data.tenant = req.user.tenant
-          data.status = 'pending'
-          delete data.approvedBy
-        }
+      if (operation === 'create') {
+        data.createdBy = req.user.id
+        data.tenant = req.user.tenant
+        data.status = 'pending'
+        delete data.approvedBy
+      }
 
-        return data
-      },
-    ],
-  },
+      if (operation === 'update') {
+        data.createdBy = originalDoc.createdBy
+        data.tenant = originalDoc.tenant
+      }
+
+      return data
+    },
+  ],
+},
 }
 
 export default ActionRequests

@@ -31,9 +31,28 @@ export default function DaftarBisnisForm() {
   }, [emailFromQuery, phoneFromQuery, businessNameFromQuery])
 
   const handleSubmit = async () => {
-  if (!formData.email || !formData.adminName) {
-    alert("Lengkapi data terlebih dahulu.");
-    return;
+    if (!formData.email || !formData.adminName) {
+      alert('Lengkapi data terlebih dahulu.')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/auth/complete-business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await res.json()
+      if (data?.success) {
+        router.push('/dashboard')
+      } else {
+        alert(data?.message || 'Gagal menyimpan data bisnis')
+      }
+    } catch (error) {
+      console.error('Error saat submit:', error)
+      alert('Terjadi kesalahan saat menyimpan data')
+    }
   }
 
   try {
@@ -67,7 +86,7 @@ export default function DaftarBisnisForm() {
     <div className="min-h-screen flex items-center justify-center bg-[#4DB8C4] p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-lg p-8">
-          <button
+          {/* <button
             onClick={() => router.push('/daftar')}
             className="p-2 rounded-lg hover:bg-gray-100 transition"
           >
@@ -82,7 +101,7 @@ export default function DaftarBisnisForm() {
             >
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
-          </button>
+          </button> */}
 
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
             Daftar sebagai bisnis

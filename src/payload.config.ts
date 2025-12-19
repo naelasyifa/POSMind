@@ -18,8 +18,10 @@ import Transactions from './collections/Transactions'
 import Notifications from './collections/Notifications'
 import Payments from './collections/Payments'
 import Reservations from './collections/Reservations'
+import Tables from './collections/Tables'
 import ActionRequests from './collections/ActionRequests'
 import EmailOtps from './collections/emailOtps'
+// import { Admins } from './collections/Admins'
 import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
@@ -40,51 +42,52 @@ console.log('Collections Loaded:', [
   Notifications.slug,
   Reservations.slug,
   StoreSettings.slug,
+  Tables.slug,
 ])
 
-const sendOtpEndpoint: any = {
-  path: '/auth/send-otp',
-  method: 'post',
-  handler: async (context: any) => {
-    const { req, payload, data } = context
-    const email = req.body.email
-    if (!email) return Response.json({ error: 'Email kosong' }, { status: 400 })
+// const sendOtpEndpoint: any = {
+//   path: '/auth/send-otp',
+//   method: 'post',
+//   handler: async (context: any) => {
+//     const { req, payload, data } = context
+//     const email = req.body.email
+//     if (!email) return Response.json({ error: 'Email kosong' }, { status: 400 })
 
-    const existing = await req.payload.find({
-      collection: 'users',
-      where: { email: { equals: email } },
-      limit: 1,
-    })
+//     const existing = await req.payload.find({
+//       collection: 'users',
+//       where: { email: { equals: email } },
+//       limit: 1,
+//     })
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+//     const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
-    if (existing.totalDocs === 0) {
-      await req.payload.create({
-        collection: 'users',
-        data: {
-          email,
-          otp,
-          otpExpiration: new Date(Date.now() + 5 * 60 * 1000),
-          isBusinessUser: true,
-        },
-      })
-    } else {
-      await req.payload.update({
-        collection: 'users',
-        id: existing.docs[0].id,
-        data: { otp, otpExpiration: new Date(Date.now() + 5 * 60 * 1000) },
-      })
-    }
+//     if (existing.totalDocs === 0) {
+//       await req.payload.create({
+//         collection: 'users',
+//         data: {
+//           email,
+//           otp,
+//           otpExpiration: new Date(Date.now() + 5 * 60 * 1000),
+//           isBusinessUser: true,
+//         },
+//       })
+//     } else {
+//       await req.payload.update({
+//         collection: 'users',
+//         id: existing.docs[0].id,
+//         data: { otp, otpExpiration: new Date(Date.now() + 5 * 60 * 1000) },
+//       })
+//     }
 
-    await req.payload.sendEmail({
-      to: email,
-      subject: 'Kode OTP POS Mind',
-      html: `<p>Kode OTP kamu adalah: <strong>${otp}</strong></p>`,
-    })
+//     await req.payload.sendEmail({
+//       to: email,
+//       subject: 'Kode OTP POS Mind',
+//       html: `<p>Kode OTP kamu adalah: <strong>${otp}</strong></p>`,
+//     })
 
-    return Response.json({ success: true })
-  },
-}
+//     return Response.json({ success: true })
+//   },
+// }
 
 export default buildConfig({
   admin: {
@@ -98,19 +101,22 @@ export default buildConfig({
     Tenants,
     Users,
     Media,
+    // Admins,
     Promos,
     Products,
     Transactions,
     Payments,
     Notifications,
     Reservations,
+    ActionRequests,
     Categories,
     StoreSettings,
+    Tables,
   ],
 
   endpoints: [approveActionRequest],
 
-  email: nodemailerAdapter({
+  /* email: nodemailerAdapter({
     defaultFromAddress: 'no-reply@pos-mind.com',
     defaultFromName: 'POS Mind',
     transportOptions: {
@@ -122,7 +128,7 @@ export default buildConfig({
         pass: process.env.SMTP_PASS,
       },
     },
-  }),
+  }), */
 
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

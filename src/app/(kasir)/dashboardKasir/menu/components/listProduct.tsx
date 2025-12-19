@@ -23,8 +23,9 @@ type ListProductProps = {
   products: Product[]
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
   onModalChange: (open: boolean) => void
+  onOpenAddProduct: () => void
   onEdit: (p: Product) => void // ⬅️ READY FOR BACKEND UPDATE
-  onDelete: (id: number) => void
+  onDelete: (id: Product) => void
   hasPermission: boolean
   activeCategory: string
   setActiveCategory: (cat: string) => void
@@ -45,6 +46,8 @@ export default function ListProduct({
   setActiveCategory,
   search,
   setSearch,
+  onEdit,
+  onDelete,
   categories,
   onEditCategory,
   onDeleteCategory,
@@ -65,28 +68,13 @@ export default function ListProduct({
     return categoryMatch && searchMatch
   })
 
-  const handleEditClick = (product: Product, index: number) => {
-    if (!hasPermission) {
-      setIsPermissionModalOpen(true)
-      return
-    }
+  const handleEditClick = (product: Product) => {
+  onEdit(product)
+}
 
-    setSelectedProduct(product)
-    setSelectedProductIndex(index)
-    setIsEditModalOpen(true)
-    onModalChange(true)
-  }
-
-  const handleDeleteClick = (product: Product, index: number) => {
-    if (!hasPermission) {
-      setIsPermissionModalOpen(true)
-      return
-    }
-
-    setSelectedProduct(product)
-    setSelectedProductIndex(index)
-    setIsDeleteModalOpen(true)
-  }
+const handleDeleteClick = (product: Product) => {
+  onDelete(product)
+}
 
   const handleSaveEdit = (updatedProduct: Product) => {
     if (selectedProductIndex !== null) {
@@ -297,14 +285,14 @@ export default function ListProduct({
                     <td className="py-3">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleEditClick(product, index)}
+                          onClick={() => onEdit(product)}
                           className="p-2 bg-white border border-[#52bfbe] hover:bg-[#52bfbe] hover:text-white rounded transition-colors"
                         >
                           <Edit size={16} />
                         </button>
 
                         <button
-                          onClick={() => handleDeleteClick(product, index)}
+                          onClick={() => onDelete(product)}
                           className="p-2 bg-white border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors"
                         >
                           <Trash2 size={16} />
@@ -320,11 +308,6 @@ export default function ListProduct({
       </div>
 
       {/* Modals */}
-      <ReqPermission
-        isOpen={isPermissionModalOpen}
-        onClose={() => setIsPermissionModalOpen(false)}
-        actionName="mengubah produk"
-      />
       <EditProduct
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
