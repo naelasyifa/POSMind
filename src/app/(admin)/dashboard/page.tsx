@@ -204,9 +204,11 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-400 mt-1">Lihat status meja secara visual</p>
                     </div>
                   </div>
-                  <button className="bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-blue-200 transition">
-                    + Reservasi Baru
-                  </button>
+                  <Link href="/dashboard/reservasiAdminManagement">
+                    <button className="bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold hover:bg-blue-200 transition">
+                      + Reservasi Baru
+                    </button>
+                  </Link>
                 </div>
               </div>
 

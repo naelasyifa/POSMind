@@ -1,14 +1,17 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Sidebar from '@/components/SidebarKasir'
 import HeaderKasir from '@/components/HeaderKasir'
-import { Edit, Trash2, CalendarPlus, Search } from 'lucide-react'
+import { Edit, Trash2, CalendarPlus, Search, Loader2 } from 'lucide-react'
 import TambahReservasi from './components/TambahReservasi'
 import EditReservasi from './components/EditReservasi'
 import HapusReservasi from './components/ReservasiCancelPopUp'
 import TableReservationDetailModal from './components/TableReservationDetailModal'
 
+// ==========================
+// TYPES & CONSTANTS
+// ==========================
 export type StatusType = 'Menunggu' | 'Dikonfirmasi' | 'Checked In' | 'Selesai' | 'Tidak Datang' | 'Tersedia'
 
 export interface Reservation {
@@ -23,7 +26,7 @@ export interface Reservation {
   customerName: string
   phone: string
   paymentMethod: string
-  areaType: 'Indoor' | 'Outdoor' | 'Smoking' | 'VIP' 
+  areaType: string 
   floor: string
 }
 
@@ -36,77 +39,19 @@ export const STATUS_LABELS: Record<StatusType, string> = {
   'Tersedia': 'Tersedia'
 }
 
-export const tableLayout: any = {
-  "Lantai 1": {
-    Indoor: [
-      { id: "A1", shape: "square" }, { id: "A2", shape: "square" }, { id: "A3", shape: "square" },
-      { id: "A4", shape: "square" }, { id: "A5", shape: "square" }, { id: "A6", shape: "square" },
-      { id: "B1", shape: "circle" }, { id: "B2", shape: "circle" }, { id: "B3", shape: "circle" },
-      { id: "B4", shape: "circle" }, { id: "B5", shape: "circle" }
-    ],
-    Outdoor: [
-      { id: "O1", shape: "square" }, { id: "O2", shape: "square" }, { id: "O3", shape: "square" },
-      { id: "O4", shape: "circle" }, { id: "O5", shape: "circle" }
-    ],
-    Smoking: [
-      { id: "S1", shape: "circle" }, { id: "S2", shape: "square" },
-      { id: "S3", shape: "circle" }, { id: "S4", shape: "square" }
-    ],
-    VIP: []
-  },
-  "Lantai 2": {
-    Indoor: [
-      { id: "I2A1", shape: "square" }, { id: "I2A2", shape: "circle" }, { id: "I2A3", shape: "square" },
-      { id: "I2B1", shape: "square" }, { id: "I2B2", shape: "circle" }, { id: "I2B3", shape: "square" }
-    ],
-    Outdoor: [
-      { id: "O2A", shape: "square" }, { id: "O2B", shape: "square" }, { id: "O2C", shape: "circle" },
-      { id: "O2D", shape: "circle" }, { id: "O2E", shape: "square" }
-    ],
-    Smoking: [
-      { id: "S2A", shape: "circle" }, { id: "S2B", shape: "square" },
-      { id: "S2C", shape: "circle" }, { id: "S2D", shape: "square" }
-    ],
-    VIP: [
-      { id: "V2A", shape: "circle" }, { id: "V2B", shape: "square" },
-      { id: "V2C", shape: "circle" }, { id: "V2D", shape: "square" }
-    ]
-  },
-  "Lantai 3": {
-    Indoor: [
-      { id: "I3A", shape: "circle" }, { id: "I3B", shape: "square" }, { id: "I3C", shape: "square" },
-      { id: "I3D", shape: "circle" }, { id: "I3E", shape: "square" }, { id: "I3F", shape: "square" }
-    ],
-    Outdoor: [
-      { id: "O3A", shape: "square" }, { id: "O3B", shape: "square" }, { id: "O3C", shape: "circle" },
-      { id: "O3D", shape: "circle" }, { id: "O3E", shape: "square" }
-    ],
-    Smoking: [
-      { id: "S3A", shape: "square" }, { id: "S3B", shape: "circle" },
-      { id: "S3C", shape: "square" }, { id: "S3D", shape: "circle" }
-    ],
-    VIP: [
-      { id: "V3A", shape: "circle" }, { id: "V3B", shape: "square" }, { id: "V3C", shape: "circle" },
-      { id: "V3D", shape: "square" }
-    ]
-  },
-  "Rooftop": {
-    Indoor: [],
-    Outdoor: [
-      { id: "RTA1", shape: "square" }, { id: "RTA2", shape: "square" }, { id: "RTB1", shape: "circle" },
-      { id: "RTB2", shape: "circle" }, { id: "RTC1", shape: "square" }, { id: "RTC2", shape: "square" }
-    ],
-    Smoking: [
-      { id: "RTSM1", shape: "circle" }, { id: "RTSM2", shape: "square" }
-    ],
-    VIP: [
-      { id: "RTV1", shape: "square" }, { id: "RTV2", shape: "square" },
-      { id: "RTV3", shape: "circle" }
-    ]
+// ==========================
+// HELPERS
+// ==========================
+const mapStatusFromApi = (apiStatus: string): StatusType => {
+  switch (apiStatus) {
+    case 'menunggu': return 'Menunggu'
+    case 'dikonfirmasi': return 'Dikonfirmasi'
+    case 'checkin': return 'Checked In'
+    case 'selesai': return 'Selesai'
+    case 'noshow': return 'Tidak Datang'
+    default: return 'Tersedia'
   }
 }
-
-export const floors = Object.keys(tableLayout)
 
 const getStatusColors = (status: StatusType) => {
   switch (status) {
@@ -120,509 +65,229 @@ const getStatusColors = (status: StatusType) => {
   }
 }
 
-const LegendStatus = () => {
-  const statuses: { status: StatusType; label: string }[] = Object.entries(STATUS_LABELS).map(([key, value]) => ({
-    status: key as StatusType,
-    label: value
-  }))
+// Logika untuk menentukan reservasi mana yang aktif "DETIK INI"
+const getActiveReservationNow = (tableId: string, allReservations: Reservation[]) => {
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
-  return (
-    <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm mb-4 p-3 border rounded-lg bg-gray-50">
-      <span className="font-semibold text-gray-700 mr-2">Keterangan Status:</span>
-      {statuses.map((s) => {
-        const colors = getStatusColors(s.status)
-        let statusClass = colors.bg.replace('bg-', 'bg-')
+  return allReservations.find(res => {
+    if (res.tableNumber !== tableId) return false
+    
+    const [startH, startM] = res.startTime.split(':').map(Number)
+    const [endH, endM] = res.endTime.split(':').map(Number)
+    const startTotal = startH * 60 + startM
+    const endTotal = endH * 60 + endM
 
-        if (s.status === 'Tersedia') {
-          statusClass += ' border border-gray-400'
-        }
-
-        return (
-          <div key={s.status} className="flex items-center">
-            <span className={`w-3 h-3 rounded-full mr-2 ${statusClass}`}></span>
-            <span className={colors.text}>{s.label}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
+    // Meja berwarna jika sekarang berada di rentang waktu booking (toleransi 15 menit sebelum)
+    // atau jika statusnya sudah Checked In
+    const isWithinTime = currentMinutes >= (startTotal - 15) && currentMinutes <= endTotal
+    const isStillActive = res.status === 'Checked In' || res.status === 'Dikonfirmasi' || res.status === 'Menunggu'
+    
+    return isWithinTime && isStillActive
+  })
 }
 
-interface TableItemProps {
-  table: { id: string, shape: string, areaType: Reservation['areaType'], floor: string }
-  reservation: Reservation | undefined
-  handleEditClick: (reservation: Reservation) => void
-  handleTableClick: (tableId: string, areaType: Reservation['areaType'], floor: string) => void
-  handleReservedTableClick: (tableId: string, areaType: Reservation['areaType'], floor: string) => void
-}
-
-const TableItem = ({ table, reservation, handleEditClick, handleTableClick, handleReservedTableClick }: TableItemProps) => {
+// ==========================
+// SUB-COMPONENTS
+// ==========================
+const TableItem = ({ table, reservation, handleTableClick, handleReservedTableClick }: any) => {
   const status: StatusType = reservation ? reservation.status : 'Tersedia'
   const colors = getStatusColors(status)
   const isReserved = status !== 'Tersedia'
 
-  const handleClick = () => {
-    if (isReserved) {
-      handleReservedTableClick(table.id, table.areaType, table.floor)
-    } else {
-      handleTableClick(table.id, table.areaType, table.floor)
-    }
-  }
-
   return (
     <div
-      onClick={handleClick}
-      className={`
-        flex flex-col items-center justify-center p-3 cursor-pointer shadow-md transition-transform duration-150 ease-in-out transform
-        ${table.shape === "circle" ? "rounded-full aspect-square w-26 h-26" : "rounded-xl w-26 h-26"}
-        ${colors.bg}
-        ring-4 ${colors.border}
-        text-gray-800 font-bold
-        ${isReserved ? 'hover:scale-[1.05] ring-offset-2' : 'hover:scale-[1.05]'}
-      `}
-      title={isReserved ? `Reservasi oleh ${reservation!.customerName} (${STATUS_LABELS[status]})` : `Meja ${table.id} Tersedia`}
+      onClick={() => isReserved ? handleReservedTableClick(table.id, table.areaType, table.floor) : handleTableClick(table.id, table.areaType, table.floor)}
+      className={`flex flex-col items-center justify-center p-3 cursor-pointer shadow-md transition-all duration-150 
+        ${table.shape === "circle" ? "rounded-full" : "rounded-xl"} 
+        ${colors.bg} ring-4 ${colors.border} text-gray-800 font-bold hover:scale-105 w-28 h-28`}
     >
       <div className="text-xl">{table.id}</div>
-      <div className="text-xs font-normal mt-1 text-center">
+      <div className="text-[10px] font-normal mt-1 text-center leading-tight">
         {isReserved ? (
           <>
-            <span className="block truncate font-semibold">{reservation!.customerName}</span>
-            <span className="block text-sm">{reservation!.startTime}</span>
-            <span className={`block text-xs font-medium ${colors.text}`}>({STATUS_LABELS[status]})</span>
+            <span className="block truncate font-bold w-20 mx-auto">{reservation.customerName}</span>
+            <span className="block text-[9px] opacity-80">{reservation.startTime}</span>
           </>
         ) : (
-          <span className={`font-semibold ${colors.text}`}>{STATUS_LABELS[status]}</span>
+          <span className="font-semibold uppercase text-[8px] text-gray-400">Tersedia</span>
         )}
       </div>
     </div>
   )
 }
 
+// ==========================
+// MAIN PAGE
+// ==========================
 export default function ReservasiPage() {
+  const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'list' | 'layout'>('layout')
-  const [selectedFloor, setSelectedFloor] = useState("Lantai 1")
-  const [selectedArea, setSelectedArea] = useState<Reservation['areaType']>("Indoor")
+  const [rawTables, setRawTables] = useState<any[]>([])
+  const [data, setData] = useState<Reservation[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const today = (new Date()).toISOString().split('T')[0]
-
-  const [data, setData] = useState<Reservation[]>([
-    { id: 'R001', tableNumber: 'A1', pax: '4', date: today, startTime: '19:00', endTime: '20:30', deposit: '50000', status: 'Dikonfirmasi', customerName: 'Budi Santoso', phone: '081xxx', paymentMethod: 'QRIS', areaType: 'Indoor', floor: 'Lantai 1' },
-    { id: 'R001a', tableNumber: 'A1', pax: '2', date: today, startTime: '21:00', endTime: '22:00', deposit: '30000', status: 'Menunggu', customerName: 'Agus Budi', phone: '081xxx', paymentMethod: 'Transfer', areaType: 'Indoor', floor: 'Lantai 1' },
-    { id: 'R005', tableNumber: 'A3', pax: '2', date: today, startTime: '12:00', endTime: '13:00', deposit: '0', status: 'Checked In', customerName: 'Dina Permata', phone: '081xxx', paymentMethod: 'Tunai', areaType: 'Indoor', floor: 'Lantai 1' },
-    { id: 'R007', tableNumber: 'A5', pax: '3', date: today, startTime: '21:00', endTime: '22:00', deposit: '20000', status: 'Menunggu', customerName: 'Gita Rani', phone: '081xxx', paymentMethod: 'QRIS', areaType: 'Indoor', floor: 'Lantai 1' },
-    { id: 'R028', tableNumber: 'B2', pax: '5', date: today, startTime: '17:00', endTime: '18:00', deposit: '50000', status: 'Dikonfirmasi', customerName: 'Indah Sari', phone: '081xxx', paymentMethod: 'Transfer', areaType: 'Indoor', floor: 'Lantai 1' },
-    { id: 'R008', tableNumber: 'O1', pax: '8', date: today, startTime: '11:00', endTime: '12:00', deposit: '50000', status: 'Selesai', customerName: 'Hendra Jaya', phone: '081xxx', paymentMethod: 'Kartu Kredit', areaType: 'Outdoor', floor: 'Lantai 1' },
-    { id: 'R029', tableNumber: 'O4', pax: '2', date: today, startTime: '19:00', endTime: '20:00', deposit: '20000', status: 'Menunggu', customerName: 'Joko R', phone: '081xxx', paymentMethod: 'QRIS', areaType: 'Outdoor', floor: 'Lantai 1' },
-    { id: 'R009', tableNumber: 'S1', pax: '2', date: today, startTime: '15:00', endTime: '16:00', deposit: '0', status: 'Dikonfirmasi', customerName: 'Irma Sari', phone: '081xxx', paymentMethod: 'Tunai', areaType: 'Smoking', floor: 'Lantai 1' },
-    { id: 'R011', tableNumber: 'I2A2', pax: '5', date: today, startTime: '18:30', endTime: '20:00', deposit: '50000', status: 'Menunggu', customerName: 'Lisa Indah', phone: '081xxx', paymentMethod: 'Transfer', areaType: 'Indoor', floor: 'Lantai 2' },
-    { id: 'R019', tableNumber: 'I2B1', pax: '3', date: today, startTime: '14:00', endTime: '15:00', deposit: '0', status: 'Checked In', customerName: 'Rian Hidayat', phone: '081xxx', paymentMethod: 'Tunai', areaType: 'Indoor', floor: 'Lantai 2' },
-    { id: 'R002', tableNumber: 'O2A', pax: '2', date: today, startTime: '10:00', endTime: '11:00', deposit: '0', status: 'Checked In', customerName: 'Siti Aminah', phone: '081xxx', paymentMethod: 'Tunai', areaType: 'Outdoor', floor: 'Lantai 2' },
-    { id: 'R020', tableNumber: 'O2C', pax: '7', date: today, startTime: '20:30', endTime: '22:00', deposit: '150000', status: 'Dikonfirmasi', customerName: 'Zaki Akbar', phone: '081xxx', paymentMethod: 'Transfer', areaType: 'Outdoor', floor: 'Lantai 2' },
-    { id: 'R012', tableNumber: 'S2A', pax: '3', date: today, startTime: '20:00', endTime: '21:00', deposit: '20000', status: 'Dikonfirmasi', customerName: 'Maria Ulfah', phone: '081xxx', paymentMethod: 'Tunai', areaType: 'Smoking', floor: 'Lantai 2' },
-    { id: 'R013', tableNumber: 'V2A', pax: '6', date: today, startTime: '22:00', endTime: '23:30', deposit: '150000', status: 'Menunggu', customerName: 'Naufal Rizki', phone: '081xxx', paymentMethod: 'Kartu Kredit', areaType: 'VIP', floor: 'Lantai 2' },
-    { id: 'R003', tableNumber: 'V3A', pax: '6', date: today, startTime: '13:00', endTime: '14:00', deposit: '100000', status: 'Menunggu', customerName: 'Joko Widodo', phone: '085xxx', paymentMethod: 'Kartu Kredit', areaType: 'VIP', floor: 'Lantai 3' },
-    { id: 'R033', tableNumber: 'V3C', pax: '4', date: today, startTime: '19:00', endTime: '20:00', deposit: '50000', status: 'Checked In', customerName: 'Qila Z', phone: '085xxx', paymentMethod: 'QRIS', areaType: 'VIP', floor: 'Lantai 3' },
-    { id: 'R015', tableNumber: 'I3B', pax: '4', date: today, startTime: '17:00', endTime: '18:00', deposit: '50000', status: 'Dikonfirmasi', customerName: 'Rudi Hartono', phone: '085xxx', paymentMethod: 'QRIS', areaType: 'Indoor', floor: 'Lantai 3' },
-    { id: 'R024', tableNumber: 'O3A', pax: '5', date: today, startTime: '11:00', endTime: '12:30', deposit: '50000', status: 'Dikonfirmasi', customerName: 'Mega Sari', phone: '085xxx', paymentMethod: 'QRIS', areaType: 'Outdoor', floor: 'Lantai 3' },
-    { id: 'R016', tableNumber: 'S3A', pax: '2', date: today, startTime: '16:00', endTime: '17:00', deposit: '0', status: 'Checked In', customerName: 'Sinta Dewi', phone: '085xxx', paymentMethod: 'Tunai', areaType: 'Smoking', floor: 'Lantai 3' },
-    { id: 'R017', tableNumber: 'RTA1', pax: '8', date: today, startTime: '18:00', endTime: '19:30', deposit: '100000', status: 'Dikonfirmasi', customerName: 'Taufik Hidayat', phone: '087xxx', paymentMethod: 'QRIS', areaType: 'Outdoor', floor: 'Rooftop' },
-    { id: 'R004', tableNumber: 'RTSM1', pax: '10', date: today, startTime: '21:00', endTime: '23:00', deposit: '200000', status: 'Dikonfirmasi', customerName: 'Rina Dewi', phone: '087xxx', paymentMethod: 'Transfer', areaType: 'Smoking', floor: 'Rooftop' },
-    { id: 'R018', tableNumber: 'RTV1', pax: '4', date: today, startTime: '12:30', endTime: '13:30', deposit: '50000', status: 'Checked In', customerName: 'Umar Bakri', phone: '087xxx', paymentMethod: 'Kartu Kredit', areaType: 'VIP', floor: 'Rooftop' }
-  ])
-
+  const [selectedFloor, setSelectedFloor] = useState("")
+  const [selectedArea, setSelectedArea] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-
+  
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null)
   const [deletingReservation, setDeletingReservation] = useState<Reservation | null>(null)
-  const [clickedTableData, setClickedTableData] = useState<{ tableNumber: string, areaType: Reservation['areaType'], floor: string } | null>(null)
+  const [clickedTableData, setClickedTableData] = useState<any>(null)
 
-  const [isAnyModalOpen, setIsAnyModalOpen] = useState(false)
-  // Definisikan 'isChildModalOpen' dengan tipe yang eksplisit (boolean)
-  const isChildModalOpen: boolean = isAddModalOpen || isEditModalOpen || isDeleteModalOpen;
+  const today = useMemo(() => new Date().toISOString().split('T')[0], [])
 
-  useEffect(() => {
-    setIsAnyModalOpen(isAddModalOpen || isEditModalOpen || isDetailModalOpen || isDeleteModalOpen)
-  }, [isAddModalOpen, isEditModalOpen, isDetailModalOpen, isDeleteModalOpen])
+  const fetchData = useCallback(async () => {
+    try {
+      const [resT, resR] = await Promise.all([
+        fetch('/api/tables?limit=100'),
+        fetch(`/api/reservations?where[tanggal][equals]=${today}&limit=100`)
+      ])
+      const tablesJson = await resT.json()
+      const resJson = await resR.json()
 
-  const getAllReservationsForTable = useMemo(() => (tableId: string): Reservation[] => {
-    return data.filter(r => r.tableNumber === tableId && r.date === today && r.status !== 'Selesai' && r.status !== 'Tidak Datang')
-  }, [data, today])
+      setRawTables(tablesJson.docs || [])
+      
+      const mapped: Reservation[] = (resJson.docs || []).map((r: any) => ({
+        id: r.id,
+        tableNumber: r.meja?.namaMeja || '?',
+        pax: r.jumlahOrang?.toString(),
+        date: r.tanggal,
+        startTime: r.jamMulai,
+        endTime: r.jamSelesai,
+        deposit: r.dpNominal?.toString() || '0',
+        status: mapStatusFromApi(r.status),
+        customerName: r.namaPelanggan,
+        phone: r.nomorTelepon,
+        paymentMethod: r.metodePembayaran,
+        areaType: r.meja?.area || 'indoor',
+        floor: r.meja?.lantai || 'lantai_1'
+      }))
+      setData(mapped)
 
-  const getReservationDetails = useMemo(() => (tableId: string): Reservation | undefined => {
-    const activeReservations = getAllReservationsForTable(tableId)
-    return activeReservations.sort((a, b) => a.startTime.localeCompare(b.startTime))[0]
-  }, [getAllReservationsForTable])
+      if (tablesJson.docs?.length > 0 && !selectedFloor) {
+        setSelectedFloor(tablesJson.docs[0].lantai)
+        setSelectedArea(tablesJson.docs[0].area)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [today, selectedFloor])
 
-  const handleTableClick = (tableNumber: string, areaType: Reservation['areaType'], floor: string) => {
+  useEffect(() => { 
+    fetchData()
+    // Auto refresh status setiap 1 menit agar warna meja update otomatis
+    const interval = setInterval(fetchData, 60000)
+    return () => clearInterval(interval)
+  }, [fetchData])
+
+  const dynamicTableLayout = useMemo(() => {
+    const layout: any = {}
+    rawTables.forEach(t => {
+      if (!layout[t.lantai]) layout[t.lantai] = {}
+      if (!layout[t.lantai][t.area]) layout[t.lantai][t.area] = []
+      layout[t.lantai][t.area].push({
+        id: t.namaMeja,
+        databaseId: t.id,
+        shape: t.bentuk === 'bulat' ? 'circle' : 'square',
+        kapasitas: t.kapasitas,
+        areaType: t.area,
+        floor: t.lantai
+      })
+    })
+    return layout
+  }, [rawTables])
+
+  const handleTableClick = (tableNumber: string, areaType: string, floor: string) => {
     setClickedTableData({ tableNumber, areaType, floor })
     setIsAddModalOpen(true)
   }
 
-  const handleReservedTableClick = (tableNumber: string, areaType: Reservation['areaType'], floor: string) => {
+  const handleReservedTableClick = (tableNumber: string, areaType: string, floor: string) => {
     setClickedTableData({ tableNumber, areaType, floor })
     setIsDetailModalOpen(true)
   }
 
-  const handleAddReservationClick = () => {
-    setIsAddModalOpen(true)
-  }
-
-  const handleEditClick = (reservation: Reservation) => {
-    setEditingReservation(reservation)
-    setIsEditModalOpen(true)
-  }
-
-  const handleOpenDeleteModal = (reservation: Reservation) => {
-    setDeletingReservation(reservation)
-    setIsEditModalOpen(false)
-    setIsDetailModalOpen(false)
-    setIsDeleteModalOpen(true)
-  }
-
-  // Perbaikan: Ubah tipe parameter menjadi 'string' agar sesuai dengan 'reservationId'
-  const handleConfirmDelete = (reservationId: string) => {
-    setData(prev => prev.filter(res => res.id !== reservationId))
-    setIsDeleteModalOpen(false)
-    setDeletingReservation(null)
-
-    if (!isDetailModalOpen) {
-      setClickedTableData(null)
-    }
-  }
-
-  const handleAddReservation = (newReservationData: any) => {
-// ... (handleAddReservation tetap)
-    const newStatus: StatusType = newReservationData.status || 'Menunggu'
-    const newReservation: Reservation = {
-      id: `R${(data.length + 1).toString().padStart(3, '0')}`,
-      tableNumber: newReservationData.tableNumber,
-      pax: newReservationData.pax,
-      date: newReservationData.date,
-      startTime: newReservationData.startTime,
-      endTime: newReservationData.endTime,
-      deposit: newReservationData.deposit,
-      status: newStatus,
-      customerName: newReservationData.customerName || `${newReservationData.firstName} ${newReservationData.lastName}`,
-      phone: newReservationData.phone,
-      paymentMethod: newReservationData.paymentMethod,
-      areaType: newReservationData.areaType as Reservation['areaType'],
-      floor: newReservationData.floor
-    }
-    setData(prev => [...prev, newReservation])
-    setIsAddModalOpen(false)
-  }
-
-  // Perbaikan: Ubah tipe parameter menjadi 'Reservation'
-  const handleUpdateReservation = (updatedData: Reservation) => {
-    setData(prev => prev.map((r) => (r.id === updatedData.id ? updatedData : r)))
-    setIsEditModalOpen(false)
-    setEditingReservation(null)
-  }
-
-  const handleAddHeaderClick = () => {
-    setClickedTableData(null)
-    setIsAddModalOpen(true)
-  }
-
-  const areasForSelectedFloor = useMemo(() => {
-// ... (areasForSelectedFloor tetap)
-    return Object.keys(tableLayout[selectedFloor]).filter(area => tableLayout[selectedFloor][area]?.length > 0)
-  }, [selectedFloor])
-
-  useEffect(() => {
-// ... (useEffect tetap)
-    if (!areasForSelectedFloor.includes(selectedArea) && areasForSelectedFloor.length > 0) {
-      setSelectedArea(areasForSelectedFloor[0] as Reservation['areaType'])
-    } else if (areasForSelectedFloor.length === 0) {
-      setSelectedArea("Indoor")
-    }
-  }, [selectedFloor, areasForSelectedFloor, selectedArea])
-
-  const columns = ['ID Reservasi', 'Pelanggan', 'Meja Area', 'Pax/Tanggal', 'Waktu', 'Status', 'Deposit', 'Aksi']
+  if (loading) return <div className="flex h-screen items-center justify-center bg-[#52BFBE] text-white"><Loader2 className="animate-spin" /></div>
 
   return (
-    <div className="flex min-h-screen bg-[#52BFBE] relative overflow-hidden">
+    <div className="flex min-h-screen bg-[#52BFBE]">
       <Sidebar />
-
-      <div
-        className={`flex-1 flex flex-col transition-filter duration-300`}
-        style={{
-          marginLeft: '7rem',
-          filter: isAnyModalOpen ? 'blur(3px)' : 'none',
-          pointerEvents: isAnyModalOpen ? 'none' : 'auto'
-        }}
-      >
-        <HeaderKasir title="Reservasi" />
-
-        <div className="flex-1 p-3">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-semibold">Reservasi</h2>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setViewMode('layout')}
-                  className={`px-4 py-2 rounded-lg text-white font-medium transition
-                    ${viewMode === 'layout' ? 'bg-[#3ABAB4]' : 'bg-gray-400 hover:bg-gray-500'}
-                  `}
-                >
-                  Layout
-                </button>
-
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-4 py-2 rounded-lg text-white font-medium transition
-                    ${viewMode === 'list' ? 'bg-[#3ABAB4]' : 'bg-gray-400 hover:bg-gray-500'}
-                  `}
-                >
-                  List
-                </button>
-
-                <button
-                  onClick={handleAddHeaderClick}
-                  className="bg-[#3ABAB4] hover:bg-[#32A9A4] text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
-                >
-                  <CalendarPlus size={18} />
-                  Tambah Reservasi
-                </button>
+      <div className="flex-1 flex flex-col ml-28">
+        <HeaderKasir title="Manajemen Reservasi" />
+        <div className="flex-1 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 min-h-full">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex bg-gray-100 p-1 rounded-xl">
+                <button onClick={() => setViewMode('layout')} className={`px-6 py-2 rounded-lg font-bold ${viewMode === 'layout' ? 'bg-white shadow text-[#3ABAB4]' : 'text-gray-500'}`}>Layout</button>
+                <button onClick={() => setViewMode('list')} className={`px-6 py-2 rounded-lg font-bold ${viewMode === 'list' ? 'bg-white shadow text-[#3ABAB4]' : 'text-gray-500'}`}>Daftar</button>
               </div>
+              <button onClick={() => { setClickedTableData(null); setIsAddModalOpen(true) }} className="bg-[#3ABAB4] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"><CalendarPlus size={20} /> Reservasi Baru</button>
             </div>
 
-            <hr className="my-4" />
-
-            {viewMode === 'layout' && (
-              <div className="p-4">
-                <LegendStatus />
-
-                <h3 className="text-lg font-semibold mb-2">Pilih Lantai:</h3>
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                  {floors.map((floor) => (
-                    <button
-                      key={floor}
-                      onClick={() => setSelectedFloor(floor)}
-                      className={`
-                        px-4 py-2 rounded-full border-2 transition whitespace-nowrap
-                        ${selectedFloor === floor
-                          ? 'bg-[#3ABAB4] text-white border-[#3ABAB4] font-semibold'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }
-                      `}
-                    >
-                      {floor}
-                    </button>
-                  ))}
-                </div>
-
-                <h3 className="text-lg font-semibold mb-2 mt-4">Pilih Area ({selectedFloor}):</h3>
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                  {areasForSelectedFloor.map((area) => (
-                    <button
-                      key={area}
-                      onClick={() => setSelectedArea(area as Reservation['areaType'])}
-                      className={`
-                        px-4 py-2 rounded-full border-2 transition whitespace-nowrap
-                        ${selectedArea === area
-                          ? 'bg-blue-500 text-white border-blue-500 font-semibold'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }
-                      `}
-                    >
-                      {area}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap gap-8 justify-start p-4 border-2 border-dashed border-gray-200 min-h-[300px] rounded-xl bg-white/50">
-                  {tableLayout[selectedFloor] && tableLayout[selectedFloor][selectedArea] && tableLayout[selectedFloor][selectedArea].length > 0 ? (
-                    tableLayout[selectedFloor][selectedArea].map((table: any) => {
-                      const reservation = getReservationDetails(table.id)
-
-                      return (
-                        <TableItem
-                          key={table.id}
-                          table={{...table, areaType: selectedArea, floor: selectedFloor}}
-                          reservation={reservation}
-                          handleEditClick={handleEditClick}
-                          handleTableClick={handleTableClick}
-                          handleReservedTableClick={handleReservedTableClick}
-                        />
-                      )
-                    })
-                  ) : (
-                    <p className="text-gray-500 italic">Tidak ada meja di area **{selectedArea}** pada **{selectedFloor}**.</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {viewMode === 'list' && (
+            {viewMode === 'layout' ? (
               <>
-                <div className="mb-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Cari berdasarkan Nama Pelanggan atau ID Reservasi..."
-                      className="w-full border rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-[#3ABAB4] focus:border-[#3ABAB4] transition"
-                    />
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  </div>
+                <div className="flex gap-2 mb-4">
+                  {Object.keys(dynamicTableLayout).map(f => (
+                    <button key={f} onClick={() => { setSelectedFloor(f); setSelectedArea(Object.keys(dynamicTableLayout[f])[0]) }} className={`px-4 py-2 rounded-full border-2 capitalize font-bold ${selectedFloor === f ? 'bg-[#3ABAB4] text-white border-[#3ABAB4]' : 'bg-white text-gray-400'}`}>{f.replace('_', ' ')}</button>
+                  ))}
                 </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-<thead>
-  <tr className="border-b-2 border-gray-300 text-sm text-gray-600">
-    <th className="pb-4 pt-2 text-left font-semibold w-[12%]">ID Reservasi</th>
-    <th className="pb-4 pt-2 text-left font-semibold w-[18%]">Pelanggan</th>
-    <th className="pb-4 pt-2 text-center font-semibold w-[15%]">Meja Area</th>
-    <th className="pb-4 pt-2 text-center font-semibold w-[15%]">Pax/Tanggal</th>
-    <th className="pb-4 pt-2 text-center font-semibold w-[15%]">Waktu</th>
-    <th className="pb-4 pt-2 text-center font-semibold w-[12%]">Status</th>
-    <th className="pb-4 pt-2 text-right font-semibold w-[13%] pr-4">Deposit</th>
-    <th className="pb-4 pt-2 text-center font-semibold w-[10%]">Aksi</th>
-  </tr>
-</thead>
-
-<tbody>
-  {data.map((reservation) => {
-    const colors = getStatusColors(reservation.status)
-
-    return (
-      <tr
-        key={reservation.id}
-        className="border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer"
-        onClick={() => handleEditClick(reservation)}
-      >
-        <td className="py-4 text-left">{reservation.id}</td>
-        <td className="py-4 text-left">{reservation.customerName}</td>
-
-        <td className="py-4 text-center">
-          <div className="flex flex-col items-center leading-tight">
-            <span className="font-semibold">{reservation.tableNumber}</span>
-            <span className="text-xs text-gray-500">
-              {reservation.areaType} - {reservation.floor}
-            </span>
-          </div>
-        </td>
-
-        <td className="py-4 text-center">
-          <div className="flex flex-col items-center leading-tight">
-            <span className="font-semibold">{reservation.pax} Pax</span>
-            <span className="text-xs text-gray-500">{reservation.date}</span>
-          </div>
-        </td>
-
-        <td className="py-4 text-center whitespace-nowrap">
-          {reservation.startTime} - {reservation.endTime}
-        </td>
-
-        <td className="py-4 text-center">
-          <span
-            className={`px-3 py-1 rounded-md text-xs font-semibold border-2
-            ${colors.border.replace('ring', 'border')}
-            ${colors.bg} ${colors.text}`}
-          >
-            {STATUS_LABELS[reservation.status]}
-          </span>
-        </td>
-
-        <td className="py-4 text-right pr-4 whitespace-nowrap">
-          Rp {parseInt(reservation.deposit).toLocaleString('id-ID')}
-        </td>
-
-        <td className="py-4 flex justify-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleEditClick(reservation)
-            }}
-            className="p-2 bg-white border-2 border-gray-300 hover:border-[#3ABAB4] hover:bg-[#3ABAB4] hover:text-white text-gray-700 rounded-lg transition-all"
-          >
-            <Edit size={16} />
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenDeleteModal(reservation)
-            }}
-            className="p-2 bg-white border-2 border-gray-300 hover:border-red-500 hover:bg-red-500 hover:text-white text-red-500 rounded-lg transition-all"
-          >
-            <Trash2 size={16} />
-          </button>
-        </td>
-      </tr>
-    )
-  })}
-</tbody>
-                  </table>
+                <div className="flex gap-2 mb-8 border-b pb-4">
+                  {selectedFloor && Object.keys(dynamicTableLayout[selectedFloor] || {}).map(a => (
+                    <button key={a} onClick={() => setSelectedArea(a)} className={`px-4 py-2 rounded-lg capitalize font-medium ${selectedArea === a ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>{a}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-8 border-2 border-dashed border-gray-100 rounded-3xl">
+                  {dynamicTableLayout[selectedFloor]?.[selectedArea]?.map((table: any) => (
+                    <TableItem 
+                      key={table.databaseId} 
+                      table={table} 
+                      reservation={getActiveReservationNow(table.id, data)} 
+                      handleTableClick={handleTableClick}
+                      handleReservedTableClick={handleReservedTableClick}
+                    />
+                  ))}
                 </div>
               </>
+            ) : (
+              /* Table List View tetap sama seperti sebelumnya */
+              <div className="overflow-x-auto">
+                 <table className="w-full">
+                    <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                      <tr>
+                        <th className="p-4 text-left">Pelanggan</th>
+                        <th className="p-4 text-center">Meja</th>
+                        <th className="p-4 text-center">Status</th>
+                        <th className="p-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {data.filter(r => r.customerName.toLowerCase().includes(searchQuery.toLowerCase())).map(res => (
+                        <tr key={res.id}>
+                          <td className="p-4 font-bold">{res.customerName}</td>
+                          <td className="p-4 text-center">{res.tableNumber}</td>
+                          <td className="p-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColors(res.status).bg} ${getStatusColors(res.status).text}`}>
+                              {STATUS_LABELS[res.status]}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                             <button onClick={() => { setEditingReservation(res); setIsEditModalOpen(true) }} className="p-2 text-blue-600"><Edit size={18} /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+              </div>
             )}
           </div>
         </div>
       </div>
-
-      <TambahReservasi
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false)
-
-          if (!isDetailModalOpen) {
-            setClickedTableData(null)
-          }
-        }}
-        onSave={handleAddReservation}
-        initialTableData={clickedTableData}
-      />
-
-      <EditReservasi
-        isOpen={isEditModalOpen && editingReservation !== null}
-        onClose={() => {
-          setIsEditModalOpen(false)
-          setEditingReservation(null)
-
-          if (!isDetailModalOpen) {
-            setClickedTableData(null)
-          }
-        }}
-        initialData={editingReservation}
-        onUpdate={handleUpdateReservation}
-      />
-
-      {isDeleteModalOpen && deletingReservation && (
-        <HapusReservasi
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false)
-            setDeletingReservation(null)
-          }}
-          // Perbaikan: Ubah argumen menjadi hanya 'reservationId'
-          onConfirm={() => handleConfirmDelete(deletingReservation.id)}
-          reservationId={deletingReservation.id}
-          customerName={deletingReservation.customerName}
-          tableNumber={deletingReservation.tableNumber}
-        />
-      )}
-
-      <TableReservationDetailModal
-        isOpen={isDetailModalOpen && clickedTableData !== null}
-        onClose={() => {
-          setIsDetailModalOpen(false)
-          setClickedTableData(null)
-        }}
-        // Perbaikan: Tambahkan properti 'isChildModalOpen'
-        isChildModalOpen={isChildModalOpen}
-        reservations={clickedTableData ? getAllReservationsForTable(clickedTableData.tableNumber) : []}
-        tableNumber={clickedTableData?.tableNumber || ''}
-        floor={clickedTableData?.floor || ''}
-        areaType={clickedTableData?.areaType || ''}
-        onEditClick={handleEditClick}
-        onAddReservationClick={handleAddReservationClick}
-      />
     </div>
   )
 }

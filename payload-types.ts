@@ -78,6 +78,7 @@ export interface Config {
     reservations: Reservation;
     categories: Category;
     storeSettings: StoreSetting;
+    tables: Table;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -96,6 +97,7 @@ export interface Config {
     reservations: ReservationsSelect<false> | ReservationsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     storeSettings: StoreSettingsSelect<false> | StoreSettingsSelect<true>;
+    tables: TablesSelect<false> | TablesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -355,11 +357,48 @@ export interface Notification {
  */
 export interface Reservation {
   id: number;
-  tenant: number | Tenant;
+  kodeReservasi?: string | null;
+  waktuReservasi?: string | null;
   namaPelanggan: string;
-  nomorMeja?: string | null;
+  jenisKelamin: 'laki-laki' | 'perempuan';
+  noTelepon: string;
+  email?: string | null;
   tanggal: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  jamMulai: string;
+  jamSelesai: string;
+  durasiMenit?: number | null;
+  pax: number;
+  deposit?: number | null;
+  totalTagihan?: number | null;
+  statusPembayaran?: ('unpaid' | 'partial' | 'paid') | null;
+  metodePembayaran?: ('tunai' | 'ewallet' | 'qris' | 'va') | null;
+  meja: number | Table;
+  status?: ('menunggu' | 'dikonfirmasi' | 'checkin' | 'selesai' | 'noshow') | null;
+  kasir?: (number | null) | User;
+  checkInAt?: string | null;
+  checkOutAt?: string | null;
+  catatan?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables".
+ */
+export interface Table {
+  id: number;
+  namaMeja: string;
+  kapasitas: number;
+  lantai: 'lantai_1' | 'lantai_2' | 'lantai_3' | 'rooftop';
+  area?: ('vip' | 'indoor' | 'outdoor' | 'smoking') | null;
+  bentuk?: ('kotak' | 'bulat') | null;
+  posisi: {
+    x: number;
+    y: number;
+  };
+  dpMeja?: number | null;
+  catatan?: string | null;
+  tenant: number | Tenant;
   updatedAt: string;
   createdAt: string;
 }
@@ -495,6 +534,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'storeSettings';
         value: number | StoreSetting;
+      } | null)
+    | ({
+        relationTo: 'tables';
+        value: number | Table;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -711,11 +754,27 @@ export interface NotificationsSelect<T extends boolean = true> {
  * via the `definition` "reservations_select".
  */
 export interface ReservationsSelect<T extends boolean = true> {
-  tenant?: T;
+  kodeReservasi?: T;
+  waktuReservasi?: T;
   namaPelanggan?: T;
-  nomorMeja?: T;
+  jenisKelamin?: T;
+  noTelepon?: T;
+  email?: T;
   tanggal?: T;
+  jamMulai?: T;
+  jamSelesai?: T;
+  durasiMenit?: T;
+  pax?: T;
+  deposit?: T;
+  totalTagihan?: T;
+  statusPembayaran?: T;
+  metodePembayaran?: T;
+  meja?: T;
   status?: T;
+  kasir?: T;
+  checkInAt?: T;
+  checkOutAt?: T;
+  catatan?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -798,6 +857,28 @@ export interface StoreSettingsSelect<T extends boolean = true> {
               namaMeja?: T;
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tables_select".
+ */
+export interface TablesSelect<T extends boolean = true> {
+  namaMeja?: T;
+  kapasitas?: T;
+  lantai?: T;
+  area?: T;
+  bentuk?: T;
+  posisi?:
+    | T
+    | {
+        x?: T;
+        y?: T;
+      };
+  dpMeja?: T;
+  catatan?: T;
+  tenant?: T;
   updatedAt?: T;
   createdAt?: T;
 }

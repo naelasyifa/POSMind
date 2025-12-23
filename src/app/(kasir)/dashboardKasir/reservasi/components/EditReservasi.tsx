@@ -4,26 +4,25 @@ import React, { useState, useEffect } from 'react'
 import { User, CreditCard, Save } from 'lucide-react'
 import type { StatusType } from '@/types/reservation'
 
-
-type AreaType = 'Indoor' | 'Outdoor' | 'Smoking' | 'VIP';
+type AreaType = 'Indoor' | 'Outdoor' | 'Smoking' | 'VIP'
 
 interface Reservation {
-  id: string;
-  tableNumber: string;
-  pax: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  deposit: string;
+  id: string
+  tableNumber: string
+  pax: string
+  date: string
+  startTime: string
+  endTime: string
+  deposit: string
   // Telah diperbaiki: Menggunakan StatusType, bukan ReservationStatus
-  status: StatusType; 
-  customerName: string;
-  gender?: 'Pria' | 'Wanita' | '';
-  phone: string;
-  email?: string;
-  paymentMethod: string;
-  areaType: AreaType;
-  floor: string;
+  status: StatusType
+  customerName: string
+  gender?: 'Pria' | 'Wanita' | ''
+  phone: string
+  email?: string
+  paymentMethod: string
+  areaType: AreaType
+  floor: string
 }
 
 /* -------- ICON COMPONENTS -------- */
@@ -32,7 +31,7 @@ function IconCustomer() {
     <div className="w-10 h-10 rounded-full bg-[#4ECAC7] flex items-center justify-center">
       <User size={20} className="text-black" />
     </div>
-  );
+  )
 }
 
 function IconPayment() {
@@ -40,51 +39,50 @@ function IconPayment() {
     <div className="w-10 h-10 rounded-full bg-[#4ECAC7] flex items-center justify-center">
       <CreditCard size={20} className="text-black" />
     </div>
-  );
+  )
 }
 
 /* ============================================ */
 
 interface EditReservationProps {
-  isOpen: boolean;
-  onClose: () => void;
-  initialData: Reservation | null;
-  onUpdate: (data: Reservation) => void;
-  onDeleteClick?: (id: string) => void;
+  isOpen: boolean
+  onClose: () => void
+  initialData: Reservation | null
+  onUpdate: (data: Reservation) => void
+  onDeleteClick?: (id: string) => void
 }
 
 export default function EditReservasi({
   isOpen,
   onClose,
   initialData,
-  onUpdate
+  onUpdate,
 }: EditReservationProps) {
-
   // ⭐ FIXED STATUS LIST
-  const statusList: StatusType[] = [ 
+  const statusList: StatusType[] = [
     'Menunggu',
     'Dikonfirmasi',
     'Checked In',
     'Selesai',
-    'Tidak Datang'
-  ];
+    'Tidak Datang',
+  ]
 
-  const tables = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'Bar'];
-  const genderList = ['Pria', 'Wanita'];
-  const paymentList = ['Tunai', 'QRIS', 'Debit', 'Kartu Kredit', 'Transfer'];
-  const areaTypeList: AreaType[] = ['Indoor', 'Outdoor', 'Smoking', 'VIP'];
-  const floorList = ['Lantai 1', 'Lantai 2', 'Lantai 3', 'Rooftop'];
+  const tables = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'Bar']
+  const genderList = ['Pria', 'Wanita']
+  const paymentList = ['Tunai', 'QRIS', 'Debit', 'Kartu Kredit', 'Transfer']
+  const areaTypeList: AreaType[] = ['Indoor', 'Outdoor', 'Smoking', 'VIP']
+  const floorList = ['Lantai 1', 'Lantai 2', 'Lantai 3', 'Rooftop']
 
   const splitName = (fullName: string) => {
-    const parts = fullName.trim().split(' ');
+    const parts = fullName.trim().split(' ')
     if (parts.length > 1) {
       return {
         first: parts.slice(0, -1).join(' '),
-        last: parts.slice(-1)[0]
-      };
+        last: parts.slice(-1)[0],
+      }
     }
-    return { first: fullName, last: '' };
-  };
+    return { first: fullName, last: '' }
+  }
 
   const defaultReservation: Reservation = {
     id: '',
@@ -99,53 +97,49 @@ export default function EditReservasi({
     phone: '',
     paymentMethod: 'Tunai',
     areaType: 'Indoor',
-    floor: 'Lantai 1'
-  };
+    floor: 'Lantai 1',
+  }
 
-  const [currentData, setCurrentData] = useState<Reservation>(
-    initialData || defaultReservation
-  );
+  const [currentData, setCurrentData] = useState<Reservation>(initialData || defaultReservation)
   const [firstName, setFirstName] = useState(
-    initialData ? splitName(initialData.customerName).first : ''
-  );
+    initialData ? splitName(initialData.customerName).first : '',
+  )
   const [lastName, setLastName] = useState(
-    initialData ? splitName(initialData.customerName).last : ''
-  );
+    initialData ? splitName(initialData.customerName).last : '',
+  )
 
   useEffect(() => {
     if (initialData) {
       setCurrentData({
         ...initialData,
         // Pastikan tipe data konsisten saat inisialisasi
-        status: initialData.status as StatusType, 
-        areaType: initialData.areaType as AreaType
-      });
+        status: initialData.status as StatusType,
+        areaType: initialData.areaType as AreaType,
+      })
 
-      const { first, last } = splitName(initialData.customerName);
-      setFirstName(first);
-      setLastName(last);
+      const { first, last } = splitName(initialData.customerName)
+      setFirstName(first)
+      setLastName(last)
     }
-  }, [initialData]);
+  }, [initialData])
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
 
     if (name === 'firstName') {
-      setFirstName(value);
+      setFirstName(value)
     } else if (name === 'lastName') {
-      setLastName(value);
+      setLastName(value)
     } else {
-      setCurrentData(prev => ({
+      setCurrentData((prev) => ({
         ...prev,
-        [name]: value
-      }));
+        [name]: value,
+      }))
     }
-  };
+  }
 
   const handleUpdate = () => {
-    if (!initialData) return;
+    if (!initialData) return
 
     if (
       !currentData.tableNumber ||
@@ -156,24 +150,22 @@ export default function EditReservasi({
       !currentData.date ||
       !currentData.phone
     ) {
-      alert(
-        'Harap isi semua kolom wajib (Meja, Nama Depan, Pax, Waktu, Tanggal, Telepon)'
-      );
-      return;
+      alert('Harap isi semua kolom wajib (Meja, Nama Depan, Pax, Waktu, Tanggal, Telepon)')
+      return
     }
 
     const updatedData: Reservation = {
       ...currentData,
       customerName: `${firstName} ${lastName}`.trim(),
       // Pastikan tipe dikembalikan ke tipe Reservation yang benar
-      status: currentData.status as StatusType, 
+      status: currentData.status as StatusType,
       areaType: currentData.areaType as AreaType,
-      gender: (currentData.gender || '') as Reservation['gender']
-    };
+      gender: (currentData.gender || '') as Reservation['gender'],
+    }
 
-    onUpdate(updatedData);
-    onClose();
-  };
+    onUpdate(updatedData)
+    onClose()
+  }
 
   return (
     <>
@@ -195,8 +187,7 @@ export default function EditReservasi({
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            Edit Reservasi{' '}
-            <span className="text-[#3ABAB4]">#{currentData.id}</span>
+            Edit Reservasi <span className="text-[#3ABAB4]">#{currentData.id}</span>
           </h2>
           <button
             type="button"
@@ -209,17 +200,15 @@ export default function EditReservasi({
 
         {/* Form */}
         <form
-          onSubmit={e => {
-            e.preventDefault();
-            handleUpdate();
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleUpdate()
           }}
         >
-
           {/* === DETAIL RESERVASI === */}
           <p className="text-sm font-semibold mb-3">Detail Reservasi</p>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
-
             {/* Nomor Meja */}
             <div>
               <label className="text-sm mb-1 block">Nomor Meja</label>
@@ -231,7 +220,7 @@ export default function EditReservasi({
                 required
               >
                 <option value="">Pilih Meja</option>
-                {tables.map(t => (
+                {tables.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -251,7 +240,6 @@ export default function EditReservasi({
                 required
               />
             </div>
-
           </div>
 
           {/* Status */}
@@ -265,7 +253,7 @@ export default function EditReservasi({
               required
             >
               <option value="">Pilih Status</option>
-              {statusList.map(s => (
+              {statusList.map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
@@ -328,8 +316,10 @@ export default function EditReservasi({
                 required
               >
                 <option value="">Pilih Lantai</option>
-                {floorList.map(f => (
-                  <option key={f} value={f}>{f}</option>
+                {floorList.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
                 ))}
               </select>
             </div>
@@ -344,13 +334,15 @@ export default function EditReservasi({
                 required
               >
                 <option value="">Pilih Area</option>
-                {areaTypeList.map(a => (
-                  <option key={a} value={a}>{a}</option>
+                {areaTypeList.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-          
+
           {/* === KEUANGAN / DEPOSIT (BARU DITAMBAHKAN) === */}
           <p className="text-sm font-semibold mb-3">Keuangan</p>
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -377,19 +369,20 @@ export default function EditReservasi({
                 required
               >
                 <option value="">Pilih Metode</option>
-                {paymentList.map(p => (
-                  <option key={p} value={p}>{p}</option>
+                {paymentList.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-          
+
           <div className="mt-8">
             {/* === DETAIL CUSTOMER === */}
             <p className="text-sm font-semibold mb-3">Detail Customer</p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-
               {/* Gender */}
               <div className="col-span-2">
                 <label className="text-sm mb-1 block">Jenis Kelamin</label>
@@ -400,7 +393,7 @@ export default function EditReservasi({
                   onChange={handleChange}
                 >
                   <option value="">Pilih Jenis Kelamin</option>
-                  {genderList.map(g => (
+                  {genderList.map((g) => (
                     <option key={g} value={g}>
                       {g}
                     </option>
@@ -462,11 +455,7 @@ export default function EditReservasi({
 
           {/* Actions */}
           <div className="flex justify-end gap-3 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg border"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">
               Batal
             </button>
             <button
@@ -477,9 +466,8 @@ export default function EditReservasi({
               Simpan Perubahan
             </button>
           </div>
-
         </form>
       </div>
     </>
-  );
+  )
 }

@@ -21,6 +21,7 @@ import Reservations from './collections/Reservations'
 import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
+import Tables from './collections/Tables'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -36,6 +37,7 @@ console.log('Collections Loaded:', [
   Notifications.slug,
   Reservations.slug,
   StoreSettings.slug,
+  Tables.slug,
 ])
 
 // const sendOtpEndpoint: any = {
@@ -103,6 +105,8 @@ export default buildConfig({
     Reservations,
     Categories,
     StoreSettings,
+    Tables,
+    
   ],
 
   email: nodemailerAdapter({
