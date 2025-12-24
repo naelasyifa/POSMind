@@ -9,133 +9,153 @@ const Reservations: CollectionConfig = {
     create: () => true,
   },
 
+  admin: {
+    useAsTitle: 'kode_reservasi',
+    defaultColumns: ['kode_reservasi', 'nama_pelanggan', 'tanggal', 'status'],
+  },
+
   fields: [
+    // ===== RELATIONS (keep column names) =====
     {
-      name: 'tenant',
+      name: 'kasir_id',
       type: 'relationship',
-      relationTo: 'tenants',
+      relationTo: 'users',
+      required: false,
+    },
+    {
+      name: 'meja_id',
+      type: 'relationship',
+      relationTo: 'tables',
       required: true,
     },
 
+    // ===== CORE DATA =====
     {
       name: 'nama_pelanggan',
       type: 'text',
       required: true,
     },
-
     {
       name: 'tanggal',
       type: 'date',
       required: true,
     },
 
+    // ===== ENUMS (MATCH DB EXACTLY) =====
     {
-  name: 'status',
-  type: 'select',
-  required: false,
-  options: [
-    { label: 'Pending', value: 'pending' },
-    { label: 'Confirmed', value: 'confirmed' },
-    { label: 'Check In', value: 'checkin' },
-  ],
-  defaultValue: 'pending',
-},
+      name: 'status',
+      type: 'select',
+      required: false,
+      defaultValue: 'menunggu',
+      options: [
+        { label: 'Menunggu', value: 'menunggu' },
+        { label: 'Dikonfirmasi', value: 'dikonfirmasi' },
+        { label: 'Check In', value: 'checkin' },
+        { label: 'Selesai', value: 'selesai' },
+        { label: 'No Show', value: 'noshow' },
+      ],
+    },
+    {
+      name: 'status_pembayaran',
+      type: 'select',
+      required: false,
+      defaultValue: 'unpaid',
+      options: [
+        { label: 'Unpaid', value: 'unpaid' },
+        { label: 'Partial', value: 'partial' },
+        { label: 'Paid', value: 'paid' },
+      ],
+    },
+    {
+      name: 'jenis_kelamin',
+      type: 'select',
+      required: true,
+      options: [
+        { label: 'Laki-laki', value: 'laki-laki' },
+        { label: 'Perempuan', value: 'perempuan' },
+      ],
+    },
+    {
+      name: 'metode_pembayaran',
+      type: 'select',
+      required: false,
+      options: [
+        { label: 'Tunai', value: 'tunai' },
+        { label: 'E-Wallet', value: 'ewallet' },
+        { label: 'QRIS', value: 'qris' },
+        { label: 'VA', value: 'va' },
+      ],
+    },
 
-
+    // ===== NUMBERS =====
     {
       name: 'pax',
       type: 'number',
       required: true,
     },
-
     {
       name: 'deposit',
       type: 'number',
       required: false,
+      defaultValue: 0,
     },
-
     {
-      name: 'kode_reservasi',
-      type: 'text',
+      name: 'total_tagihan',
+      type: 'number',
       required: false,
     },
-
-    {
-      name: 'no_telepon',
-      type: 'text',
-      required: false,
-    },
-
-    {
-      name: 'email',
-      type: 'email',
-      required: false,
-    },
-
-    {
-      name: 'jam_mulai',
-      type: 'text',
-      required: true,
-    },
-
-    {
-      name: 'jam_selesai',
-      type: 'text',
-      required: true,
-    },
-
     {
       name: 'durasi_menit',
       type: 'number',
       required: false,
     },
 
+    // ===== TIME =====
     {
-      name: 'total_tagihan',
-      type: 'number',
-      required: false,
+      name: 'jam_mulai',
+      type: 'text',
+      required: true,
     },
-
     {
-      name: 'status_pembayaran',
-      type: 'select',
-      required: false,
-      options: [
-        { label: 'Unpaid', value: 'unpaid' },
-        { label: 'Paid', value: 'paid' },
-        { label: 'Refunded', value: 'refunded' },
-      ],
+      name: 'jam_selesai',
+      type: 'text',
+      required: true,
     },
-
-    {
-      name: 'kasir',
-      type: 'relationship',
-      relationTo: 'users',
-      required: false,
-    },
-
     {
       name: 'check_in_at',
       type: 'date',
       required: false,
     },
-
     {
       name: 'check_out_at',
       type: 'date',
       required: false,
     },
-
     {
-      name: 'catatan',
-      type: 'textarea',
+      name: 'waktu_reservasi',
+      type: 'date',
       required: false,
     },
 
+    // ===== OPTIONAL =====
     {
-      name: 'meja',
-      type: 'relationship',
-      relationTo: 'tables',
+      name: 'kode_reservasi',
+      type: 'text',
+      required: false,
+    },
+    {
+      name: 'no_telepon',
+      type: 'text',
+      required: true,
+    },
+    {
+      name: 'email',
+      type: 'email',
+      required: false,
+    },
+    {
+      name: 'catatan',
+      type: 'textarea',
       required: false,
     },
   ],

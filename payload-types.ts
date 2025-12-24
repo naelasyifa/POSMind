@@ -359,25 +359,27 @@ export interface Notification {
  */
 export interface Reservation {
   id: number;
-  tenant: number | Tenant;
+  kasir_id?: (number | null) | User;
+  meja_id: number | Table;
   nama_pelanggan: string;
   tanggal: string;
-  status?: ('pending' | 'confirmed' | 'checkin') | null;
+  status?: ('menunggu' | 'dikonfirmasi' | 'checkin' | 'selesai' | 'noshow') | null;
+  status_pembayaran?: ('unpaid' | 'partial' | 'paid') | null;
+  jenis_kelamin: 'laki-laki' | 'perempuan';
+  metode_pembayaran?: ('tunai' | 'ewallet' | 'qris' | 'va') | null;
   pax: number;
   deposit?: number | null;
-  kode_reservasi?: string | null;
-  no_telepon?: string | null;
-  email?: string | null;
+  total_tagihan?: number | null;
+  durasi_menit?: number | null;
   jam_mulai: string;
   jam_selesai: string;
-  durasi_menit?: number | null;
-  total_tagihan?: number | null;
-  status_pembayaran?: ('unpaid' | 'paid' | 'refunded') | null;
-  kasir?: (number | null) | User;
   check_in_at?: string | null;
   check_out_at?: string | null;
+  waktu_reservasi?: string | null;
+  kode_reservasi?: string | null;
+  no_telepon: string;
+  email?: string | null;
   catatan?: string | null;
-  meja?: (number | null) | Table;
   updatedAt: string;
   createdAt: string;
 }
@@ -782,25 +784,27 @@ export interface NotificationsSelect<T extends boolean = true> {
  * via the `definition` "reservations_select".
  */
 export interface ReservationsSelect<T extends boolean = true> {
-  tenant?: T;
+  kasir_id?: T;
+  meja_id?: T;
   nama_pelanggan?: T;
   tanggal?: T;
   status?: T;
+  status_pembayaran?: T;
+  jenis_kelamin?: T;
+  metode_pembayaran?: T;
   pax?: T;
   deposit?: T;
+  total_tagihan?: T;
+  durasi_menit?: T;
+  jam_mulai?: T;
+  jam_selesai?: T;
+  check_in_at?: T;
+  check_out_at?: T;
+  waktu_reservasi?: T;
   kode_reservasi?: T;
   no_telepon?: T;
   email?: T;
-  jam_mulai?: T;
-  jam_selesai?: T;
-  durasi_menit?: T;
-  total_tagihan?: T;
-  status_pembayaran?: T;
-  kasir?: T;
-  check_in_at?: T;
-  check_out_at?: T;
   catatan?: T;
-  meja?: T;
   updatedAt?: T;
   createdAt?: T;
 }

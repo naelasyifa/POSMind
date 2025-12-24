@@ -46,6 +46,7 @@ export default function ListProduct({
   setActiveCategory,
   search,
   setSearch,
+  onOpenAddProduct,
   onEdit,
   onDelete,
   categories,
@@ -69,12 +70,12 @@ export default function ListProduct({
   })
 
   const handleEditClick = (product: Product) => {
-  onEdit(product)
-}
+    onEdit(product)
+  }
 
-const handleDeleteClick = (product: Product) => {
-  onDelete(product)
-}
+  const handleDeleteClick = (product: Product) => {
+    onDelete(product)
+  }
 
   const handleSaveEdit = (updatedProduct: Product) => {
     if (selectedProductIndex !== null) {
@@ -210,8 +211,7 @@ const handleDeleteClick = (product: Product) => {
               setIsPermissionModalOpen(true)
               return
             }
-            setIsAddProductOpen(true)
-            onModalChange(true)
+            onOpenAddProduct()
           }}
           className="bg-[#737373] text-white hover:bg-[#5E5E5E] px-4 py-2 rounded-lg text-sm font-medium"
         >
