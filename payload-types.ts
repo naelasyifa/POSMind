@@ -79,6 +79,7 @@ export interface Config {
     categories: Category;
     storeSettings: StoreSetting;
     tables: Table;
+    'payment-methods': PaymentMethod;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -98,6 +99,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     storeSettings: StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
+    'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -310,10 +312,24 @@ export interface Transaction {
   discount?: number | null;
   total: number;
   status?: ('proses' | 'selesai' | 'batal') | null;
-  metode?: ('Cash' | 'E-Wallet') | null;
+  caraBayar: 'cash' | 'non_cash';
+  paymentMethod?: (number | null) | PaymentMethod;
   bayar?: number | null;
   kembalian?: number | null;
   waktu: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods".
+ */
+export interface PaymentMethod {
+  id: number;
+  name: string;
+  type: 'cash' | 'bank_transfer' | 'qris';
+  bankCode?: string | null;
+  isActive?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -323,6 +339,11 @@ export interface Transaction {
  */
 export interface Payment {
   id: number;
+  orderId: string;
+  method?: (number | null) | PaymentMethod;
+  amount: number;
+  status?: ('pending' | 'paid' | 'expired' | 'failed') | null;
+  reference?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -538,6 +559,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tables';
         value: number | Table;
+      } | null)
+    | ({
+        relationTo: 'payment-methods';
+        value: number | PaymentMethod;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -720,7 +745,8 @@ export interface TransactionsSelect<T extends boolean = true> {
   discount?: T;
   total?: T;
   status?: T;
-  metode?: T;
+  caraBayar?: T;
+  paymentMethod?: T;
   bayar?: T;
   kembalian?: T;
   waktu?: T;
@@ -732,6 +758,11 @@ export interface TransactionsSelect<T extends boolean = true> {
  * via the `definition` "payments_select".
  */
 export interface PaymentsSelect<T extends boolean = true> {
+  orderId?: T;
+  method?: T;
+  amount?: T;
+  status?: T;
+  reference?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -879,6 +910,18 @@ export interface TablesSelect<T extends boolean = true> {
   dpMeja?: T;
   catatan?: T;
   tenant?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-methods_select".
+ */
+export interface PaymentMethodsSelect<T extends boolean = true> {
+  name?: T;
+  type?: T;
+  bankCode?: T;
+  isActive?: T;
   updatedAt?: T;
   createdAt?: T;
 }
