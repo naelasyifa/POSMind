@@ -30,11 +30,9 @@ export async function POST(req: NextRequest) {
       data: {
         actionType,
         payload: payloadData,
-        tenant: user.tenant,
-        createdBy: user.id,
-        status: 'pending',
-      },
+      } as any, // 👈 key line
       user,
+      overrideAccess: true,
     })
 
     return NextResponse.json({ success: true, doc })

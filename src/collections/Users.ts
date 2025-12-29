@@ -45,8 +45,39 @@ export const Users: CollectionConfig = {
       },
     },
   },
+
+  defaultPopulate: {
+    tenant: true,
+    role: true,
+  },
+
   admin: {
     useAsTitle: 'email',
+  },
+
+  access: {
+    read: ({ req }) => {
+      if (!req.user) return false
+
+      // Superadmin sees everything
+      if (req.user.role === 'superadmin') return true
+
+      // Tenant can be: number | object | null
+      const tenantId =
+        req.user.tenant && typeof req.user.tenant === 'object'
+          ? req.user.tenant.id
+          : (req.user.tenant ?? null)
+
+      if (!tenantId) return false
+
+      return {
+        tenant: {
+          equals: tenantId,
+        },
+      }
+    },
+
+    update: ({ req }) => req.user?.role === 'superadmin' || req.user?.role === 'admintoko',
   },
 
   fields: [
@@ -131,14 +162,16 @@ export const Users: CollectionConfig = {
     },
   ],
 
-  access: {
-    read: ({ req }) => {
-      if (req.user?.role === 'superadmin') return true
-      return {
-        tenant: { equals: req.user?.tenant },
-      }
-    },
-    update: () => true,
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create' && req.user?.tenant && !data.tenant) {
+          data.tenant = req.user.tenant
+        }
+
+        return data
+      },
+    ],
   },
 
   // hooks: {

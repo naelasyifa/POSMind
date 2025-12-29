@@ -7,6 +7,28 @@ export const Tenants: CollectionConfig = {
     useAsTitle: 'name',
   },
 
+  access: {
+    read: ({ req }) => {
+      if (!req.user) return false
+      if (req.user.role === 'superadmin') return true
+      return { id: { equals: req.user.tenant } }
+    },
+    create: ({ req }) => req.user?.role === 'superadmin',
+    update: ({ req }) => req.user?.role === 'superadmin',
+    delete: ({ req }) => req.user?.role === 'superadmin',
+  },
+
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === 'create' && req.user) {
+          data.createdBy = req.user.id
+        }
+        return data
+      },
+    ],
+  },
+
   fields: [
     {
       name: 'name',
@@ -17,7 +39,7 @@ export const Tenants: CollectionConfig = {
       name: 'domain',
       type: 'text',
       required: false,
-      unique: false, // Hapus unique → Supabase sering error jika sudah ada data
+      unique: false,
     },
     {
       name: 'createdBy',
