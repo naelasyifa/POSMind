@@ -18,13 +18,14 @@ import Transactions from './collections/Transactions'
 import Notifications from './collections/Notifications'
 import Payments from './collections/Payments'
 import Reservations from './collections/Reservations'
-import Tables from './collections/Tables'
 import ActionRequests from './collections/ActionRequests'
 import EmailOtps from './collections/emailOtps'
 // import { Admins } from './collections/Admins'
 import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
+import Tables from './collections/Tables'
+import PaymentMethods from './collections/PaymentMethods'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -43,6 +44,7 @@ console.log('Collections Loaded:', [
   Reservations.slug,
   StoreSettings.slug,
   Tables.slug,
+  PaymentMethods.slug,
 ])
 
 // const sendOtpEndpoint: any = {
@@ -112,6 +114,7 @@ export default buildConfig({
     Categories,
     StoreSettings,
     Tables,
+    PaymentMethods,
   ],
 
   endpoints: [approveActionRequest],
@@ -126,6 +129,9 @@ export default buildConfig({
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false, // <== ini penting untuk self-signed / dev
       },
     },
   }), */

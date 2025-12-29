@@ -25,6 +25,13 @@ type CartItem = {
   isGratis?: boolean
 }
 
+type PaymentMethod = {
+  id: string
+  name: string
+  type: 'cash' | 'qris' | 'bank_transfer'
+  bankCode?: string
+}
+
 // Fungsi untuk menerapkan promo Beli X Gratis Y pada item
 function applyBxGyPromo(item: CartItem, X: number, Y: number, unlimited: boolean = true) {
   const qtyBeli = item.qty
@@ -84,7 +91,9 @@ export default function DetailPesanan({
   const [frozenTime, setFrozenTime] = useState<string>('')
 
   const [isPaying, setIsPaying] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris' | ''>('')
+  // const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris' | ''>('')
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null)
   const [amountPaid, setAmountPaid] = useState<number>(0)
   const [change, setChange] = useState<number>(0)
   const [isPaid, setIsPaid] = useState(false)
@@ -225,48 +234,42 @@ export default function DetailPesanan({
 
   const { subtotal: sub, discount, tax, service, total: totalAmount } = calculateTotals()
 
+  // =================== FETCH METODE PEMBAYARAN ===================
+  useEffect(() => {
+    fetch('/api/payment-methods?where[isActive][equals]=true')
+      .then((res) => res.json())
+      .then((data) => setPaymentMethods(Array.isArray(data?.docs) ? data.docs : []))
+  }, [])
+
   // =================== HITUNG KEMBALIAN ===================
   useEffect(() => {
-    if (paymentMethod === 'cash') {
-      setChange(amountPaid > total ? amountPaid - total : 0)
+    if (selectedMethod?.type === 'cash') {
+      setChange(amountPaid > totalAmount ? amountPaid - totalAmount : 0)
     } else {
       setChange(0)
     }
-  }, [amountPaid, paymentMethod, totalAmount])
+  }, [amountPaid, selectedMethod, totalAmount])
 
   useEffect(() => {
-    if (paymentMethod === 'qris') {
+    if (selectedMethod?.type === 'qris') {
       setAmountPaid(totalAmount)
     }
-  }, [paymentMethod, totalAmount])
+  }, [selectedMethod, totalAmount])
 
   // =================== HANDLER PEMBAYARAN ===================
   const handleCheckout = () => setIsPaying(true)
 
   const handleConfirmPayment = async () => {
-    if (!paymentMethod) return alert('Pilih metode pembayaran!')
-    if (paymentMethod === 'cash' && amountPaid < totalAmount) {
-      return alert('Jumlah bayar kurang!')
+    if (!selectedMethod) return alert('Pilih metode pembayaran')
+
+    // validasi cash
+    if (selectedMethod.type === 'cash' && amountPaid < totalAmount) {
+      return alert('Jumlah bayar kurang')
     }
 
     try {
-      // === Transform keranjang untuk promo BxGy ===
-      let itemsWithBxGy: CartItem[] = []
-      keranjang.forEach((it) => {
-        const promo = promoBreakdown.find((p) => p.type === 'bxgy' && p.id === it.id)
-        if (promo && promo.X && promo.Y) {
-          const { items } = applyBxGyPromo(it, promo.X, promo.Y, true)
-          itemsWithBxGy.push(...items)
-        } else {
-          itemsWithBxGy.push(it)
-        }
-      })
-
-      const discount = promoNominalList.reduce((s, p) => s + p.value, 0)
-
-      const itemsForPayload = itemsWithBxGy.map(({ id, ...rest }) => ({ productId: id, ...rest }))
-
-      const res = await fetch('/api/frontend/transactions', {
+      // =================== CREATE TRANSACTION ===================
+      const trxRes = await fetch('/api/frontend/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -274,26 +277,54 @@ export default function DetailPesanan({
           tenant: 1,
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
-          items: itemsForPayload, // <<< id dihapus
+          items: displayCart.map(({ id, ...rest }) => ({
+            productId: id,
+            ...rest,
+          })),
           subtotal: sub,
           pajak: tax,
           serviceCharge: service,
           discount,
           total: totalAmount,
-          metode: paymentMethod === 'cash' ? 'Cash' : 'E-Wallet',
-          bayar: amountPaid,
-          kembalian: paymentMethod === 'cash' ? amountPaid - totalAmount : 0,
-          status: 'selesai',
+          caraBayar: selectedMethod.type === 'cash' ? 'cash' : 'non_cash',
+          paymentMethod: selectedMethod.type !== 'cash' ? selectedMethod.id : null,
+          bayar: selectedMethod.type === 'cash' ? amountPaid : 0,
+          kembalian: selectedMethod.type === 'cash' ? amountPaid - totalAmount : 0,
+          status: selectedMethod.type === 'cash' ? 'selesai' : 'proses',
           waktu: new Date().toISOString(),
         }),
       })
 
-      const data = await res.json()
-      if (!res.ok) return alert(data.error)
+      const trx = await trxRes.json()
+      if (!trxRes.ok) return alert(trx.error)
 
-      setIsPaid(true) // aktifkan state setelah bayar
-      setFrozenTime(currentTime)
-      alert('Pembayaran berhasil! Silakan cetak struk.')
+      // =================== CASH ===================
+      if (selectedMethod.type === 'cash') {
+        setIsPaid(true)
+        setFrozenTime(currentTime)
+        alert('Pembayaran cash berhasil')
+        return
+      }
+
+      // =================== NON CASH ===================
+      const endpoint =
+        selectedMethod.type === 'qris' ? '/api/payments/qris' : '/api/payments/transfer'
+
+      const payRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: noPesanan,
+          amount: totalAmount,
+          method: selectedMethod.type, // qris | bank_transfer
+          providerCode: selectedMethod.bankCode, // BCA, BRI, dll
+        }),
+      })
+
+      const pay = await payRes.json()
+      if (!payRes.ok) return alert(pay.error)
+
+      alert('Silakan selesaikan pembayaran')
     } catch (err: any) {
       alert('Terjadi kesalahan: ' + err.message)
     }
@@ -544,27 +575,28 @@ export default function DetailPesanan({
               <h3 className="font-semibold text-sm">Detail Pembayaran</h3>
 
               {/* Metode */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setPaymentMethod('cash')}
-                  className={`flex-1 py-2 rounded border ${
-                    paymentMethod === 'cash' ? 'bg-[#52bfbe] text-white' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  Cash
-                </button>
-                <button
-                  onClick={() => setPaymentMethod('qris')}
-                  className={`flex-1 py-2 rounded border ${
-                    paymentMethod === 'qris' ? 'bg-[#52bfbe] text-white' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  QRIS
-                </button>
+              <div className="flex gap-3 flex-wrap">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    onClick={() => {
+                      setSelectedMethod(method)
+                      setAmountPaid(0)
+                      setChange(0)
+                    }}
+                    className={`px-4 py-2 rounded border text-sm ${
+                      selectedMethod?.id === method.id
+                        ? 'bg-[#52bfbe] text-white'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    {method.name}
+                  </button>
+                ))}
               </div>
 
               {/* Input Cash */}
-              {paymentMethod === 'cash' && (
+              {selectedMethod?.type === 'cash' && (
                 <div>
                   <label className="text-sm text-gray-600">Jumlah Bayar (Rp)</label>
                   <input
@@ -579,13 +611,16 @@ export default function DetailPesanan({
               <div className="flex justify-between text-sm font-medium">
                 <span>Total Bayar</span>
                 <span>
-                  Rp{(paymentMethod === 'cash' ? amountPaid : totalAmount).toLocaleString()}
+                  Rp{(selectedMethod?.type === 'cash' ? amountPaid : totalAmount).toLocaleString()}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm font-medium">
                 <span>Kembali</span>
-                <span>Rp{change.toLocaleString()}</span>
+                <span>
+                  Rp
+                  {change.toLocaleString()}
+                </span>
               </div>
 
               <button
@@ -609,13 +644,13 @@ export default function DetailPesanan({
             <div className="mt-4 border-t pt-3 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Metode</span>
-                <span className="font-medium capitalize">{paymentMethod}</span>
+                <span className="font-medium capitalize">{selectedMethod?.name}</span>
               </div>
 
               <div className="flex justify-between">
                 <span>Total Bayar</span>
                 <span>
-                  Rp{(paymentMethod === 'cash' ? amountPaid : totalAmount).toLocaleString()}
+                  Rp{(selectedMethod?.type === 'cash' ? amountPaid : totalAmount).toLocaleString()}
                 </span>
               </div>
 

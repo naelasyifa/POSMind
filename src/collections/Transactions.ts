@@ -47,13 +47,24 @@ const Transactions: CollectionConfig = {
       defaultValue: 'proses',
     },
     {
-      name: 'metode',
+      name: 'caraBayar',
       type: 'select',
+      required: true,
+      defaultValue: 'cash',
       options: [
-        { label: 'Cash', value: 'Cash' },
-        { label: 'E-Wallet', value: 'E-Wallet' },
+        { label: 'Tunai', value: 'cash' },
+        { label: 'Non Tunai', value: 'non_cash' },
       ],
     },
+    {
+      name: 'paymentMethod',
+      type: 'relationship',
+      relationTo: 'payment-methods',
+      admin: {
+        condition: (_, data) => data?.caraBayar === 'non_cash',
+      },
+    },
+
     { name: 'bayar', type: 'number' },
     { name: 'kembalian', type: 'number' },
     { name: 'waktu', type: 'date', required: true },

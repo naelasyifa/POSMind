@@ -1,183 +1,177 @@
-import React from 'react'
-import { X, Edit, CalendarPlus, Circle } from 'lucide-react'
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { X, Edit, CalendarPlus, Circle, Loader2 } from 'lucide-react'
 
 // ==============================
-// DEFINISI INTERFACE & UTILITY (Harus sama dengan ReservasiPage.tsx)
+// DEFINISI INTERFACE
 // ==============================
-
 type StatusType = 'Menunggu' | 'Dikonfirmasi' | 'Checked In' | 'Selesai' | 'Tidak Datang' | 'Tersedia'
 
 interface Reservation {
-    id: string
-    tableNumber: string
-    pax: string
-    date: string
-    startTime: string
-    endTime: string
-    deposit: string
-    status: StatusType
-    customerName: string
-    phone: string
-    paymentMethod: string
-    areaType: 'Indoor' | 'Outdoor' | 'Smoking' | 'VIP' 
-    floor: string
+  id: string
+  tableNumber: string
+  pax: string
+  date: string
+  startTime: string
+  endTime: string
+  status: StatusType
+  deposit: string; // Tambahkan ini jika belum ada
+  paymentMethod: string;
+  customerName: string
+  phone: string
+  areaType: string 
+  floor: string
 }
 
 const STATUS_LABELS: Record<StatusType, string> = {
-    'Menunggu': 'Menunggu',
-    'Dikonfirmasi': 'Dikonfirmasi',
-    'Checked In': 'Sudah Check In',
-    'Selesai': 'Selesai',
-    'Tidak Datang': 'Tidak Hadir',
-    'Tersedia': 'Tersedia'
+  'Menunggu': 'Menunggu',
+  'Dikonfirmasi': 'Dikonfirmasi',
+  'Checked In': 'Sudah Check In',
+  'Selesai': 'Selesai',
+  'Tidak Datang': 'Tidak Hadir',
+  'Tersedia': 'Tersedia'
 }
 
-interface TableReservationDetailModalProps {
-    isOpen: boolean
-    onClose: () => void // Hanya dipanggil saat tombol X diklik
-    isChildModalOpen: boolean
-    reservations: Reservation[]
-    tableNumber: string
-    floor: string
-    areaType: string
-    onEditClick: (reservation: Reservation) => void
-    onAddReservationClick: () => void // Handler untuk chaining modal Tambah
+interface Props {
+  isOpen: boolean
+  onClose: () => void
+  tableNumber: string // Meja mana yang diklik
+  floor: string
+  areaType: string
+  onEditClick: (reservation: Reservation) => void
+  onAddReservationClick: () => void
 }
 
-// Fungsi untuk mendapatkan warna status
-const getStatusColors = (status: StatusType) => {
-    switch (status) {
-        case 'Dikonfirmasi': return { border: 'ring-green-700', bg: 'bg-green-100', text: 'text-green-700' }
-        case 'Menunggu': return { border: 'ring-amber-700', bg: 'bg-amber-100', text: 'text-amber-700' }
-        case 'Checked In': return { border: 'ring-blue-700', bg: 'bg-blue-100', text: 'text-blue-700' }
-        case 'Selesai': return { border: 'ring-indigo-700', bg: 'bg-indigo-100', text: 'text-indigo-700' }
-        case 'Tidak Datang': return { border: 'ring-gray-700', bg: 'bg-gray-100', text: 'text-gray-700' }
-        default: return { border: 'ring-gray-500', bg: 'bg-gray-200', text: 'text-gray-700' }
-    }
-}
-
-// ==============================
-// KOMPONEN UTAMA
-// ==============================
 export default function TableReservationDetailModal({
-    isOpen,
-    onClose,
-    isChildModalOpen,
-    reservations,
-    tableNumber,
-    floor,
-    areaType,
-    onEditClick,
-    onAddReservationClick 
-}: TableReservationDetailModalProps) {
+  isOpen,
+  onClose,
+  tableNumber,
+  floor,
+  areaType,
+  onEditClick,
+  onAddReservationClick 
+}: Props) {
+  const [loading, setLoading] = useState(false)
+  const [localReservations, setLocalReservations] = useState<Reservation[]>([])
 
-    if (!isOpen) return null
+  // 1. AMBIL DATA DARI API SETIAP MODAL DIBUKA
+  useEffect(() => {
+    if (isOpen && tableNumber) {
+      const fetchDetailMeja = async () => {
+        setLoading(true)
+        const today = new Date().toISOString().split('T')[0]
+        try {
+          // Fetch reservasi khusus untuk meja ini saja di hari ini
+          const res = await fetch(`/api/reservations?where[tanggal][equals]=${today}&where[meja.namaMeja][equals]=${tableNumber}&limit=50`)
+          const json = await res.json()
+          
+          const mapped: Reservation[] = (json.docs || []).map((r: any) => ({
+            id: r.id,
+            tableNumber: r.meja?.namaMeja,
+            pax: r.jumlahOrang?.toString(),
+            date: r.tanggal,
+            startTime: r.jamMulai,
+            endTime: r.jamSelesai,
+            status: r.status === 'checkin' ? 'Checked In' : 
+                    r.status === 'noshow' ? 'Tidak Datang' : 
+                    r.status.charAt(0).toUpperCase() + r.status.slice(1),
+            customerName: r.namaPelanggan,
+            phone: r.nomorTelepon,
+            areaType: r.meja?.area,
+            floor: r.meja?.lantai
+          }))
 
-    const today = (new Date()).toISOString().split('T')[0]
-    
-    // Filter dan urutkan reservasi aktif hari ini
-    const activeReservations = reservations
-        .filter(r => r.date === today && r.status !== 'Selesai' && r.status !== 'Tidak Datang')
-        .sort((a, b) => a.startTime.localeCompare(b.startTime)) 
-
-    // Handler saat item reservasi diklik (membuka modal edit)
-    const handleEditClick = (res: Reservation) => {
-        // HANYA panggil onEditClick, TIDAK panggil onClose()
-        onEditClick(res) 
+          // Urutkan berdasarkan jam
+          setLocalReservations(mapped.sort((a, b) => a.startTime.localeCompare(b.startTime)))
+        } catch (err) {
+          console.error("Gagal ambil detail reservasi:", err)
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchDetailMeja()
     }
+  }, [isOpen, tableNumber])
 
-    // Handler saat tombol "Tambah Reservasi" diklik
-    const handleAddClick = () => {
-        // HANYA panggil onAddReservationClick, TIDAK panggil onClose()
-        onAddReservationClick() 
+  if (!isOpen) return null
+
+  const getStatusColors = (status: StatusType) => {
+    switch (status) {
+      case 'Dikonfirmasi': return { bg: 'bg-green-100', text: 'text-green-700' }
+      case 'Menunggu': return { bg: 'bg-amber-100', text: 'text-amber-700' }
+      case 'Checked In': return { bg: 'bg-blue-100', text: 'text-blue-700' }
+      default: return { bg: 'bg-gray-100', text: 'text-gray-700' }
     }
+  }
 
-    return (
-        <>
-            {/* 1. Overlay Backdrop (Z-30) */}
-            {/* HAPUS onClick={onClose} dari sini agar modal detail tidak otomatis hilang saat modal baru muncul */}
-            <div
-                className={`fixed inset-0 bg-black/20 z-30 transition-all ${
-                    isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-                }`}
-            />
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm transition-opacity" onClick={onClose} />
+      
+      <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+          
+          {/* HEADER */}
+          <div className="p-6 border-b text-center relative">
+            <button onClick={onClose} className="absolute left-6 top-6 p-2 rounded-full hover:bg-gray-100 text-gray-400">
+              <X size={24} />
+            </button>
+            <h2 className="text-xl font-bold mt-1">Jadwal Meja <span className="text-[#3ABAB4]">{tableNumber}</span></h2>
+            <p className="text-xs text-gray-400 font-medium uppercase mt-1 tracking-widest">{floor} • {areaType}</p>
+          </div>
 
-            {/* 2. Modal Content (Z-40) */}
-            <div className={`fixed inset-0 flex items-center justify-center z-40 transition-transform duration-300 ${isOpen ? 'scale-100' : 'scale-90'}`}>
-                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col">
-                    
-                    {/* HEADER MODAL DENGAN TOMBOL X (Batal) */}
-                    <div className="p-6 border-b sticky top-0 bg-white rounded-t-3xl z-10">
-                        <div className="flex justify-between items-center">
-                            
-                            {/* TOMBOL X (Batal) - **Ini satu-satunya cara menutup modal detail dari dalam** */}
-                            <button
-                                onClick={onClose} 
-                                className="p-1 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition"
-                                title="Tutup / Batal"
-                            >
-                                <X size={24} />
-                            </button>
-
-                            <h2 className="text-xl font-bold text-center flex-1">
-                                Jadwal Meja **{tableNumber}**
-                            </h2>
-                            
-                            <div className="w-[32px]"></div> 
-                        </div>
-                        <p className="text-center text-sm text-gray-500 mt-1">Area: {areaType} | Lantai: {floor}</p>
+          {/* BODY */}
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 bg-gray-50/50 min-h-[300px]">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-[#3ABAB4]">
+                <Loader2 className="animate-spin mb-2" size={32} />
+                <p className="text-sm font-medium">Sinkronisasi API...</p>
+              </div>
+            ) : localReservations.length > 0 ? (
+              localReservations.map((res) => (
+                <div 
+                  key={res.id} 
+                  className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-[#3ABAB4] transition-all cursor-pointer group"
+                  onClick={() => onEditClick(res)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full bg-current ${getStatusColors(res.status).text}`} />
+                      <div>
+                        <p className="font-bold text-gray-800">{res.customerName}</p>
+                        <p className="text-xs text-gray-500">{res.pax} Pax • {res.phone}</p>
+                      </div>
                     </div>
-
-                    {/* BODY MODAL - List Reservasi */}
-                    <div className="p-6 space-y-4 overflow-y-auto flex-1">
-                        <h3 className="text-lg font-semibold mb-3 text-gray-700">Reservasi Aktif Hari Ini ({activeReservations.length})</h3>
-
-                        {activeReservations.length > 0 ? (
-                            activeReservations.map((res) => {
-                                const colors = getStatusColors(res.status as StatusType)
-                                return (
-                                    <div 
-                                        key={res.id} 
-                                        className="flex justify-between items-center p-4 rounded-xl border-2 border-gray-200 hover:border-[#3ABAB4] transition duration-200 cursor-pointer shadow-sm"
-                                        onClick={() => handleEditClick(res)} // Membuka Modal Edit
-                                    >
-                                        <div className="flex-1 min-w-0 flex items-center gap-3">
-                                            <Circle size={10} className={`${colors.text}`} fill={colors.text} />
-                                            <div className="min-w-0">
-                                                <span className="font-semibold block truncate">{res.customerName}</span>
-                                                <span className="text-xs text-gray-500">{res.pax} Pax | ID: {res.id}</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right ml-4 flex-shrink-0">
-                                            <span className="font-medium text-lg block">{res.startTime} - {res.endTime}</span>
-                                            <span className={`text-sm font-semibold ${colors.text} flex items-center gap-1 justify-end`}>
-                                                {STATUS_LABELS[res.status]}
-                                                <Edit size={14} className="ml-1 text-gray-500 hover:text-[#3ABAB4]" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        ) : (
-                            <div className="text-center py-10 text-gray-500 italic bg-gray-50 rounded-lg border">
-                                Meja ini tidak memiliki reservasi aktif hari ini.
-                            </div>
-                        )}
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{res.startTime}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${getStatusColors(res.status).bg} ${getStatusColors(res.status).text}`}>
+                        {STATUS_LABELS[res.status]}
+                      </span>
                     </div>
-
-                    {/* FOOTER MODAL - Tombol Tambah Reservasi */}
-                    <div className="p-6 border-t sticky bottom-0 bg-white rounded-b-3xl z-10">
-                        <button
-                            onClick={handleAddClick} // Membuka Modal Tambah
-                            className="w-full px-4 py-3 rounded-xl bg-[#3ABAB4] text-white font-semibold hover:bg-[#32A9A4] transition flex items-center justify-center gap-2"
-                        >
-                            <CalendarPlus size={20} />
-                            Tambah Reservasi Baru
-                        </button>
-                    </div>
-
+                  </div>
                 </div>
-            </div>
-        </>
-    )
+              ))
+            ) : (
+              <div className="text-center py-20">
+                <CalendarPlus size={48} className="mx-auto text-gray-200 mb-4" />
+                <p className="text-gray-400 text-sm italic">Belum ada reservasi hari ini.</p>
+              </div>
+            )}
+          </div>
+
+          {/* FOOTER */}
+          <div className="p-6 bg-white border-t">
+            <button
+              onClick={onAddReservationClick}
+              className="w-full py-4 rounded-2xl bg-[#3ABAB4] text-white font-bold hover:bg-[#2d9691] shadow-lg shadow-[#3ABAB4]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
+            >
+              <CalendarPlus size={20} />
+              Tambah Reservasi Baru
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }

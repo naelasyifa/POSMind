@@ -1,30 +1,41 @@
 import { CollectionConfig } from 'payload'
 
-export const Tables: CollectionConfig = {
+const Tables: CollectionConfig = {
   slug: 'tables',
 
-  timestamps: true, // created_at, updated_at
+  admin: {
+    useAsTitle: 'namaMeja',
+    defaultColumns: ['namaMeja', 'lantai', 'area', 'kapasitas'],
+  },
+
+  access: {
+    read: () => true,
+    create: () => true,
+    update: () => true,
+    delete: () => true,
+  },
+
+  timestamps: true,
 
   fields: [
+    /* =========================
+       IDENTITAS MEJA
+    ==========================*/
     {
-      name: 'tenant',
-      type: 'relationship',
-      relationTo: 'tenants',
-      required: true,
-    },
-
-    {
-      name: 'nama_meja',
+      name: 'namaMeja',
       type: 'text',
       required: true,
+      index: true,
     },
-
     {
       name: 'kapasitas',
       type: 'number',
       required: true,
     },
 
+    /* =========================
+       KATEGORI
+    ==========================*/
     {
       name: 'lantai',
       type: 'select',
@@ -33,70 +44,85 @@ export const Tables: CollectionConfig = {
         { label: 'Lantai 1', value: 'lantai_1' },
         { label: 'Lantai 2', value: 'lantai_2' },
         { label: 'Lantai 3', value: 'lantai_3' },
+        { label: 'Rooftop', value: 'rooftop' },
       ],
     },
-
     {
       name: 'area',
       type: 'select',
-      required: false,
       options: [
+        { label: 'VIP', value: 'vip' },
         { label: 'Indoor', value: 'indoor' },
         { label: 'Outdoor', value: 'outdoor' },
-        { label: 'VIP', value: 'vip' },
         { label: 'Smoking', value: 'smoking' },
       ],
     },
 
+    /* =========================
+       BENTUK & POSISI (LAYOUT)
+    ==========================*/
     {
       name: 'bentuk',
       type: 'select',
-      required: false,
+      defaultValue: 'kotak',
       options: [
         { label: 'Kotak', value: 'kotak' },
         { label: 'Bulat', value: 'bulat' },
       ],
     },
-
     {
-      name: 'posisi_x',
-      type: 'number',
-      required: true,
-    },
-
-    {
-      name: 'posisi_y',
-      type: 'number',
-      required: true,
-    },
-
-    {
-      name: 'status',
-      type: 'select',
-      required: false,
-      options: [
-        { label: 'Available', value: 'available' },
-        { label: 'Reserved', value: 'reserved' },
-        { label: 'Disabled', value: 'disabled' },
+      name: 'posisi',
+      type: 'group',
+      label: 'Posisi Layout',
+      fields: [
+        {
+          name: 'x',
+          type: 'number',
+          required: true,
+        },
+        {
+          name: 'y',
+          type: 'number',
+          required: true,
+        },
       ],
     },
 
+    /* =========================
+       BISNIS RULE
+    ==========================*/
+    {
+      name: 'dpMeja',
+      label: 'DP Meja (Rp)',
+      type: 'number',
+      defaultValue: 0,
+      min: 0,
+    },
+
+    /* =========================
+       OPSIONAL (UI SUPPORT)
+    ==========================*/
     {
       name: 'catatan',
       type: 'textarea',
-      required: false,
     },
 
+    /* =========================
+       TENANT (AUTO DONATELL)
+    ==========================*/
     {
-      name: 'dp_meja',
-      type: 'number',
-      required: false,
-    },
-
-    {
-      name: 'is_highlight',
-      type: 'checkbox',
-      required: false,
+      name: 'tenant',
+      type: 'relationship',
+      relationTo: 'tenants',
+      required: true,
+      admin: {
+        hidden: true, // 👈 admin gak bisa lihat / pilih
+      },
+      hooks: {
+        beforeChange: [
+          ({ value }) => value ?? 3, // 👈 selalu Donatell
+        ],
+      },
     },
   ],
 }
