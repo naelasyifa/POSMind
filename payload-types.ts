@@ -163,12 +163,13 @@ export interface User {
   otp?: string | null;
   otpExpiration?: string | null;
   phone?: string | null;
-  businessName?: string | null;
+  businessName: string;
   adminName?: string | null;
   businessField?: string | null;
   businessType?: string | null;
   address?: string | null;
   isBusinessUser?: boolean | null;
+  temp_business_name?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -383,7 +384,10 @@ export interface Reservation {
   kodeReservasi?: string | null;
   waktuReservasi?: string | null;
   namaPelanggan: string;
-  jenisKelamin: 'laki-laki' | 'perempuan';
+  /**
+   * enum_reservations_jenis_kelamin
+   */
+  jenis_kelamin: string;
   noTelepon: string;
   email?: string | null;
   tanggal: string;
@@ -397,8 +401,6 @@ export interface Reservation {
   metodePembayaran?: ('tunai' | 'ewallet' | 'qris' | 'va') | null;
   meja: number | Table;
   status?: ('menunggu' | 'dikonfirmasi' | 'checkin' | 'selesai' | 'noshow') | null;
-  status_pembayaran?: ('unpaid' | 'partial' | 'paid') | null;
-  jenis_kelamin?: ('menunggu' | 'dikonfirmasi' | 'checkin' | 'selesai' | 'noshow') | null;
   kasir?: (number | null) | User;
   checkInAt?: string | null;
   checkOutAt?: string | null;
@@ -666,6 +668,7 @@ export interface UsersSelect<T extends boolean = true> {
   businessType?: T;
   address?: T;
   isBusinessUser?: T;
+  temp_business_name?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -820,7 +823,7 @@ export interface ReservationsSelect<T extends boolean = true> {
   kodeReservasi?: T;
   waktuReservasi?: T;
   namaPelanggan?: T;
-  jenisKelamin?: T;
+  jenis_kelamin?: T;
   noTelepon?: T;
   email?: T;
   tanggal?: T;
@@ -834,8 +837,6 @@ export interface ReservationsSelect<T extends boolean = true> {
   metodePembayaran?: T;
   meja?: T;
   status?: T;
-  status_pembayaran?: T;
-  jenis_kelamin?: T;
   kasir?: T;
   checkInAt?: T;
   checkOutAt?: T;

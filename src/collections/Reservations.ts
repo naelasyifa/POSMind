@@ -26,7 +26,6 @@ const Reservations: CollectionConfig = {
   },
 
   fields: [
-    // ===== RELATIONS (keep column names) =====
     {
       name: 'kodeReservasi',
       type: 'text',
@@ -42,13 +41,12 @@ const Reservations: CollectionConfig = {
 
     { name: 'namaPelanggan', type: 'text', required: true },
     {
-      name: 'jenisKelamin',
-      type: 'select',
+      name: 'jenis_kelamin',
+      type: 'text',
       required: true,
-      options: [
-        { label: 'Laki-laki', value: 'laki-laki' },
-        { label: 'Perempuan', value: 'perempuan' },
-      ],
+      admin: {
+        description: 'enum_reservations_jenis_kelamin',
+      },
     },
     { name: 'noTelepon', type: 'text', required: true },
     { name: 'email', type: 'email' },
@@ -104,33 +102,8 @@ const Reservations: CollectionConfig = {
       required: true,
     },
 
-    // ===== ENUMS (MATCH DB EXACTLY) =====
     {
       name: 'status',
-      type: 'select',
-      required: false,
-      defaultValue: 'menunggu',
-      options: [
-        { label: 'Menunggu', value: 'menunggu' },
-        { label: 'Dikonfirmasi', value: 'dikonfirmasi' },
-        { label: 'Check In', value: 'checkin' },
-        { label: 'Selesai', value: 'selesai' },
-        { label: 'No Show', value: 'noshow' },
-      ],
-    },
-    {
-      name: 'status_pembayaran',
-      type: 'select',
-      required: false,
-      defaultValue: 'unpaid',
-      options: [
-        { label: 'Unpaid', value: 'unpaid' },
-        { label: 'Partial', value: 'partial' },
-        { label: 'Paid', value: 'paid' },
-      ],
-    },
-    {
-      name: 'jenis_kelamin',
       type: 'select',
       defaultValue: 'menunggu',
       options: [

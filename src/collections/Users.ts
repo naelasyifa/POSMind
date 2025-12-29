@@ -101,7 +101,7 @@ export const Users: CollectionConfig = {
     {
       name: 'businessName',
       type: 'text',
-      required: false, //janlup di true lagi
+      required: true,
     },
 
     {
@@ -125,12 +125,15 @@ export const Users: CollectionConfig = {
       type: 'checkbox',
       defaultValue: true,
     },
+    {
+      name: 'temp_business_name',
+      type: 'text',
+    },
   ],
 
   access: {
     read: ({ req }) => {
       if (req.user?.role === 'superadmin') return true
-
       return {
         tenant: { equals: req.user?.tenant },
       }
