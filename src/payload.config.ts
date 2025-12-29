@@ -26,8 +26,8 @@ import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
 
-const filename = fileURLToPath(import.meta.url);
-const dirname = path.dirname(filename);
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
 console.log('Collections Loaded:', [
   Tenants.slug,
   Users.slug,
@@ -134,13 +134,14 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
 
   db: postgresAdapter({
-  pool: {
-    connectionString: process.env.DATABASE_URI || '',
-    max: 5,                  // VERY IMPORTANT
-    idleTimeoutMillis: 60000,
-    connectionTimeoutMillis: 10000,
-  },
-}),
+    pool: {
+      connectionString: process.env.DATABASE_URI || '',
+      max: 5, // VERY IMPORTANT
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 10000,
+    },
+    // push: false,
+  }),
 
   sharp,
 

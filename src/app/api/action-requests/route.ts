@@ -9,8 +9,9 @@ export async function POST(req: NextRequest) {
 
     const { actionType, payloadData } = body
 
-    const authResult = await payload.auth({ headers: req.headers })
-    const user = authResult?.user
+    const { user } = await payload.auth({
+      headers: req.headers,
+    })
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { Edit, Trash2, Package, PackageSearch, MoreVertical } from 'lucide-react'
 import EditProduct from './editProduct'
 import HapusProduct from './hapusProduct'
-import ReqPermission from './requestPermission'
 
 type Product = {
   id: string
@@ -56,7 +55,6 @@ export default function ListProduct({
 }: ListProductProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false)
   const [categoryMenuOpen, setCategoryMenuOpen] = useState<number | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedProductIndex, setSelectedProductIndex] = useState<number | null>(null)
@@ -206,14 +204,8 @@ export default function ListProduct({
         </div>
 
         <button
-          onClick={() => {
-            if (!hasPermission) {
-              setIsPermissionModalOpen(true)
-              return
-            }
-            onOpenAddProduct()
-          }}
           className="bg-[#737373] text-white hover:bg-[#5E5E5E] px-4 py-2 rounded-lg text-sm font-medium"
+          onClick={onOpenAddProduct}
         >
           + Tambah Produk
         </button>

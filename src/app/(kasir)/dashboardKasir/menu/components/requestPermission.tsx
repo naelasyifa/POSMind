@@ -7,6 +7,7 @@ type ActionType = 'create' | 'update' | 'delete'
 type PermissionRequestProps = {
   isOpen: boolean
   onClose: () => void
+  onApproved: () => void // ✅ ADD THIS
   actionType: 'create' | 'update' | 'delete'
   actionLabel: string
   payload?: any
@@ -15,6 +16,7 @@ type PermissionRequestProps = {
 export default function PermissionRequest({
   isOpen,
   onClose,
+  onApproved,
   actionType,
   actionLabel,
   payload,
@@ -48,24 +50,31 @@ export default function PermissionRequest({
           </button>
 
           <button
-  onClick={async () => {
-    await fetch('/api/action-requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        actionType,
-        payloadData: payload,
-      }),
-    })
+            onClick={async () => {
+              const res = await fetch('/api/action-requests', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  actionType,
+                  payloadData: payload,
+                }),
+              })
 
-    alert('Permintaan izin dikirim ke Admin')
-    onClose()
-  }}
-  className="flex-1 bg-[#52bfbe] text-white py-3 rounded-lg"
->
-  Minta Izin
-</button>
+              if (!res.ok) {
+                const err = await res.json()
+                alert(err.error ?? 'Gagal mengirim permintaan izin')
+                return
+              }
 
+              alert('Permintaan izin dikirim ke Admin')
+              onApproved()
+              onClose()
+            }}
+            className="flex-1 bg-[#52bfbe] text-white py-3 rounded-lg"
+          >
+            Minta Izin
+          </button>
         </div>
       </div>
     </div>

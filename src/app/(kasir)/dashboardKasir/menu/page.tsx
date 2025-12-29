@@ -149,6 +149,19 @@ export default function MenuPage() {
 
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 
+  const handlePermissionApproved = () => {
+    if (!pendingAction) return
+
+    if (pendingAction.type === 'create') {
+      setIsAddProductOpen(true)
+    }
+
+    // future: update/delete
+
+    setPendingAction(null)
+    setIsPermissionModalOpen(false)
+  }
+
   const handleAddProduct = (newProductInput: {
     id: string
     nama: string
@@ -184,32 +197,32 @@ export default function MenuPage() {
   }
 
   const handleEditProduct = (product: Product) => {
-  if (!hasPermission) {
-    setPendingAction({
-      type: 'update',
-      label: 'mengubah produk',
-      payload: product,
-    })
-    setIsPermissionModalOpen(true)
-    return
-  }
+    if (!hasPermission) {
+      setPendingAction({
+        type: 'update',
+        label: 'mengubah produk',
+        payload: product,
+      })
+      setIsPermissionModalOpen(true)
+      return
+    }
 
-  // real edit later
-}
+    // real edit later
+  }
 
   const handleDeleteProduct = (product: Product) => {
-  if (!hasPermission) {
-    setPendingAction({
-      type: 'delete',
-      label: 'menghapus produk',
-      payload: product,
-    })
-    setIsPermissionModalOpen(true)
-    return
-  }
+    if (!hasPermission) {
+      setPendingAction({
+        type: 'delete',
+        label: 'menghapus produk',
+        payload: product,
+      })
+      setIsPermissionModalOpen(true)
+      return
+    }
 
-  // real edit later
-}
+    // real edit later
+  }
 
   const handleEditCategory = (cat: CategoryItem) => {
     if (!hasPermission) {
@@ -289,17 +302,18 @@ export default function MenuPage() {
 
       {/* Modals */}
       {pendingAction && (
-  <ReqPermission
-    isOpen={isPermissionModalOpen}
-    onClose={() => {
-      setIsPermissionModalOpen(false)
-      setPendingAction(null)
-    }}
-    actionType={pendingAction.type}
-    actionLabel={pendingAction.label}
-    payload={pendingAction.payload}
-  />
-)}
+        <ReqPermission
+          isOpen={isPermissionModalOpen}
+          onClose={() => {
+            setIsPermissionModalOpen(false)
+            setPendingAction(null)
+          }}
+          onApproved={handlePermissionApproved} // 👈 ADD THIS
+          actionType={pendingAction.type}
+          actionLabel={pendingAction.label}
+          payload={pendingAction.payload}
+        />
+      )}
 
       <AddProduct
         isOpen={isAddProductOpen}
