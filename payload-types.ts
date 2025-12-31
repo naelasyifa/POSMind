@@ -161,7 +161,8 @@ export interface User {
   otp?: string | null;
   otpExpiration?: string | null;
   phone?: string | null;
-  businessName: string;
+  businessName?: string | null;
+  tempBusinessName?: string | null;
   adminName?: string | null;
   businessField?: string | null;
   businessType?: string | null;
@@ -629,6 +630,7 @@ export interface UsersSelect<T extends boolean = true> {
   otpExpiration?: T;
   phone?: T;
   businessName?: T;
+  tempBusinessName?: T;
   adminName?: T;
   businessField?: T;
   businessType?: T;
