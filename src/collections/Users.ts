@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import type { Where } from 'payload'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -52,7 +53,7 @@ export const Users: CollectionConfig = {
   fields: [
     {
       name: 'email',
-      type: 'text',
+      type: 'email',
       required: true,
       unique: true,
     },
@@ -101,7 +102,10 @@ export const Users: CollectionConfig = {
     {
       name: 'businessName',
       type: 'text',
-      required: true,
+    },
+    {
+      name: 'tempBusinessName',
+      type: 'text',
     },
 
     {

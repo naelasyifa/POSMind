@@ -39,11 +39,8 @@ export async function POST(req: NextRequest) {
     // 👤 USER BARU (REGISTER)
     // ===============================
     if (existing.totalDocs === 0) {
-      if (!password) {
-        return NextResponse.json(
-          { error: 'Password wajib diisi saat pendaftaran' },
-          { status: 400 },
-        )
+      if (!password || !businessName) {
+        return NextResponse.json({ error: 'Password dan Nama Bisnis wajib diisi' }, { status: 400 })
       }
 
       await payload.create({
@@ -52,13 +49,14 @@ export async function POST(req: NextRequest) {
           email,
           password,
           phone,
-          businessName,
+          tempBusinessName: businessName,
           otp,
           otpExpiration: expiration,
           emailVerified: false,
           isBusinessUser: true,
           role: 'admintoko',
         },
+        overrideAccess: true,
       })
     }
 
@@ -73,6 +71,7 @@ export async function POST(req: NextRequest) {
           otp,
           otpExpiration: expiration,
         },
+        overrideAccess: true,
       })
     }
 
