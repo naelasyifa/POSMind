@@ -80,6 +80,7 @@ export interface Config {
     storeSettings: StoreSetting;
     tables: Table;
     'payment-methods': PaymentMethod;
+    shifts: Shift;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -100,6 +101,7 @@ export interface Config {
     storeSettings: StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     tables: TablesSelect<false> | TablesSelect<true>;
     'payment-methods': PaymentMethodsSelect<false> | PaymentMethodsSelect<true>;
+    shifts: ShiftsSelect<false> | ShiftsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -490,6 +492,33 @@ export interface StoreSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shifts".
+ */
+export interface Shift {
+  id: number;
+  shiftCode?: string | null;
+  shiftName: 'Pagi' | 'Siang' | 'Malam';
+  status?: ('open' | 'closed') | null;
+  cashier?: (number | null) | User;
+  cashierEmail?: string | null;
+  openedAt?: string | null;
+  closedAt?: string | null;
+  openingCash: number;
+  expectedCash?: number | null;
+  expectedNonCash?: number | null;
+  actualCash?: number | null;
+  actualNonCash?: number | null;
+  differenceCash?: number | null;
+  differenceNonCash?: number | null;
+  closingNote?: string | null;
+  isCashMatched?: boolean | null;
+  isNonCashMatched?: boolean | null;
+  closingAction?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -563,6 +592,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payment-methods';
         value: number | PaymentMethod;
+      } | null)
+    | ({
+        relationTo: 'shifts';
+        value: number | Shift;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -922,6 +955,32 @@ export interface PaymentMethodsSelect<T extends boolean = true> {
   type?: T;
   bankCode?: T;
   isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "shifts_select".
+ */
+export interface ShiftsSelect<T extends boolean = true> {
+  shiftCode?: T;
+  shiftName?: T;
+  status?: T;
+  cashier?: T;
+  cashierEmail?: T;
+  openedAt?: T;
+  closedAt?: T;
+  openingCash?: T;
+  expectedCash?: T;
+  expectedNonCash?: T;
+  actualCash?: T;
+  actualNonCash?: T;
+  differenceCash?: T;
+  differenceNonCash?: T;
+  closingNote?: T;
+  isCashMatched?: T;
+  isNonCashMatched?: T;
+  closingAction?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -129,12 +129,17 @@ export const Users: CollectionConfig = {
 
   access: {
     read: ({ req }) => {
-      if (req.user?.role === 'superadmin') return true
-      return {
-        tenant: { equals: req.user?.tenant },
-      }
+      if (!req.user) return false
+      return true
     },
-    update: () => true,
+
+    update: ({ req }) => {
+      if (!req.user) return false
+      return true
+    },
+
+    create: () => true,
+    delete: () => true,
   },
 
   // hooks: {

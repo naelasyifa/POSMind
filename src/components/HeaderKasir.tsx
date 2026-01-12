@@ -6,9 +6,11 @@ import { useNotif } from '@/context/NotificationContext'
 
 interface HeaderKasirProps {
   title: string
-  showBack?: boolean
+  shiftName?: string
   notifications?: number
+  showBack?: boolean
   onBack?: () => void
+  onCloseShift?: () => void
 }
 
 export default function HeaderKasir({

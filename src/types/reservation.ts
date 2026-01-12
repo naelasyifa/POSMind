@@ -24,6 +24,7 @@ export interface Reservation {
   id: string
   tableNumber: string
   pax: number
+  tableId: string 
   date: string
   startTime: string
   endTime: string
