@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
-import payload from 'payload'
+import { getPayloadClient } from '@/app/payloadClient'
 import { generateSignature } from '@/lib/paymentSignature'
 
 export async function POST(req: Request) {
+  const payload = await getPayloadClient()
   const body = await req.json()
   const { orderId, amount, paymentMethodId } = body
 

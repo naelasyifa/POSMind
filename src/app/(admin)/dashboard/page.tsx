@@ -4,7 +4,7 @@ import Sidebar from '@/components/SidebarAdmin'
 import HeaderAdmin from '@/components/HeaderAdmin'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   LineChart,
   Line,
@@ -134,6 +134,8 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 }
 
 export default function DashboardPage() {
+  const [mounted, setMounted] = useState(false)
+
   const [mode, setMode] = useState<'bulanan' | 'mingguan'>('bulanan')
   const chartData = mode === 'bulanan' ? data : dataMingguan
 
@@ -154,6 +156,12 @@ export default function DashboardPage() {
       { subject: 'Service', A: found.service },
     ]
   }, [radarKasir])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
 
   return (
     <div className="flex min-h-screen bg-[#52BFBE] z-50">
@@ -458,7 +466,7 @@ export default function DashboardPage() {
               </h3>
             </div>
             <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart
                   data={dataKinerjaKasir}
                   layout="vertical"

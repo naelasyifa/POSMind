@@ -277,6 +277,7 @@ export default function DetailPesanan({
           tenant: 1,
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
+          paymentMethodId: selectedMethod.id,
           items: displayCart.map(({ id, ...rest }) => ({
             productId: id,
             ...rest,
@@ -286,8 +287,7 @@ export default function DetailPesanan({
           serviceCharge: service,
           discount,
           total: totalAmount,
-          caraBayar: selectedMethod.type === 'cash' ? 'cash' : 'non_cash',
-          paymentMethod: selectedMethod.type !== 'cash' ? selectedMethod.id : null,
+
           bayar: selectedMethod.type === 'cash' ? amountPaid : 0,
           kembalian: selectedMethod.type === 'cash' ? amountPaid - totalAmount : 0,
           status: selectedMethod.type === 'cash' ? 'selesai' : 'proses',
@@ -316,8 +316,7 @@ export default function DetailPesanan({
         body: JSON.stringify({
           orderId: noPesanan,
           amount: totalAmount,
-          method: selectedMethod.type, // qris | bank_transfer
-          providerCode: selectedMethod.bankCode, // BCA, BRI, dll
+          paymentMethodId: selectedMethod.id,
         }),
       })
 

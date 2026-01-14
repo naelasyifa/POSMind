@@ -19,19 +19,25 @@ export async function POST(req: Request) {
     const payload = await getPayloadClient()
     const body = await req.json()
 
-    if (!body.metode) {
-      return NextResponse.json({ error: 'metode is required' }, { status: 400 })
-    }
     if (!body.tenant) {
       return NextResponse.json({ error: 'tenant is required' }, { status: 400 })
     }
 
-    // map metode
-    if (body.metode === 'cash') body.metode = 'Cash'
-    if (body.metode === 'qris') body.metode = 'E-Wallet'
+    if (!body.paymentMethodId) {
+      return NextResponse.json({ error: 'paymentMethodId is required' }, { status: 400 })
+    }
+
+    const paymentMethod = await payload.findByID({
+      collection: 'payment-methods',
+      id: body.paymentMethodId,
+    })
+
+    if (!paymentMethod) {
+      return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
+    }
 
     if (!body.status) {
-      body.status = 'selesai'
+      body.status = paymentMethod.type === 'cash' ? 'selesai' : 'pending'
     }
 
     // VALIDASI PROMO ID & KUOTA
