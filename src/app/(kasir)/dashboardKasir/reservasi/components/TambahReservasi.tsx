@@ -1,321 +1,206 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { User, CreditCard } from 'lucide-react'
-import type { StatusType } from '@/types/reservation'
-
-/* ============================================
-    ICON COMPONENTS
-===============================================*/
-function IconCustomer() {
-    return (
-        <div className="w-10 h-10 rounded-full bg-[#4ECAC7] flex items-center justify-center">
-            <User size={20} className="text-black" />
-        </div>
-    )
-}
-
-function IconPayment() {
-    return (
-        <div className="w-10 h-10 rounded-full bg-[#4ECAC7] flex items-center justify-center">
-            <CreditCard size={20} className="text-black" />
-        </div>
-    )
-}
-
-/* ============================================
-    INTERFACE
-===============================================*/
-
-export interface ReservationData {
-    table: string
-    pax: number
-    date: string
-    startTime: string
-    endTime: string
-    deposit: number
-    status: StatusType
-    gender: string
-    firstName: string
-    lastName: string
-    phone: string
-    email: string
-    paymentMethod: string
-    areaType: string
-    floor: string
-}
+import { User, CreditCard, Loader2, DollarSign, Receipt } from 'lucide-react'
 
 interface AddReservationProps {
     isOpen: boolean
     onClose: () => void
-    onSave: (data: ReservationData) => void
-    // Tambahkan prop ini agar sinkron dengan denah meja
-    initialTableData: { tableNumber: string; areaType: string; floor: string } | null
+    onSuccess: () => void
+    initialData: {
+        tableId: string
+        tableNumber: string
+        areaType: string
+        floor: string
+    } | null
 }
 
-/* ============================================
-    CONSTANTS
-===============================================*/
+export default function TambahReservasi({ isOpen, onClose, onSuccess, initialData }: AddReservationProps) {
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    // --- TAMBAHAN: State untuk menampung daftar meja dari API ---
+    const [allTables, setAllTables] = useState<any[]>([])
 
-const STATUS_LIST: StatusType[] = [
-    'Menunggu',
-    'Dikonfirmasi',
-    'Checked In',
-    'Selesai',
-    'Tidak Datang',
-    'Tersedia'
-]
+    const [formData, setFormData] = useState({
+        namaPelanggan: '',
+        jenisKelamin: 'laki-laki',
+        noTelepon: '',
+        email: '',
+        tanggal: new Date().toISOString().split('T')[0],
+        jamMulai: '12:00',
+        jamSelesai: '14:00',
+        pax: 1,
+        deposit: 0,
+        totalTagihan: 0,
+        statusPembayaran: 'unpaid',
+        metodePembayaran: 'tunai',
+        meja: '', // ID Meja dari Payload
+        status: 'menunggu',
+        catatan: ''
+    })
 
-const initialFormData: ReservationData = {
-    table: '',
-    pax: 1,
-    date: new Date().toISOString().split('T')[0],
-    startTime: '09:00',
-    endTime: '10:00',
-    deposit: 0,
-    status: 'Dikonfirmasi',
-    gender: 'Pria',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    paymentMethod: 'Tunai',
-    areaType: 'Indoor',
-    floor: 'Lantai 1',
-}
-
-/* ============================================
-    COMPONENT
-===============================================*/
-
-export default function TambahReservasi({ isOpen, onClose, onSave, initialTableData }: AddReservationProps) {
-    const [formData, setFormData] = useState<ReservationData>(initialFormData)
-
-    // PERBAIKAN: Logika untuk menangkap data dari klik meja di denah
+    // --- TAMBAHAN: Fetch data meja saat modal dibuka ---
     useEffect(() => {
         if (isOpen) {
-            if (initialTableData) {
-                setFormData({
-                    ...initialFormData,
-                    table: initialTableData.tableNumber,
-                    areaType: initialTableData.areaType,
-                    floor: initialTableData.floor
-                })
+            fetch('/api/tables?limit=100')
+                .then(res => res.json())
+                .then(json => setAllTables(json.docs || []))
+                .catch(err => console.error("Gagal ambil meja:", err))
+        }
+    }, [isOpen])
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData?.tableId) {
+                setFormData(prev => ({ ...prev, meja: initialData.tableId }))
             } else {
-                setFormData(initialFormData)
+                setFormData(prev => ({ ...prev, meja: '' }))
             }
         }
-    }, [isOpen, initialTableData])
+    }, [isOpen, initialData])
 
-    const tables = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'Bar', 'S1', 'S2', 'O1', 'V1', 'R1']
-    const genderList = ['Pria', 'Wanita']
-    const paymentList = ['Tunai', 'QRIS', 'Debit', 'Kartu Kredit', 'Transfer']
-    const areaTypeList = ['Indoor', 'Outdoor', 'Smoking', 'VIP', 'Rooftop']
-    const floorList = ['Lantai 1', 'Lantai 2', 'Lantai 3', 'Rooftop']
+    const handleSave = async () => {
+        setIsSubmitting(true)
+        try {
+            const response = await fetch('/api/frontend/reservations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    pax: Number(formData.pax) || 0,
+                    deposit: Number(formData.deposit) || 0,
+                    totalTagihan: Number(formData.totalTagihan) || 0,
+                }),
+            })
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target
-        let processed: string | number = value
+            const resJson = await response.json()
+            if (!response.ok) {
+                throw new Error(resJson.message || resJson.errors?.[0]?.message || 'Gagal simpan')
+            }
 
-        if (name === 'pax') processed = Math.max(1, parseInt(value) || 1)
-        if (name === 'deposit') processed = parseFloat(value) || 0
-
-        setFormData((prev) => ({ ...prev, [name]: processed }))
-    }
-
-    const handleSave = () => {
-        if (!formData.table) return alert('Harap pilih Nomor Meja.')
-        if (!formData.firstName) return alert('Harap isi Nama Depan.')
-        if (!formData.phone) return alert('Harap isi No. Telepon.')
-
-        if (formData.startTime >= formData.endTime)
-            return alert('Jam selesai harus lebih lambat dari jam mulai.')
-
-        onSave(formData)
+            alert('Reservasi Berhasil!')
+            onSuccess()
+            onClose()
+        } catch (error: any) {
+            alert(error.message)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
         <>
-            {/* Overlay */}
-            <div
-                className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-all ${
-                    isOpen ? 'opacity-100 visible z-[55]' : 'opacity-0 invisible z-[-1]'
-                }`}
-                onClick={onClose}
-            />
-
-            {/* Slide Panel */}
-            <div
-                className={`fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-[60] rounded-l-2xl p-8 overflow-y-auto transition-transform duration-500 ${
-                    isOpen ? 'translate-x-0' : 'translate-x-full'
-                }`}
-            >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Tambah Reservasi</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-900 text-xl font-bold">
-                        ✕
-                    </button>
+            <div className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] transition-all ${isOpen ? 'visible opacity-100' : 'invisible opacity-0'}`} onClick={onClose} />
+            
+            <div className={`fixed top-0 right-0 h-full w-full max-w-[480px] bg-white z-[101] shadow-2xl p-8 overflow-y-auto transition-transform duration-500 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-xl font-bold">Tambah Reservasi</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-black">✕</button>
                 </div>
 
-                {/* FORM */}
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        handleSave()
-                    }}
-                >
-                    {/* ================= DETAILS ================= */}
-                    <p className="text-sm font-semibold mb-3">Detail Reservasi</p>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        {/* Table */}
-                        <div>
-                            <label className="text-sm mb-1 block">Nomor Meja</label>
-                            <select className="w-full border rounded-lg px-3 py-2" name="table" value={formData.table} onChange={handleChange}>
+                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
+                    
+                    {/* INFO MEJA - DIUBAH AGAR BISA DROPDOWN JIKA BUKAN DARI LAYOUT */}
+                    <div className="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                        <p className="text-[10px] text-teal-600 uppercase font-bold tracking-wider">Meja Terpilih</p>
+                        {initialData ? (
+                            <p className="text-lg font-bold text-teal-800">{initialData.tableNumber} - {initialData.floor}</p>
+                        ) : (
+                            <select 
+                                required
+                                className="w-full bg-transparent text-lg font-bold text-teal-800 outline-none border-b border-teal-200"
+                                value={formData.meja}
+                                onChange={e => setFormData({...formData, meja: e.target.value})}
+                            >
                                 <option value="">Pilih Meja</option>
-                                {tables.map((t) => (
-                                    <option key={t} value={t}>
-                                        {t}
+                                {allTables.map(table => (
+                                    <option key={table.id} value={table.id}>
+                                        {table.namaMeja} - {table.lantai}
                                     </option>
                                 ))}
                             </select>
-                        </div>
+                        )}
+                    </div>
 
-                        {/* Pax */}
-                        <div>
-                            <label className="text-sm mb-1 block">Jumlah Pax</label>
-                            <input
-                                type="number"
-                                className="w-full border rounded-lg px-3 py-2"
-                                name="pax"
-                                value={formData.pax}
-                                onChange={handleChange}
-                                min={1}
-                            />
-                        </div>
-
-                        {/* Area */}
-                        <div>
-                            <label className="text-sm mb-1 block">Tipe Area</label>
-                            <select className="w-full border rounded-lg px-3 py-2" name="areaType" value={formData.areaType} onChange={handleChange}>
-                                {areaTypeList.map((a) => (
-                                    <option key={a}>{a}</option>
-                                ))}
+                    {/* DATA PELANGGAN */}
+                    <div className="space-y-4">
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Detail Pelanggan</p>
+                        <input required placeholder="Nama Pelanggan" type="text" className="w-full border-b py-2 outline-none focus:border-teal-500" value={formData.namaPelanggan} onChange={e => setFormData({...formData, namaPelanggan: e.target.value})} />
+                        <div className="flex flex-col gap-4">
+                            <select className="w-full border-b py-2 outline-none" value={formData.jenisKelamin} onChange={e => setFormData({...formData, jenisKelamin: e.target.value})}>
+                                <option value="laki-laki">Laki-laki</option>
+                                <option value="perempuan">Perempuan</option>
                             </select>
-                        </div>
-
-                        {/* Floor */}
-                        <div>
-                            <label className="text-sm mb-1 block">Lantai</label>
-                            <select className="w-full border rounded-lg px-3 py-2" name="floor" value={formData.floor} onChange={handleChange}>
-                                {floorList.map((f) => (
-                                    <option key={f}>{f}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Date */}
-                        <div>
-                            <label className="text-sm mb-1 block">Tanggal Reservasi</label>
-                            <input type="date" className="w-full border rounded-lg px-3 py-2" name="date" value={formData.date} onChange={handleChange} />
-                        </div>
-
-                        {/* Deposit */}
-                        <div>
-                            <label className="text-sm mb-1 block">Uang Muka (Rp)</label>
-                            <input type="number" className="w-full border rounded-lg px-3 py-2" name="deposit" value={formData.deposit} onChange={handleChange} />
-                        </div>
-
-                        {/* Start */}
-                        <div>
-                            <label className="text-sm mb-1 block">Jam Mulai</label>
-                            <input type="time" className="w-full border rounded-lg px-3 py-2" name="startTime" value={formData.startTime} onChange={handleChange} />
-                        </div>
-
-                        {/* End */}
-                        <div>
-                            <label className="text-sm mb-1 block">Jam Selesai</label>
-                            <input type="time" className="w-full border rounded-lg px-3 py-2" name="endTime" value={formData.endTime} onChange={handleChange} />
+                            <input required placeholder="No. Telepon" type="text" className="w-full border-b py-2 outline-none" value={formData.noTelepon} onChange={e => setFormData({...formData, noTelepon: e.target.value})} />
                         </div>
                     </div>
 
-                    {/* Status */}
-                    <div className="mb-6">
-                        <label className="text-sm mb-1 block">Status</label>
-                        <select className="w-full border rounded-lg px-3 py-2" name="status" value={formData.status} onChange={handleChange}>
-                            {STATUS_LIST.map((s) => (
-                                <option key={s}>{s}</option>
-                            ))}
+                    {/* WAKTU & PAX */}
+                    <div className="space-y-4">
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Waktu & Pax</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <input type="date" className="border rounded-lg p-2 text-sm" value={formData.tanggal} onChange={e => setFormData({...formData, tanggal: e.target.value})} />
+                            <input type="number" placeholder="Pax" className="border rounded-lg p-2 text-sm" value={formData.pax === 0 ? '' : formData.pax} onChange={e => setFormData({...formData, pax: e.target.value === '' ? 0 : parseInt(e.target.value)})} />
+                            <input type="time" className="border rounded-lg p-2 text-sm" value={formData.jamMulai} onChange={e => setFormData({...formData, jamMulai: e.target.value})} />
+                            <input type="time" className="border rounded-lg p-2 text-sm" value={formData.jamSelesai} onChange={e => setFormData({...formData, jamSelesai: e.target.value})} />
+                        </div>
+                    </div>
+
+                    {/* PEMBAYARAN & TAGIHAN */}
+                    <div className="space-y-4 pt-4 border-t">
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Informasi Billing</p>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center"><Receipt size={16}/></div>
+                                <div className="flex-1">
+                                    <label className="text-xs text-gray-500 block">Total Tagihan (Estimasi)</label>
+                                    <input type="number" className="w-full font-bold outline-none text-black" value={formData.totalTagihan === 0 ? '' : formData.totalTagihan} onChange={e => setFormData({...formData, totalTagihan: e.target.value === '' ? 0 : parseInt(e.target.value)})} placeholder="0" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center"><DollarSign size={16}/></div>
+                                <div className="flex-1">
+                                    <label className="text-xs text-gray-500 block">Status Pembayaran</label>
+                                    <select className="w-full font-bold outline-none text-teal-600" value={formData.statusPembayaran} onChange={e => setFormData({...formData, statusPembayaran: e.target.value})}>
+                                        <option value="unpaid">Belum Dibayar</option>
+                                        <option value="partial">DP (Uang Muka)</option>
+                                        <option value="paid">Lunas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {formData.statusPembayaran !== 'unpaid' && (
+                                <div className="pl-11 space-y-3 animate-in fade-in duration-300">
+                                    <div>
+                                        <label className="text-xs text-gray-500 block">Nominal DP / Bayar</label>
+                                        <input type="number" className="w-full border-b font-bold text-orange-600 outline-none" value={formData.deposit === 0 ? '' : formData.deposit} onChange={e => setFormData({...formData, deposit: e.target.value === '' ? 0 : parseInt(e.target.value)})} placeholder="0" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 block">Metode Pembayaran</label>
+                                        <select className="w-full border-b font-bold outline-none" value={formData.metodePembayaran} onChange={e => setFormData({...formData, metodePembayaran: e.target.value})}>
+                                            <option value="tunai">Tunai</option>
+                                            <option value="qris">QRIS</option>
+                                            <option value="ewallet">E-Wallet</option>
+                                            <option value="va">Virtual Account</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* STATUS RESERVASI */}
+                    <div className="pt-4 border-t">
+                        <label className="text-xs font-bold text-gray-400 uppercase block mb-2">Status Reservasi</label>
+                        <select className="w-full border rounded-lg p-3 font-bold bg-gray-50 outline-none" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                            <option value="menunggu">Menunggu</option>
+                            <option value="dikonfirmasi">Dikonfirmasi</option>
+                            <option value="checkin">Checked In</option>
                         </select>
                     </div>
 
-                    {/* ================= CUSTOMER ================= */}
-                    <p className="text-sm font-semibold mb-3">Detail Customer</p>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        {/* Gender */}
-                        <div className="col-span-2">
-                            <label className="text-sm mb-1 block">Jenis Kelamin</label>
-                            <select className="w-full border rounded-lg px-3 py-2" name="gender" value={formData.gender} onChange={handleChange}>
-                                {genderList.map((g) => (
-                                    <option key={g}>{g}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="text-sm mb-1 block">Nama Depan</label>
-                            <input type="text" className="w-full border rounded-lg px-3 py-2" name="firstName" value={formData.firstName} onChange={handleChange} />
-                        </div>
-
-                        <div>
-                            <label className="text-sm mb-1 block">Nama Belakang</label>
-                            <input type="text" className="w-full border rounded-lg px-3 py-2" name="lastName" value={formData.lastName} onChange={handleChange} />
-                        </div>
-
-                        <div>
-                            <label className="text-sm mb-1 block">No. Telepon</label>
-                            <input type="text" className="w-full border rounded-lg px-3 py-2" name="phone" value={formData.phone} onChange={handleChange} />
-                        </div>
-
-                        <div>
-                            <label className="text-sm mb-1 block">Email</label>
-                            <input type="email" className="w-full border rounded-lg px-3 py-2" name="email" value={formData.email} onChange={handleChange} />
-                        </div>
-                    </div>
-
-                    {/* ================= Additional ================= */}
-                    <div className="bg-white p-4 rounded-lg border shadow">
-                        <h2 className="text-base font-semibold mb-4">Additional Information</h2>
-
-                        <div className="flex items-center gap-3 mb-4">
-                            <IconCustomer />
-                            <span className="text-sm whitespace-nowrap">Customer Info</span>
-                            <span className="ml-auto font-medium text-sm">Pelanggan Baru</span>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <IconPayment />
-                            <span className="text-sm whitespace-nowrap">Metode Pembayaran</span>
-
-                            <select className="ml-auto border rounded-lg px-3 py-2 text-sm w-44" name="paymentMethod" value={formData.paymentMethod} onChange={handleChange}>
-                                {paymentList.map((p) => (
-                                    <option key={p}>{p}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* ACTION */}
-                    <div className="flex justify-end gap-3 mt-6">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">
-                            Batal
-                        </button>
-                        <button type="submit" className="px-4 py-2 rounded-lg bg-[#3ABAB4] text-white font-medium">
-                            Simpan Reservasi
-                        </button>
-                    </div>
+                    <button disabled={isSubmitting} type="submit" className="w-full py-4 rounded-2xl bg-[#3ABAB4] text-white font-bold hover:bg-[#2d9691] shadow-lg shadow-[#3ABAB4]/20 transition-all flex items-center justify-center gap-2 active:scale-95"
+                    >
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : 'Simpan Reservasi'}
+                    </button>
                 </form>
             </div>
         </>

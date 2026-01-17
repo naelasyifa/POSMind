@@ -1,30 +1,34 @@
+// // middleware.ts
 // import { NextResponse } from 'next/server'
 // import type { NextRequest } from 'next/server'
 
 // export function middleware(req: NextRequest) {
 //   const { pathname } = req.nextUrl
 
-//   // 🔐 Cek token login
-//   const token = req.cookies.get('token')?.value
+//   // 🔒 Route yang perlu login
+//   const protectedRoutes = ['/dashboard']
 
-//   // Jika akses dashboard tapi tidak ada token → redirect ke /masuk
-//   if (pathname.startsWith('/dashboard') && !token) {
+//   const isProtected = protectedRoutes.some((route) =>
+//     pathname.startsWith(route),
+//   )
+
+//   if (!isProtected) {
+//     return NextResponse.next()
+//   }
+
+//   // 🔑 Ambil token auth Payload
+//   const token =
+//     req.cookies.get('payload-token') ||
+//     req.cookies.get('payload-auth-token')
+
+//   // ❌ Belum login
+//   if (!token) {
 //     return NextResponse.redirect(new URL('/masuk', req.url))
 //   }
 
-//   // 🏷️ Tenant slug detection
-//   const segments = pathname.split('/').filter(Boolean)
-//   const tenantSlug = segments[1] // setelah 'dashboard' (optional sesuai struktur URL kamu)
-
-//   const res = NextResponse.next()
-//   if (tenantSlug) {
-//     res.headers.set('x-tenant-slug', tenantSlug)
-//   }
-
-//   return res
+//   return NextResponse.next()
 // }
 
-// // Matcher harus berada di luar function!
 // export const config = {
 //   matcher: ['/dashboard/:path*'],
 // }

@@ -17,6 +17,7 @@ import Transactions from './collections/Transactions'
 import Notifications from './collections/Notifications'
 import Payments from './collections/Payments'
 import Reservations from './collections/Reservations'
+import Shifts from './collections/Shifts'
 // import { Admins } from './collections/Admins'
 import { Cat } from 'lucide-react'
 import Categories from './collections/Categories'
@@ -40,6 +41,7 @@ console.log('Collections Loaded:', [
   StoreSettings.slug,
   Tables.slug,
   PaymentMethods.slug,
+  Shifts.slug,
 ])
 
 // const sendOtpEndpoint: any = {
@@ -109,6 +111,7 @@ export default buildConfig({
     StoreSettings,
     Tables,
     PaymentMethods,
+    Shifts,
   ],
 
   email: nodemailerAdapter({
@@ -135,6 +138,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
+    push: false,
   }),
 
   sharp,

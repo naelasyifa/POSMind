@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X, Edit, CalendarPlus, Circle, Loader2 } from 'lucide-react'
+import { X, CalendarPlus, Loader2 } from 'lucide-react'
 
 // ==============================
-// DEFINISI INTERFACE
+// DEFINISI INTERFACE & HELPERS
 // ==============================
 type StatusType = 'Menunggu' | 'Dikonfirmasi' | 'Checked In' | 'Selesai' | 'Tidak Datang' | 'Tersedia'
 
@@ -16,12 +16,12 @@ interface Reservation {
   startTime: string
   endTime: string
   status: StatusType
-  deposit: string; // Tambahkan ini jika belum ada
-  paymentMethod: string;
+  deposit: string
   customerName: string
   phone: string
   areaType: string 
   floor: string
+  paymentMethod?: string
 }
 
 const STATUS_LABELS: Record<StatusType, string> = {
@@ -33,10 +33,23 @@ const STATUS_LABELS: Record<StatusType, string> = {
   'Tersedia': 'Tersedia'
 }
 
+// Helper untuk mapping status dari database (lowercase) ke UI (Capitalize)
+const mapStatusFromApi = (apiStatus: string): StatusType => {
+  switch (apiStatus) {
+    case 'menunggu': return 'Menunggu'
+    case 'dikonfirmasi': return 'Dikonfirmasi'
+    case 'checkin': return 'Checked In'
+    case 'selesai': return 'Selesai'
+    case 'noshow': return 'Tidak Datang'
+    default: return 'Tersedia'
+  }
+}
+
 interface Props {
   isOpen: boolean
   onClose: () => void
-  tableNumber: string // Meja mana yang diklik
+  tableId: string
+  tableNumber: string 
   floor: string
   areaType: string
   onEditClick: (reservation: Reservation) => void
@@ -47,6 +60,7 @@ export default function TableReservationDetailModal({
   isOpen,
   onClose,
   tableNumber,
+  tableId,
   floor,
   areaType,
   onEditClick,
@@ -57,33 +71,36 @@ export default function TableReservationDetailModal({
 
   // 1. AMBIL DATA DARI API SETIAP MODAL DIBUKA
   useEffect(() => {
-    if (isOpen && tableNumber) {
+    if (isOpen && tableId) {
       const fetchDetailMeja = async () => {
         setLoading(true)
         const today = new Date().toISOString().split('T')[0]
         try {
-          // Fetch reservasi khusus untuk meja ini saja di hari ini
-          const res = await fetch(`/api/reservations?where[tanggal][equals]=${today}&where[meja.namaMeja][equals]=${tableNumber}&limit=50`)
+          // Sesuaikan dengan route API kamu: /api/reservations
+          // Menambahkan filter untuk tanggal hari ini dan nomor meja yang diklik
+          const res = await fetch(`/api/frontend/reservations?tableId=${tableId}&tanggal=${today}`)
           const json = await res.json()
           
-          const mapped: Reservation[] = (json.docs || []).map((r: any) => ({
-            id: r.id,
-            tableNumber: r.meja?.namaMeja,
-            pax: r.jumlahOrang?.toString(),
-            date: r.tanggal,
-            startTime: r.jamMulai,
-            endTime: r.jamSelesai,
-            status: r.status === 'checkin' ? 'Checked In' : 
-                    r.status === 'noshow' ? 'Tidak Datang' : 
-                    r.status.charAt(0).toUpperCase() + r.status.slice(1),
-            customerName: r.namaPelanggan,
-            phone: r.nomorTelepon,
-            areaType: r.meja?.area,
-            floor: r.meja?.lantai
-          }))
+          if (json.success) {
+            const mapped: Reservation[] = (json.data || []).map((r: any) => ({
+              id: r.id,
+              tableId: typeof r.meja === 'object' ? r.meja.id : r.meja,
+              tableNumber: r.meja?.namaMeja || '?',
+              pax: r.pax?.toString() || r.jumlahOrang?.toString() || '0', // Fallback jika nama field berbeda
+              date: r.tanggal,
+              startTime: r.jamMulai,
+              endTime: r.jamSelesai,
+              status: mapStatusFromApi(r.status),
+              customerName: r.namaPelanggan,
+              phone: r.noTelepon || r.nomorTelepon || '-',
+              areaType: r.meja?.area || '',
+              floor: r.meja?.lantai || '',
+              deposit: r.deposit?.toString() || '0'
+            }))
 
-          // Urutkan berdasarkan jam
-          setLocalReservations(mapped.sort((a, b) => a.startTime.localeCompare(b.startTime)))
+            // Urutkan berdasarkan jam mulai agar tampilan rapi
+            setLocalReservations(mapped.sort((a, b) => a.startTime.localeCompare(b.startTime)))
+          }
         } catch (err) {
           console.error("Gagal ambil detail reservasi:", err)
         } finally {
@@ -92,7 +109,7 @@ export default function TableReservationDetailModal({
       }
       fetchDetailMeja()
     }
-  }, [isOpen, tableNumber])
+}, [isOpen, tableId])
 
   if (!isOpen) return null
 
@@ -101,6 +118,8 @@ export default function TableReservationDetailModal({
       case 'Dikonfirmasi': return { bg: 'bg-green-100', text: 'text-green-700' }
       case 'Menunggu': return { bg: 'bg-amber-100', text: 'text-amber-700' }
       case 'Checked In': return { bg: 'bg-blue-100', text: 'text-blue-700' }
+      case 'Selesai': return { bg: 'bg-indigo-100', text: 'text-indigo-700' }
+      case 'Tidak Datang': return { bg: 'bg-red-100', text: 'text-red-700' }
       default: return { bg: 'bg-gray-100', text: 'text-gray-700' }
     }
   }
@@ -118,15 +137,17 @@ export default function TableReservationDetailModal({
               <X size={24} />
             </button>
             <h2 className="text-xl font-bold mt-1">Jadwal Meja <span className="text-[#3ABAB4]">{tableNumber}</span></h2>
-            <p className="text-xs text-gray-400 font-medium uppercase mt-1 tracking-widest">{floor} • {areaType}</p>
+            <p className="text-xs text-gray-400 font-medium uppercase mt-1 tracking-widest">
+                {floor.replace('_', ' ')} • {areaType}
+            </p>
           </div>
 
           {/* BODY */}
-          <div className="p-6 space-y-4 overflow-y-auto flex-1 bg-gray-50/50 min-h-[300px]">
+          <div className="p-6 space-y-4 overflow-y-auto flex-1 bg-gray-50/50 min-h-[350px] max-h-[500px]">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-[#3ABAB4]">
                 <Loader2 className="animate-spin mb-2" size={32} />
-                <p className="text-sm font-medium">Sinkronisasi API...</p>
+                <p className="text-sm font-medium">Memuat data...</p>
               </div>
             ) : localReservations.length > 0 ? (
               localReservations.map((res) => (

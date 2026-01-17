@@ -1,890 +1,367 @@
-
-// DashboardKasir.tsx
 'use client'
 
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/SidebarKasir'
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import HeaderKasir from '@/components/HeaderKasir'
-import Link from 'next/link'
 import Image from "next/image"
-
 import {
-    CreditCard,
-    Wallet,
-    Clock,
-    ShoppingBag,
-    Users,
-    PlusCircle,
-    Search,
-    History,
-    Table,
-    ClipboardList,
-    CircleDollarSign,
-    Lock,
-    X,
-    ScanLine,
-    Landmark,
-    HandCoins,
-    Hourglass,
-    CheckCircle,
-    Ban,
-    Smartphone,
+    PlusCircle, Search, History, Table, ClipboardList, CircleDollarSign, 
+    Lock, ScanLine, Landmark, HandCoins, Hourglass, CheckCircle, Smartphone, User2
 } from 'lucide-react'
 
-// PENTING: Import komponen Tutup Shift yang baru
-import CloseShiftForm from './components/TutupShift';
+import CloseShiftForm from './components/TutupShift'
 import ShiftForm from './components/BukaShift'
 
-/* =============================
-    UTIL: FORMAT RUPIAH
-============================= */
-const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(num).replace('Rp', '').trim()
-}
+const PAYMENT_ICONS: Record<string, React.ReactElement> = {
+    QRIS: <ScanLine size={18} className="text-green-600" />,
+    CASH: <HandCoins size={18} className="text-blue-600" />,
+    TRANSFER: <Landmark size={18} className="text-indigo-600" />,
+    EWALLET: <Smartphone size={18} className="text-purple-600" />,
+};
 
-// ... (IMAGE MAP, PAYMENT ICON MAP, ORDER STATUS ICON MAP - Tetap sama) ...
-const PRODUCT_IMAGE_MAP: { [key: string]: string } = {
-    'Nasi Goreng Spesial': '/images/nasi_goreng_spesial.jpg',
-    'Es Kopi Susu': '/images/es_kopi_susu.jpg',
-    'Chicken Katsu': '/images/chicken_katsu.jpg',
-    'Cumi Saus Padang': '/images/cumi_saus_padang.jpg',
-    'diskon 20 persen': '/images/promo_20.jpg',
-    'diskon 30 persen': '/images/promo_30.jpg',
-}
+/* ================= COMPONENT: SHIFT INDICATOR ================= */
+const ShiftStatusIndicator = ({ name, shiftName, startTime, onOpenClose }: any) => {
+    const [duration, setDuration] = useState('00:00:00');
 
-const PAYMENT_METHOD_ICONS: { [key: string]: React.ReactElement } = {
-    'QRIS': <ScanLine size={20} className="text-green-600" />,
-    'Cash': <HandCoins size={20} className="text-blue-600" />,
-    'E-wallet': <Smartphone size={20} className="text-purple-600" />,
-    'Transfer': <Landmark size={20} className="text-indigo-600" />,
-    'Credit Card': <CreditCard size={20} className="text-red-600" />,
-    'Unknown': <Wallet size={20} className="text-gray-500" />,
-}
-
-const ORDER_STATUS_ICONS: { [key: string]: React.ReactElement } = {
-    'dalam_proses': <Hourglass size={20} className="text-yellow-600" />,
-    'selesai': <CheckCircle size={20} className="text-green-600" />,
-    'dibatalkan': <Ban size={20} className="text-red-600" />,
-}
-
-
-/* =============================
-    MAIN COMPONENT
-============================= */
-export default function DashboardKasir() {
-    const router = useRouter()
-
-    /* =============================
-        SHIFT STATE (LOCAL STORAGE)
-    ============================== */
-    const [shiftOpen, setShiftOpen] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('shiftOpen') === 'true'
-        }
-        return false
-    })
-
-    const [shiftStart, setShiftStart] = useState<Date | null>(() => {
-        if (typeof window !== 'undefined') {
-            const start = localStorage.getItem('shiftStart')
-            return start ? new Date(start) : null
-        }
-        return null
-    })
-
-    const [initialCapital, setInitialCapital] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const capital = localStorage.getItem('initialCapital')
-            return capital ? parseFloat(capital) : 0
-        }
-        return 0
-    })
-
-    const [currentShiftName, setCurrentShiftName] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('currentShiftName') || 'N/A'
-        }
-        return 'N/A'
-    })
-
-    const [shiftEnd, setShiftEnd] = useState<Date | null>(null)
-    const [now, setNow] = useState<Date | null>(null)
-    // Variabel yang digunakan untuk mengatasi Hydration Error
-    const [isClient, setIsClient] = useState(false)
-
-    /* =============================
-        SHIFT FORM / ALERT STATE
-    ============================== */
-    const [showShiftAlert, setShowShiftAlert] = useState(() => !shiftOpen)
-    const [showShiftForm, setShowShiftForm] = useState(false)
-    // STATE BARU UNTUK MODAL TUTUP SHIFT
-    const [showCloseShiftModal, setShowCloseShiftModal] = useState(false) 
-
-    /* =============================
-        IDENTITAS KASIR
-    ============================== */
-    const kasirName = 'Ruby Nana'
-
-    /* =============================
-        DATA DUMMY (TRANSAKSI)
-    ============================== */
-    const staticNow = useMemo(() => new Date(), [])
-
-    const [transactions, setTransactions] = useState<Array<any>>([
-        { id: 1, status: 'selesai', amount: 45000, payment: 'QRIS', table: 1, time: staticNow },
-        { id: 2, status: 'dalam_proses', amount: 60000, payment: 'Cash', table: 4, time: staticNow },
-        { id: 3, status: 'dibatalkan', amount: 30000, payment: 'E-wallet', table: 6, time: staticNow },
-        { id: 4, status: 'selesai', amount: 120000, payment: 'Transfer', table: 2, time: staticNow },
-        { id: 5, status: 'selesai', amount: 20000, payment: 'Cash', table: 10, time: staticNow },
-    ])
-
-    /* =============================
-        DATA MEJA (3 LANTAI)
-    ============================== */
-    const [selectedFloor, setSelectedFloor] = useState('Lantai 1')
-    const [tables] = useState([
-        { id: 1, floor: 'Lantai 1', name: 'Bar', status: 'terisi', pax: 1, customer: 'John Doe' },
-        { id: 2, floor: 'Lantai 1', name: 'A1', status: 'kosong', pax: 0 },
-        { id: 3, floor: 'Lantai 1', name: 'A2', status: 'terisi', pax: 1, customer: 'John Doe' },
-        { id: 4, floor: 'Lantai 1', name: 'B1', status: 'terisi', pax: 4, customer: 'Keluarga Budi' },
-    ])
-
-    /* =============================
-        STOK MENIPIS
-    ============================== */
-    const [stocks] = useState([
-        { id: 1, name: 'Chicken Parmesan', qty: 2, threshold: 5 },
-        { id: 2, name: 'French Fries', qty: 0, threshold: 10 },
-        { id: 3, name: 'Ice Tea', qty: 3, threshold: 5 },
-        { id: 4, name: 'Nasi Goreng', qty: 8, threshold: 5 },
-    ])
-
-    /* =============================
-        ACTIVITY LOG
-    ============================== */
-    const [activities, setActivities] = useState([
-        { id: 1, text: 'Dashboard dibuka', time: staticNow }
-    ])
-
-    /* =============================
-        POPULAR PRODUCTS
-    ============================== */
-    const [popularProducts] = useState([
-        { name: 'Nasi Goreng Spesial', timesOrdered: 125, imagePath: PRODUCT_IMAGE_MAP['Nasi Goreng Spesial'] },
-        { name: 'Es Kopi Susu', timesOrdered: 98, imagePath: PRODUCT_IMAGE_MAP['Es Kopi Susu'] },
-        { name: 'Chicken Katsu', timesOrdered: 70, imagePath: PRODUCT_IMAGE_MAP['Chicken Katsu'] },
-        { name: 'Cumi Saus Padang', timesOrdered: 65, imagePath: PRODUCT_IMAGE_MAP['Cumi Saus Padang'] },
-    ])
-
-    /* =============================
-        TIMER
-    ============================== */
     useEffect(() => {
-        setNow(new Date())
-        // Mengatur isClient=true setelah komponen mount
-        setIsClient(true) 
-        const t = setInterval(() => setNow(new Date()), 1000)
-        return () => clearInterval(t)
-    }, [])
+        const timer = setInterval(() => {
+            if (!startTime) return;
+            const start = new Date(startTime).getTime();
+            const now = new Date().getTime();
+            const diff = now - start;
 
-    /* =============================
-        LOCAL STORAGE SYNC
-    ============================== */
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('shiftOpen', shiftOpen.toString())
-            localStorage.setItem('shiftStart', shiftStart ? shiftStart.toISOString() : '')
-            localStorage.setItem('initialCapital', initialCapital.toString())
-            localStorage.setItem('currentShiftName', currentShiftName)
+            const hours = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+            
+            setDuration(`${hours}:${minutes}:${seconds}`);
+        }, 1000);
 
-            if (shiftOpen) {
-                setShowShiftAlert(false)
-                setShowShiftForm(false)
-            } else {
-                setShowShiftAlert(!showShiftForm)
-            }
-        }
-    }, [shiftOpen, shiftStart, initialCapital, currentShiftName])
+        return () => clearInterval(timer);
+    }, [startTime]);
 
+    return (
+        <div className="inline-flex items-center bg-[#555555] text-white p-1.5 rounded-2xl shadow-lg border border-white/10">
+            {/* User Part */}
+            <div className="flex items-center gap-3 px-4 py-1 border-r border-white/20">
+                <User2 size={18} className="opacity-80" />
+                <span className="text-sm font-bold">{name || 'User'}</span>
+            </div>
 
-    /* =============================
-        COMPUTED SUMMARY
-    ============================== */
-    const summary = useMemo(() => {
-        const total = transactions.length
-        const selesai = transactions.filter(t => t.status === 'selesai').length
-        const proses  = transactions.filter(t => t.status === 'dalam_proses').length
-        const batal   = transactions.filter(t => t.status === 'dibatalkan').length
-        const revenue = transactions.filter(t => t.status === 'selesai')
-            .reduce((s, t) => s + t.amount, 0)
+            {/* Shift Info Part */}
+            <div className="flex items-center gap-3 px-4 py-1 border-r border-white/20">
+                <Hourglass size={18} className="text-white/70" />
+                <div className="flex flex-col">
+                    <span className="text-[10px] font-medium leading-tight opacity-90">Shift: {shiftName}</span>
+                    <span className="text-[11px] font-bold leading-tight">Berjalan • Durasi {duration}</span>
+                </div>
+            </div>
 
-        const cashIn = transactions
-            .filter(t => t.status === 'selesai' && t.payment === 'Cash')
-            .reduce((s, t) => s + t.amount, 0)
-
-        const customers = tables.filter(t => t.status !== 'kosong')
-            .reduce((s, t) => s + t.pax, 0)
-
-        return { total, selesai, proses, batal, revenue, customers, cashIn }
-    }, [transactions, tables])
-
-    /* =============================
-        PAYMENT DETAILS
-    ============================== */
-    const paymentDetails = useMemo(() => {
-        const map: Record<string, { count: number; total: number }> = {}
-        transactions.forEach((t) => {
-            const key = t.payment || 'Unknown'
-            if (!map[key]) map[key] = { count: 0, total: 0 }
-            map[key].count++
-            if (t.status === 'selesai') map[key].total += t.amount
-        })
-        return map
-    }, [transactions])
-
-    const filteredTables = useMemo(() => {
-        return tables.filter(t => t.floor === selectedFloor)
-    }, [tables, selectedFloor])
-
-    const lowStocks = stocks.filter((s) => s.qty <= s.threshold)
-
-    /* =============================
-        SHIFT ACTIONS
-    ============================== */
-    const pushActivity = (text: string) => {
-        setActivities(prev => [
-            { id: Date.now(), text, time: new Date() },
-            ...prev
-        ].slice(0, 20))
-    }
-
-    const openShift = (capital: number, shift: string, note: string) => {
-        const started = new Date()
-        setShiftOpen(true)
-        setShiftStart(started)
-        setShiftEnd(null)
-        setShowShiftForm(false)
-        setShowShiftAlert(false)
-        setInitialCapital(capital)
-        setCurrentShiftName(shift)
-
-        pushActivity(
-            `Shift ${shift} dibuka oleh ${kasirName} dengan Modal Awal Rp ${formatNumber(capital)}. Catatan: ${note || '-'}`
-        )
-    }
-
-    const closeShift = () => {
-        const ended = new Date()
-        setShiftOpen(false)
-        setShiftEnd(ended)
-        setShowShiftAlert(true)
-        setInitialCapital(0)
-        setCurrentShiftName('N/A')
-
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('shiftOpen')
-            localStorage.removeItem('shiftStart')
-            localStorage.removeItem('initialCapital')
-            localStorage.removeItem('currentShiftName')
-        }
-
-        pushActivity(`Shift ditutup oleh ${kasirName} pada ${formatTime(ended)}`)
-    }
-
-    // LOGIKA BARU: Jika shift terbuka, buka modal Tutup Shift
-    const toggleShift = () => {
-        if (shiftOpen) {
-            setShowCloseShiftModal(true) // Buka modal Tutup Shift
-        } else {
-            setShowShiftForm(true) // Buka modal Buka Shift
-        }
-    }
-
-    const handleOpenShiftAlert = () => {
-        setShowShiftAlert(false)
-        setShowShiftForm(true)
-    }
-
-    const handleCloseShiftForm = useCallback(() => {
-        setShowShiftForm(false)
-        if (!shiftOpen) setShowShiftAlert(true)
-    }, [shiftOpen])
-    
-    // LOGIKA BARU: Handle submit dari modal Tutup Shift
-    const handleCloseShiftSubmit = (actualCash: number, note: string) => {
-        // Logika pengiriman data audit (simulasi)
-        console.log("AUDIT DATA SENT:", { 
-            shiftStart, 
-            initialCapital, 
-            expectedCash: totalCash, 
-            actualCash, 
-            note 
-        });
-        
-        // 1. Tutup modal
-        setShowCloseShiftModal(false);
-        
-        // 2. Jalankan fungsi penutupan shift lokal (membersihkan localStorage)
-        closeShift();
-        
-        // 3. Status 'Shift Belum Dibuka' akan otomatis muncul
-    }
-
-
-    /* =============================
-        FORMAT TIME & DURATION
-    ============================== */
-    const pad = (n: number) => n.toString().padStart(2, '0')
-
-    const formatDuration = (from: Date | null, to: Date | null = now) => {
-        if (!from || !to) return '- - : - - : - -'
-        const diff = Math.max(0, Math.floor((to.getTime() - from.getTime()) / 1000))
-        const h = Math.floor(diff / 3600)
-        const m = Math.floor((diff % 3600) / 60)
-        const s = diff % 60
-        return `${pad(h)}:${pad(m)}:${pad(s)}`
-    }
-
-    function formatTime(d: Date) {
-        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-    }
-
-    /* =============================
-        ADD DUMMY TRANSACTION
-    ============================== */
-    const addDummyTransaction = (opt: { status?: string; amount?: number; payment?: string; table?: number }) => {
-        if (!shiftOpen) {
-            alert('Shift belum dibuka.')
-            return
-        }
-
-        const t = {
-            id: Date.now(),
-            status: opt.status || 'selesai',
-            amount: opt.amount ?? 50000,
-            payment: opt.payment ?? 'QRIS',
-            table: opt.table ?? Math.floor(Math.random() * 20) + 1,
-            time: new Date(),
-        }
-
-        setTransactions((p) => [t, ...p].slice(0, 200))
-        pushActivity(`Transaksi baru: ${t.id} (${t.payment}) Rp ${formatNumber(t.amount)}`)
-    }
-
-    // Total Kas Expected (Modal Awal + Semua Cash In dari transaksi)
-    const totalCash = initialCapital + summary.cashIn 
-
-    const ShiftAlert = () => (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-            <div className="bg-white rounded-xl shadow-2xl p-10 text-center w-full max-w-sm relative">
-                <Lock size={48} className="text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Shift Belum Dibuka</h3>
-                <p className="text-gray-600 mb-6">Silakan buka shift sebelum melanjutkan.</p>
-
-                <button
-                    onClick={handleOpenShiftAlert}
-                    className="bg-[#52BFBE] hover:bg-[#3FA3A2] text-white font-medium py-2 px-6 rounded-lg transition"
+            {/* Button Part */}
+            <div className="px-2">
+                <button 
+                    onClick={onOpenClose}
+                    className="bg-white text-gray-800 px-5 py-2 rounded-xl text-[11px] font-black uppercase hover:bg-red-500 hover:text-white transition-all shadow-sm"
                 >
-                    Buka Shift
+                    Tutup Shift
                 </button>
             </div>
         </div>
-    )
+    );
+};
 
-    // PERBAIKAN: isLocked harus mencakup showCloseShiftModal
-    const isLocked = showShiftForm || (showShiftAlert && !shiftOpen) || showCloseShiftModal
+export default function DashboardKasir() {
+    const router = useRouter()
+    const [isClient, setIsClient] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [apiData, setApiData] = useState<any>(null)
+    const [shiftOpen, setShiftOpen] = useState(false)
+    const [shiftData, setShiftData] = useState<any>(null)
+    const [showShiftForm, setShowShiftForm] = useState(false)
+    const [showCloseShiftModal, setShowCloseShiftModal] = useState(false)
+
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true)
+            const [resDashboard, resShift] = await Promise.all([
+            fetch('/api/frontend/kasir/dashboard', {
+                credentials: 'include',
+            }),
+            fetch('/api/frontend/shifts/active', {
+                credentials: 'include',
+            }),
+            ])
+            const dataDashboard = await resDashboard.json()
+            const dataActive = await resShift.json()
+
+            setApiData(dataDashboard)
+            
+            if (resShift.ok && dataActive.active) {
+            setShiftOpen(true)
+            setShiftData(dataActive.shift)
+            }
+
+        } catch (error) {
+            console.error("Fetch error:", error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        setIsClient(true)
+        fetchData()
+    }, [fetchData])
+
+    const totalCash = useMemo(() => {
+        const opening = Number(shiftData?.openingCash || 0)
+        const cashIn = Number(apiData?.summary?.cashIn || 0)
+        return opening + cashIn
+    }, [shiftData, apiData])
+
+    // PENAMBAHAN LOGIKA UNTUK MODAL TUTUP SHIFT
+    const totalNonCash = useMemo(() => {
+        const totalRevenue = Number(apiData?.summary?.revenue || 0)
+        const cashIn = Number(apiData?.summary?.cashIn || 0)
+        return totalRevenue - cashIn
+    }, [apiData])
+
+    if (!isClient) return null
 
     return (
-        <div className="flex min-h-screen bg-[#52bfbe] relative">
-            {isClient && isLocked && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-40"></div>
-            )}
+        <div className="flex min-h-screen bg-[#52BFBE]">
+            <Sidebar key="dashboard" />
             
-            {/* 1. Modal Buka Shift */}
-            {isClient && showShiftForm && <ShiftForm onOpen={openShift} onClose={handleCloseShiftForm} />}
-            
-            {/* 2. Modal Tutup Shift (BARU) */}
-            {isClient && showCloseShiftModal && (
-                <CloseShiftForm 
-                    expectedCash={totalCash} // Menggunakan totalCash yang dihitung
-                    shiftId={`SH-${shiftStart?.toISOString().slice(0, 10) || '000'}-${currentShiftName}`} 
-                    onClose={() => setShowCloseShiftModal(false)}
-                    onSubmit={handleCloseShiftSubmit} // Panggil fungsi submit yang baru
+            <div className="flex-1 flex flex-col ml-28">
+                <HeaderKasir 
+                    title="Dashboard" 
+                    shiftName={shiftData?.shiftName || 'Shift: -'} 
+                    onCloseShift={() => setShowCloseShiftModal(true)}
                 />
-            )}
-            
-            {/* 3. Alert Shift Belum Dibuka */}
-            {isClient && showShiftAlert && !shiftOpen && !showShiftForm && <ShiftAlert />}
 
-            {/* MAIN CONTAINER */}
-            <div className={`flex flex-1 z-0 ${isLocked ? 'pointer-events-none' : ''}`}>
+            <main className="p-7 space-y-6">
+            {/* HEADER SECTION: WELCOME TEXT & SHIFT INDICATOR SEJAJAR */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+                {/* Sisi Kiri: Teks Selamat Datang */}
+                <div>
+                <h1 className="text-4xl font-bold text-white">Selamat Datang, Kasir</h1>
+                <p className="text-sm text-white opacity-90">
+                    Semangat meraih target hari ini!
+                </p>
+                </div>
 
-                {/* SIDEBAR */}
-                <Sidebar />
-                <HeaderKasir title="Dashboard" showBack={false} />
-                {/* MAIN CONTENT */}
-                <div className="flex-1 flex flex-col">
-                    <div className="flex items-start justify-between pr-6 pt-10">
-                        <div className="pl-8 ml-28 flex flex-col justify-start">
-                            <h1 className="text-4xl font-extrabold text-white">
-                                Selamat Bertugas, {kasirName.split(' ')[0]}!
-                            </h1>
-                            <p className="text-lg text-white/80 mt-1">Siap melayani hari ini.</p>
-                        </div>
+                {/* Sisi Kanan: Shift Indicator */}
+                {shiftOpen && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                    <ShiftStatusIndicator
+                    name={shiftData?.cashier?.email || shiftData?.cashierEmail || "Memuat..."}
+                    shiftName={shiftData?.shiftName || "-"}
+                    startTime={shiftData?.openedAt}
+                    onOpenClose={() => setShowCloseShiftModal(true)}
+                    />
+                </div>
+                )}
+            </div>
 
-                        {/* SHIFT PANEL (KONTEN KANAN) */}
-                        <div className="flex items-center gap-5 bg-[#737373] px-5 py-2 rounded-xl shadow text-white">
+                    {/* ACTION BUTTONS */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <ActionButton label="Buat Pesanan" icon={<PlusCircle />} color="bg-[#6A5AE0]" onClick={() => router.push('/dashboardKasir/transaksi')} />
+                        <ActionButton label="Pesanan Berjalan" icon={<ClipboardList />} color="bg-[#FFB74D]" />
+                        <ActionButton label="Riwayat Pembayaran" icon={<History />} color="bg-[#9E9E9E]" />
+                        <ActionButton label="Cari Menu" icon={<Search />} color="bg-[#7986CB]"onClick={() => router.push('/dashboardKasir/menu')}  />
+                        <ActionButton label="Kas Masuk/Keluar" icon={<CircleDollarSign />} color="bg-[#37474F]" />
+                        <ActionButton label="Lihat Meja" icon={<Table />} color="bg-[#F06292]" onClick={() => router.push('/dashboardKasir/reservasi')} />
+                    </div>
 
-                            {/* KASIR NAME */}
-                            <div className="flex items-center gap-2">
-                                <Users size={18} />
-                                <span className="font-medium">{kasirName}</span>
+                    {/* STAT CARDS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard title="Total Pesanan" value={apiData?.summary?.total || 0} />
+                        <StatCard title="Pendapatan Hari Ini" value={`Rp ${apiData?.summary?.revenue?.toLocaleString() || 0}`} />
+                        <StatCard title="Total Pax" value={apiData?.summary?.customers || 0} />
+                        
+                        <div className="bg-white rounded-xl p-4 shadow-md">
+                            <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Kas Fisik</h3>
+                            <div className="text-[11px] space-y-1 text-gray-600 border-b pb-2">
+                                <div className="flex justify-between"><span>Modal Awal</span> <b>Rp {shiftData?.openingCash?.toLocaleString() || 0}</b></div>
+                                <div className="flex justify-between"><span>Kas Masuk</span> <b>Rp {apiData?.summary?.cashIn?.toLocaleString() || 0}</b></div>
+                                <div className="flex justify-between text-red-500"><span>Kas Keluar</span> <b>Rp 0</b></div>
                             </div>
-
-                            <div className="border-r h-6 opacity-40"></div>
-
-                            {/* SHIFT TIME */}
-                            <div className="flex items-center gap-2">
-                                <Clock size={18} />
-                                <div className="text-sm">
-                                    <div>
-                                        Shift: <span className="font-medium">{currentShiftName}</span>
-                                    </div>
-
-                                    <div className="text-xs opacity-90">
-                                        {shiftOpen
-                                            ? `Berjalan • Durasi ${isClient ? formatDuration(shiftStart) : '- -'}`
-                                            : shiftStart
-                                                ? `Terakhir: ${isClient ? formatTime(shiftStart) : '- -'}`
-                                                : 'Belum dibuka'}
-                                    </div>
-                                </div>
+                            <div className="mt-2 flex justify-between items-center">
+                                <span className="text-[10px] font-bold uppercase">Total Kas</span>
+                                <span className="text-base font-black text-gray-800">Rp {totalCash.toLocaleString()}</span>
                             </div>
-
-                            <div className="border-r h-6 opacity-40"></div>
-
-                            {/* SHIFT BUTTON - MENGGUNAKAN toggleShift yang baru */}
-                            <button
-                                onClick={toggleShift}
-                                // Matikan tombol jika sedang ada modal buka/tutup shift yang aktif
-                                disabled={showShiftForm || showCloseShiftModal} 
-                                className={`px-4 py-1 rounded-md font-medium transition ${
-                                    shiftOpen
-                                        ? 'bg-white text-gray-700 border border-gray-300'
-                                        : 'bg-green-600 text-white'
-                                }`}
-                            >
-                                {shiftOpen ? 'Tutup Shift' : 'Buka Shift'}
-                            </button>
                         </div>
                     </div>
 
-                    {/* MAIN AREA */}
-                    <main className="flex-1 flex flex-col"> 
+                    {/* MAIN CONTENT SPLIT */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-6">
+                            <SectionWrapper title="Status Pesanan">
+                                <StatusItem label="Dalam Proses" value={apiData?.summary?.proses || 0} icon={<Hourglass className="text-amber-500" />} />
+                                <StatusItem label="Selesai" value={apiData?.summary?.selesai || 0} icon={<CheckCircle className="text-green-500" />} />
+                            </SectionWrapper>
 
-                        <div className="p-6 space-y-6 ml-28">
+                            <SectionWrapper title="Produk Terlaris">
+                                {apiData?.popularProducts?.map((prod: any, i: number) => (
+                                    <ProductItem key={i} name={prod.name} sub={`Dipesan ${prod.timesOrdered} kali`} />
+                                ))}
+                            </SectionWrapper>
 
-                            {/* QUICK ACTIONS */}
-                            <QuickActions
-                                onSimulateNew={() => addDummyTransaction({
-                                    status: 'selesai',
-                                    amount: 75000,
-                                    payment: 'QRIS'
-                                })}
-                            />
-                            {/* SUMMARY CARDS */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <SummaryCard
-                                    title="Total Pesanan"
-                                    value={summary.total}
-                                    icon={<ShoppingBag size={28} className="text-[#2DB2AE]" />}
-                                />
-
-                                <SummaryCard
-                                    title="Pendapatan Hari Ini"
-                                    value={`Rp ${formatNumber(summary.revenue)}`}
-                                    icon={<CreditCard size={28} className="text-[#2DB2AE]" />}
-                                />
-
-                                <SummaryCard
-                                    title="Total Pax (Duduk)"
-                                    value={summary.customers}
-                                    icon={<Users size={28} className="text-[#2DB2AE]" />}
-                                />
-
-                                {/* KAS FISIK */}
-                                <div className="bg-white rounded-xl shadow p-5 border-l-4 border-[#2DB2AE]">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-semibold text-black-800">Kas Fisik</h3>
-                                        <Wallet size={28} className="text-[#2DB2AE]" />
-                                    </div>
-
-                                    <div className="space-y-1 text-sm text-black-700">
-                                        <p><span className="font-medium">Modal Awal:</span> Rp {formatNumber(initialCapital)}</p>
-                                        <p><span className="font-medium">Kas Masuk (Cash):</span> Rp {formatNumber(summary.cashIn)}</p>
-                                        <p><span className="font-medium">Kas Keluar:</span> Rp 0</p>
-
-                                        <div className="pt-2 mt-2 border-t border-gray-100">
-                                            <p className="font-bold text-base">
-                                                <span className="font-medium">Total Kas:</span> Rp {formatNumber(totalCash)}
-                                            </p>
+                            <SectionWrapper title="Overview Meja">
+                                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                                    {apiData?.tables?.slice(0, 12).map((meja: any) => (
+                                        <div key={meja.id} className={`h-12 rounded-lg border-2 flex items-center justify-center text-[10px] font-bold ${
+                                            meja.status === 'isi' ? 'bg-blue-100 border-blue-400 text-blue-600' : 
+                                            meja.status === 'kosong' ? 'bg-green-100 border-green-400 text-green-600' : 
+                                            'bg-gray-100 border-gray-300 text-gray-400'
+                                        }`}>
+                                            {meja.name}
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            </div>
-
-                            {/* STATUS & PAYMENT DETAIL */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                                {/* STATUS PESANAN */}
-                                <Panel title="Status Pesanan">
-                                    <StatusItem
-                                        label="Dalam Proses"
-                                        value={summary.proses}
-                                        statusKey="dalam_proses"
-                                    />
-                                    <StatusItem
-                                        label="Selesai"
-                                        value={summary.selesai}
-                                        statusKey="selesai"
-                                    />
-                                    <StatusItem
-                                        label="Dibatalkan"
-                                        value={summary.batal}
-                                        valueClass="text-red-500"
-                                        statusKey="dibatalkan"
-                                    />
-                                </Panel>
-
-                                {/* PAYMENT DETAILS */}
-                                <Panel title="Metode Pembayaran (Detail)">
-                                    <div className="space-y-2">
-                                        {Object.entries(paymentDetails).map(([method, data]) => (
-                                            <div key={method} className="flex justify-between items-center p-3 border rounded-lg">
-                                                <div className="flex items-center gap-3">
-                                                    {PAYMENT_METHOD_ICONS[method] || PAYMENT_METHOD_ICONS['Unknown']}
-                                                    <p className="font-medium">{method}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs text-gray-500">{data.count} transaksi</p>
-                                                    <p className="font-semibold">Rp {formatNumber(data.total)}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Panel>
-                            </div>
-
-
-                            {/* PRODUCTS + STOCKS */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                                <div className="md:col-span-2 space-y-4">
-
-                                    {/* PRODUK TERLARIS */}
-                                    <ProductList
-                                        title="Produk Terlaris"
-                                        products={popularProducts}
-                                    />
-
-                                    {/* PROMO */}
-                                    <div className="bg-white rounded-xl shadow p-5">
-                                        <h3 className="font-semibold text-[#3FA3A2] mb-3">Promo Berlangsung</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <PromoCard discount={20} imagePath={PRODUCT_IMAGE_MAP['diskon 20 persen']} />
-                                            <PromoCard discount={30} imagePath={PRODUCT_IMAGE_MAP['diskon 30 persen']} />
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                                {/* STOCK MENIPIS */}
-                                <div className="bg-white rounded-xl shadow p-5 h-full">
-                                    <h3 className="font-semibold text-[#3FA3A2] mb-3">Stok Menipis / Habis</h3>
-
-                                    <div className="space-y-2">
-                                        {lowStocks.length === 0 && (
-                                            <p className="text-sm text-gray-500">Tidak ada stok menipis</p>
-                                        )}
-
-                                        {lowStocks.map((s) => (
-                                            <div key={s.id} className="flex justify-between items-center p-3 border rounded-lg">
-                                                <div>
-                                                    <p className="font-medium">{s.name}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Stok: {s.qty} (threshold {s.threshold})
-                                                    </p>
-                                                </div>
-
-                                                <div className={`text-sm font-semibold ${s.qty === 0 ? 'text-red-500' : 'text-yellow-600'}`}>
-                                                    {s.qty === 0 ? 'Habis' : 'Menipis'}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* TABLE OVERVIEW + ACTIVITY LOG */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                                {/* TABLES */}
-                                <div className="md:col-span-2 bg-white rounded-xl shadow p-5">
-                                    <h3 className="font-semibold text-[#3FA3A2] mb-4">Overview Meja</h3>
-
-                                    {/* FILTER BUTTONS */}
-                                    <div className="flex space-x-2 mb-4">
-                                        {['Lantai 1', 'Lantai 2', 'Lantai 3'].map((floor) => (
-                                            <button
-                                                key={floor}
-                                                onClick={() => setSelectedFloor(floor)}
-                                                className={`px-4 py-2 rounded-lg font-medium transition ${
-                                                    selectedFloor === floor
-                                                        ? 'bg-[#52BFBE] text-white shadow-md'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                }`}
-                                            >
-                                                {floor}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {/* TABLE GRID */}
-                                    <div className="grid grid-cols-4 gap-3">
-                                        {filteredTables.map((t) => (
-                                            <div
-                                                key={t.id}
-                                                className={`p-3 rounded-lg text-sm border flex flex-col items-center justify-center text-center 
-                                                    ${
-                                                        t.status === 'kosong'
-                                                            ? 'bg-white border-gray-300 hover:shadow-sm cursor-pointer'
-                                                            : t.status === 'terisi'
-                                                            ? 'bg-[#fffbf0] border-yellow-500 shadow-lg cursor-pointer'
-                                                            : 'bg-[#fff7f7] border-red-500 shadow-lg cursor-pointer'
-                                                    }
-                                                `}
-                                            >
-                                                <div className="font-bold text-gray-800">{t.name}</div>
-
-                                                <div className="text-xs opacity-90 font-medium">
-                                                    {statusLabel(t.status)}
-                                                </div>
-
-                                                {t.status !== 'kosong' && (
-                                                    <>
-                                                        <div className="text-xs text-gray-500 mt-1">Pax: {t.pax}</div>
-                                                        {t.customer && (
-                                                            <div className="text-xs text-gray-400 italic truncate w-full px-1">
-                                                                ({t.customer})
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* ACTIVITY LOG */}
-                                <div className="bg-white rounded-xl shadow p-5 h-full flex flex-col">
-                                    <h3 className="font-semibold text-[#3FA3A2] mb-4">Aktivitas Terbaru</h3>
-
-                                    <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                                        {activities.map((a) => (
-                                            <div key={a.id} className="text-sm border rounded-lg p-2">
-                                                <div className="text-xs text-gray-500">
-                                                    {isClient ? formatTime(a.time) : '- -'}
-                                                </div>
-                                                <div>{a.text}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                            </div>
+                            </SectionWrapper>
                         </div>
-                    </main>
-                </div>
+
+                        <div className="space-y-6">
+                            <SectionWrapper title="Metode Pembayaran">
+                                {apiData?.paymentDetails && Object.entries(apiData.paymentDetails).map(([method, detail]: any) => (
+                                    <PaymentItem key={method} label={method} icon={PAYMENT_ICONS[method.toUpperCase()]} />
+                                ))}
+                            </SectionWrapper>
+
+                            <SectionWrapper title="Stok Menipis">
+                                {apiData?.lowStocks?.map((item: any, i: number) => (
+                                    <ProductItem key={i} name={item.name} sub={`Sisa Stok: ${item.qty}`} isAlert />
+                                ))}
+                            </SectionWrapper>
+
+                            <SectionWrapper title="Aktivitas Terbaru">
+                                {apiData?.activities?.slice(0, 5).map((act: any) => (
+                                    <div key={act.id} className="flex justify-between items-center p-3 border-b last:border-0 border-gray-50">
+                                        <p className="text-xs text-gray-700 font-medium">{act.text}</p>
+                                        <span className="text-[10px] text-gray-400">{new Date(act.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                    </div>
+                                ))}
+                            </SectionWrapper>
+                        </div>
+                    </div>
+                </main>
             </div>
+
+            {/* MODALS */}
+            {!loading && !shiftOpen && !showShiftForm && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white p-8 rounded-3xl text-center max-w-sm w-full shadow-2xl relative">
+                        {/* Tombol X untuk menutup dan kembali ke dashboard */}
+                        <button 
+                            onClick={() => setShowShiftForm(false)} 
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            ✕
+                        </button>
+                        <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Lock className="text-teal-500" size={40} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800 uppercase">Shift Terkunci</h2>
+                        <p className="text-sm text-gray-500 mt-2 mb-8">Anda harus membuka shift terlebih dahulu untuk mulai berjualan.</p>
+                        <button onClick={() => setShowShiftForm(true)} className="w-full bg-[#4DB6AC] hover:bg-teal-600 text-white py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
+                            Buka Shift Sekarang
+                        </button>
+                    </div>
+                </div>
+            )}
+            
+            {showShiftForm && (
+            <ShiftForm
+                onSuccess={(shift) => {
+                    setShowShiftForm(false);
+                    setShiftOpen(true);
+                    setShiftData(shift);
+                    fetchData(); // Panggil ini untuk menyegarkan data dashboard
+                }}
+                onClose={() => setShowShiftForm(false)}
+            />
+                        )}
+
+            {/* MODAL TUTUP SHIFT */}
+            {showCloseShiftModal && shiftData && (
+                <CloseShiftForm
+                    shiftId={shiftData.id}
+                    expectedCash={totalCash}
+                    expectedNonCash={totalNonCash}
+                    onClose={() => setShowCloseShiftModal(false)}
+                    onSubmit={() => { // Pastikan di CloseShiftForm.tsx kamu memanggil onSubmit() setelah sukses
+                        setShowCloseShiftModal(false);
+                        setShiftOpen(false); // 🔥 TAMBAHKAN INI: Agar dashboard langsung tertutup
+                        setShiftData(null);  // 🔥 TAMBAHKAN INI: Agar durasi berhenti
+                        fetchData();         // Refresh data
+                    }}
+                />
+            )}
         </div>
     )
 }
 
+/* ================= REUSABLE UI COMPONENTS ================= */
 
-/* =============================
-    COMPONENTS
-============================= */
+const ActionButton = ({ label, icon, color, onClick }: any) => (
+    <button onClick={onClick} className={`${color} text-white p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all`}>
+        <div className="bg-white/20 p-2 rounded-xl">{React.cloneElement(icon, { size: 24 })}</div>
+        <span className="text-[10px] font-bold uppercase text-center leading-tight tracking-wide">{label}</span>
+    </button>
+)
 
-const QuickActions = ({ onSimulateNew }: any) => {
-    const items = [
-        { label: 'Pesanan Baru', icon: <PlusCircle size={22} />, bgColor: 'bg-blue-600', hoverColor: 'hover:bg-blue-700' },
-        { label: 'Pesanan Berjalan', icon: <ClipboardList size={22} />, bgColor: 'bg-yellow-500', hoverColor: 'hover:bg-yellow-600' },
-        { label: 'Riwayat Pembayaran', icon: <History size={22} />, bgColor: 'bg-gray-500', hoverColor: 'hover:bg-gray-600' },
-        { label: 'Cari Menu', icon: <Search size={22} />, bgColor: 'bg-indigo-500', hoverColor: 'hover:bg-indigo-600' },
-        { label: 'Kas Masuk/Keluar', icon: <CircleDollarSign size={22} />, bgColor: 'bg-gray-700', hoverColor: 'hover:bg-gray-700' },
-        { label: 'Lihat Meja', icon: <Table size={22} />, bgColor: 'bg-pink-500', hoverColor: 'hover:bg-pink-600' },
-    ]
-
-    return (
-        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-            {items.map((item, i) => (
-                <button
-                    key={i}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl shadow text-white transition ${item.bgColor} ${item.hoverColor}`}
-                >
-                    {item.icon}
-                    <span className="text-xs mt-2 font-medium">{item.label}</span>
-                </button>
-            ))}
-
-            {/* SIMULASI */}
-            <button
-                onClick={onSimulateNew}
-                className="col-span-2 md:col-span-1 flex items-center gap-2 justify-center p-3 rounded-xl shadow bg-red-500 hover:bg-red-600 text-white transition"
-            >
-                <PlusCircle size={18} />
-                <span className="text-xs font-medium">Simulasi Transaksi</span>
-            </button>
-        </div>
-    )
-}
-
-
-const SummaryCard = ({ title, value, icon }: any) => (
-    <div className="bg-white rounded-xl shadow p-5 border-l-4 border-[#2DB2AE]">
-        <div className="flex items-center justify-between mb-2">
-            <h3 className="font-medium text-gray-600">{title}</h3>
-            {icon}
-        </div>
-        <p className="text-3xl font-bold">{value}</p>
+const StatCard = ({ title, value }: any) => (
+    <div className="bg-white rounded-xl p-5 shadow-md flex flex-col justify-center min-h-[100px]">
+        <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{title}</h3>
+        <p className="text-2xl font-black text-gray-800">{value}</p>
     </div>
 )
 
-
-const Panel = ({ title, children }: any) => (
-    <div className="bg-white rounded-xl shadow p-5">
-        <h3 className="font-semibold text-[#3FA3A2] mb-4">{title}</h3>
+const SectionWrapper = ({ title, children }: any) => (
+    <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-5">
+            <h3 className="text-sm font-extrabold text-gray-800 uppercase tracking-wider">{title}</h3>
+            <button className="text-[11px] text-teal-500 font-bold hover:underline">Lihat Semua</button>
+        </div>
         <div className="space-y-3">{children}</div>
     </div>
 )
 
+const StatusItem = ({ label, value, icon }: any) => (
+    <div className="flex justify-between items-center p-4 border rounded-xl border-gray-100 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-3">
+            <div className="p-2 bg-gray-50 rounded-lg">{icon}</div>
+            <span className="text-xs font-bold text-gray-700">{label}</span>
+        </div>
+        <span className="text-lg font-black text-teal-600">{value}</span>
+    </div>
+)
 
-const StatusItem = ({
-    label,
-    value,
-    valueClass = 'text-[#2DB2AE]',
-    statusKey
-}: {
-    label: string
-    value: number
-    valueClass?: string
-    statusKey: string
-}) => {
-    const icon = ORDER_STATUS_ICONS[statusKey] || <ClipboardList size={20} className="text-gray-500" />
-    return (
-        <div className="flex justify-between items-center p-3 border rounded-lg">
-            <div className="flex items-center gap-3">
-                {icon}
-                <p>{label}</p>
+const PaymentItem = ({ label, icon }: any) => (
+    <div className="flex justify-between items-center p-3 border rounded-xl border-gray-50 hover:border-teal-200 transition-all">
+        <div className="flex items-center gap-3">
+            <div className="bg-gray-100 p-2 rounded-lg">{icon}</div>
+            <span className="text-xs font-bold text-gray-700 uppercase">{label}</span>
+        </div>
+        <span className="text-[9px] bg-teal-50 text-teal-600 px-2 py-1 rounded-full font-bold uppercase">Aktif</span>
+    </div>
+)
+
+const ProductItem = ({ name, sub, isAlert }: any) => (
+    <div className="flex justify-between items-center p-3 border rounded-xl border-gray-50 group hover:shadow-sm transition-all">
+        <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-100">
+                <Image src="/api/placeholder/48/48" alt="prod" fill className="object-cover group-hover:scale-110 transition-transform" />
             </div>
-            <span className={`font-semibold ${valueClass}`}>{value}</span>
+            <div>
+                <p className="text-xs font-bold text-gray-800">{name}</p>
+                <p className="text-[10px] text-gray-400 font-medium">{sub}</p>
+            </div>
         </div>
-    )
-}
-
-
-const ProductList = ({ title, products }: {
-    title: string,
-    products: Array<{ name: string, timesOrdered: number, imagePath: string }>
-}) => (
-    <div className="bg-white rounded-xl shadow p-5">
-        <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-[#3FA3A2]">{title}</h3>
-            <Link href="#" className="text-[#52BFBE] text-sm font-medium hover:underline">
-                Lihat Semua →
-            </Link>
-        </div>
-
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-            {products.map((product, i) => (
-                <div key={i} className="flex items-center justify-between border rounded-lg p-3 hover:bg-[#E8F9F9] transition">
-                    <div className="flex items-center gap-3">
-
-                        <div className="w-[45px] h-[45px] bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 overflow-hidden relative flex-shrink-0">
-                            {product.imagePath ? (
-                                <Image
-                                    src={product.imagePath}
-                                    alt={product.name}
-                                    fill
-                                    style={{ objectFit: 'cover' }}
-                                    sizes="45px"
-                                />
-                            ) : (
-                                <span className="text-xs text-gray-500">No Img</span>
-                            )}
-                        </div>
-
-                        <div>
-                            <p className="font-medium text-gray-800 text-sm">{product.name}</p>
-                            <p className="text-xs text-gray-500">Dipesan {product.timesOrdered} kali</p>
-                        </div>
-                    </div>
-
-                    <span className="text-sm font-semibold text-[#52BFBE]">Tersedia</span>
-                </div>
-            ))}
-        </div>
+        <span className={`text-[9px] font-bold px-2 py-1 rounded-md uppercase ${isAlert ? 'bg-red-50 text-red-500' : 'bg-teal-50 text-teal-600'}`}>
+            {isAlert ? 'Stok Menipis' : 'Tersedia'}
+        </span>
     </div>
 )
-
-
-const PromoCard = ({ discount, imagePath }: {
-    discount: number
-    imagePath?: string
-}) => (
-    <div className="relative w-full h-28 rounded-xl overflow-hidden shadow">
-        
-        <div className="absolute inset-0 z-0">
-            {imagePath ? (
-                <Image
-                    src={imagePath}
-                    alt={`Diskon ${discount}%`}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                />
-            ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 italic text-xs">
-                    No Promo Image
-                </div>
-            )}
-        </div>
-
-        <div className="absolute inset-0 bg-gradient-to-r from-[#dff8f7]/80 to-[#f6fffe]/80 z-10" />
-        
-        <div className="absolute top-3 left-3 px-3 py-1 rounded-md z-20">
-            <p className="text-black text-lg font-bold leading-tight">
-                Diskon <br /> hingga {discount}%
-            </p>
-            <p className="text-xs text-gray-700 mt-1">Spesial Hari Ini!</p>
-        </div>
-    </div>
-)
-
-
-/* =============================
-    HELPER — STATUS LABEL
-============================= */
-function statusLabel(s: string) {
-    if (s === 'kosong') return 'Kosong'
-    if (s === 'terisi') return 'Terisi'
-    if (s === 'menunggu_bayar') return 'Menunggu Bayar'
-    return s
-}

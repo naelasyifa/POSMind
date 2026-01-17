@@ -3,6 +3,37 @@ import { getPayloadClient } from '../../../../payloadClient'
 
 export const runtime = 'nodejs'
 
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const payload = await getPayloadClient()
+
+    if (!params.id) {
+      return NextResponse.json({ success: false, message: 'ID diperlukan' }, { status: 400 })
+    }
+
+    const reservation = await payload.findByID({
+      collection: 'reservations',
+      id: params.id,
+      depth: 1, // Agar data relasi meja ikut terbawa
+    })
+
+    if (!reservation) {
+      return NextResponse.json({ success: false, message: 'Data tidak ditemukan' }, { status: 404 })
+    }
+
+    return NextResponse.json(reservation)
+  } catch (error: any) {
+    console.error('GET Error:', error)
+    return NextResponse.json(
+      { success: false, message: 'Gagal mengambil data' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }

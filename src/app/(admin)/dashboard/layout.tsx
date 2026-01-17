@@ -7,13 +7,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const check = async () => {
+      const res = await fetch('/api/users/me', {
+        credentials: 'include',
+      })
 
-    // Jika tidak ada token -> redirect ke halaman login
-    if (!token) {
-      router.replace('/') // Ganti sesuai nama halaman login kamu
+      if (!res.ok) router.replace('/')
     }
-  }, [router])
+
+    check()
+  }, [])
 
   return <div>{children}</div>
 }
