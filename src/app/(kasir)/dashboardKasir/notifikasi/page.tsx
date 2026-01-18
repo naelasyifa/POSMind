@@ -133,32 +133,35 @@ export default function NotifikasiKasir() {
         />
         <div className="p-6">
           <div className="bg-white rounded-xl shadow p-6">
-            {/* Header Notifikasi */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-lg font-semibold text-black">Notifikasi</h2>
-                <p className="text-sm text-gray-700">
-                  Terdapat {data.filter((n) => !n.isRead).length} pesan belum dibaca
+                <h2 className="text-lg font-semibold text-gray-900">Notifikasi Kasir</h2>
+                <p className="text-sm text-gray-500">
+                  Terdapat{' '}
+                  <span className="font-bold text-[#52BFBE]">
+                    {data.filter((n) => !n.isRead).length}
+                  </span>{' '}
+                  pesan belum dibaca
                 </p>
               </div>
               <button
                 onClick={handleMarkAllRead}
-                className="bg-gray-700 hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-md shadow-sm transition"
+                className="text-[#52BFBE] hover:underline text-sm font-medium transition"
               >
-                Tandai Dibaca Semua
+                Tandai Semua Dibaca
               </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-4 mb-6">
+            {/* TAB FILTER - Style Segmented Control agar tidak menyatu dengan background */}
+            <div className="flex flex-wrap gap-2 mb-8 bg-gray-100 p-1.5 rounded-lg w-fit">
               {['Semua', 'Belum Dibaca', 'Transaksi', 'Produk', 'Promo', 'Reservasi'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t as any)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                  className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
                     tab === t
-                      ? 'bg-white text-[#52BFBE] shadow'
-                      : 'bg-[#4AB1B0] text-white hover:bg-[#3FA3A2]'
+                      ? 'bg-white text-[#52BFBE] shadow-sm' // Aktif: Putih Timbul
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200' // Tidak Aktif: Abu-abu
                   }`}
                 >
                   {t}
@@ -166,45 +169,70 @@ export default function NotifikasiKasir() {
               ))}
             </div>
 
-            {/* Daftar Notifikasi */}
-            <div className="space-y-3">
+            {/* DAFTAR NOTIFIKASI */}
+            <div className="space-y-2">
               {filteredData.map((n) => (
                 <div
                   key={n.id}
-                  onClick={() => handleMarkOneRead(n.id)} // ✅ langsung tandai dibaca
-                  className={`bg-white rounded-lg shadow-sm flex justify-between items-center p-4 cursor-pointer ${
-                    n.isRead ? '' : 'bg-[#E0F7F6]'
+                  onClick={() => handleMarkOneRead(n.id)}
+                  className={`relative rounded-xl border transition-all duration-200 flex justify-between items-center p-4 cursor-pointer ${
+                    n.isRead
+                      ? 'bg-white border-gray-100'
+                      : 'bg-blue-50 border-blue-100 hover:bg-blue-100'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">{getIcon(n.icon)}</div>
+                  {/* Indikator Garis Samping untuk Pesan Baru */}
+                  {!n.isRead && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#52BFBE] rounded-l-xl"></div>
+                  )}
+
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`p-2 rounded-full ${n.isRead ? 'bg-gray-50' : 'bg-white shadow-sm'}`}
+                    >
+                      {getIcon(n.icon)}
+                    </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-800">{n.title}</h3>
-                      <p className="text-sm text-gray-600">{n.message}</p>
+                      <h3
+                        className={`text-sm ${n.isRead ? 'font-medium text-gray-600' : 'font-bold text-gray-900'}`}
+                      >
+                        {n.title}
+                      </h3>
+                      <p className="text-sm text-gray-500">{n.message}</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-gray-500">
-                      {new Date(n.createdAt).toLocaleDateString('id-ID')}
+                    <span className="text-xs text-gray-400 font-medium">
+                      {new Date(n.createdAt).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
                     </span>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setSelectedNotif(n)
                         setIsModalOpen(true)
                       }}
-                      className="flex items-center gap-1 bg-white border border-red-400 text-red-500 hover:bg-red-50 text-xs px-3 py-1 rounded-md shadow-sm"
+                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
                     >
-                      <Trash2 size={14} /> Hapus
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
               ))}
+
+              {filteredData.length === 0 && (
+                <div className="text-center py-20 text-gray-400">
+                  Tidak ada notifikasi dalam kategori ini.
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal Konfirmasi Hapus */}
       <HapusNotifKasir
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -236,14 +236,19 @@ export default function EditPromo({ id, onClose, onUpdate, promoData }: EditProm
     }
 
     // Format tanggal & jam
-    const formatDate = (dateStr: string) => {
+    const formatDateToISO = (dateStr: string) => {
+      if (!dateStr) return null
       const d = new Date(dateStr)
       return isNaN(d.getTime()) ? null : d.toISOString()
     }
-    updatedData.mulai = formatDate(updatedData.mulai)
-    updatedData.akhir = formatDate(updatedData.akhir)
-    updatedData.startTime = updatedData.startTime ? updatedData.startTime + ':00' : null
-    updatedData.endTime = updatedData.endTime ? updatedData.endTime + ':00' : null
+
+    updatedData.mulai = formatDateToISO(form.mulai)
+    updatedData.akhir = formatDateToISO(form.akhir)
+
+    // Pastikan jam tidak ditambah :00 terus menerus
+    // Kita ambil 5 karakter pertama (HH:mm)
+    updatedData.startTime = form.startTime ? form.startTime.substring(0, 5) : null
+    updatedData.endTime = form.endTime ? form.endTime.substring(0, 5) : null
 
     // Default limitCustomer
     updatedData.limitCustomer = updatedData.limitCustomer || 'unlimited'

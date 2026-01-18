@@ -24,6 +24,7 @@ import Categories from './collections/Categories'
 import StoreSettings from './collections/storeSettings'
 import Tables from './collections/Tables'
 import PaymentMethods from './collections/PaymentMethods'
+import { getPaymentHeaders } from './utils/payment-api'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -96,6 +97,57 @@ export default buildConfig({
     },
   },
 
+  // Tambahkan fungsi onInit di sini (sejajar dengan collections)
+  onInit: (payload) => {
+    // Hapus async di sini
+    payload.logger.info('Payload initialized...')
+
+    // Jalankan proses async tanpa 'await' agar tidak menahan startup
+    const syncPayments = async () => {
+      try {
+        const apiURL = `${process.env.PAYMENT_BASE_URL}/transfer/api/v1/method`
+        const headers = await getPaymentHeaders('GET')
+
+        const response = await fetch(apiURL, {
+          method: 'GET',
+          headers: headers as any,
+          next: { revalidate: 0 },
+        })
+
+        const result = await response.json()
+
+        if (result.status && Array.isArray(result.data)) {
+          for (const item of result.data) {
+            const existing = await payload.find({
+              collection: 'payment-methods',
+              where: { externalId: { equals: item.id } },
+            })
+
+            if (existing.docs.length === 0) {
+              await payload.create({
+                collection: 'payment-methods',
+                data: {
+                  name: item.name,
+                  externalId: item.id,
+                  code: item.code,
+                  isActive: true,
+                  category: item.category,
+                },
+              })
+              payload.logger.info(`✅ Synced new payment method: ${item.name}`)
+            }
+          }
+        }
+        payload.logger.info('✅ Sinkronisasi selesai')
+      } catch (error: any) {
+        // Ganti ke 'error: any' di sini
+        payload.logger.error(`❌ Gagal sinkronisasi payment: ${error.message}`)
+      }
+    }
+
+    syncPayments() // Panggil tanpa await
+  },
+
   collections: [
     Tenants,
     Users,
@@ -138,7 +190,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
-    push: false,
+    push: true,
   }),
 
   sharp,
@@ -165,6 +217,5 @@ export default buildConfig({
         },
       },
     }),
-    
   ],
 })

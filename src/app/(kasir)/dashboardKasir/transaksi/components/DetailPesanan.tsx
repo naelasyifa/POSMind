@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Pencil, SendToBack, Trash2 } from 'lucide-react'
 import PelangganModal from './PelangganModal'
 import { cetakTransaksiPDF, Transaksi, StoreSettings } from '../cetakTransaksi'
+import PaymentActionModal from './PaymentActionModal'
+import { generateKasirStrukPDF } from '@/utils/kasirStrukPDF'
 
 type PromoItem = {
   id?: string
@@ -29,7 +31,42 @@ type PaymentMethod = {
   id: string
   name: string
   type: 'cash' | 'qris' | 'bank_transfer'
+  category?: string
+  code?: string
   bankCode?: string
+}
+
+function isPromoTimeValid(promo: any) {
+  const now = new Date()
+
+  // 1. Validasi Tanggal Expired
+  if (promo.akhir) {
+    const tAkhir = new Date(promo.akhir)
+    // Set ke jam 23:59:59 agar promo tetap berlaku sampai detik terakhir hari itu
+    tAkhir.setHours(23, 59, 59, 999)
+    if (now > tAkhir) return false
+  }
+
+  // 2. Validasi Jam (Jika admin menyetel jam mulai & akhir)
+  if (promo.startTime && promo.endTime) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    const [sh, sm] = promo.startTime.split(':').map(Number)
+    const [eh, em] = promo.endTime.split(':').map(Number)
+
+    const startMins = sh * 60 + sm
+    const endMins = eh * 60 + em
+
+    if (currentMinutes < startMins || currentMinutes > endMins) return false
+  }
+
+  // 3. Validasi Hari (Jika admin menyetel hari-hari tertentu)
+  if (promo.availableDays && promo.availableDays.length > 0) {
+    const today = now.toLocaleString('en-US', { weekday: 'long' }).toLowerCase()
+    if (!promo.availableDays.includes(today)) return false
+  }
+
+  return true
 }
 
 // Fungsi untuk menerapkan promo Beli X Gratis Y pada item
@@ -98,6 +135,11 @@ export default function DetailPesanan({
   const [change, setChange] = useState<number>(0)
   const [isPaid, setIsPaid] = useState(false)
   const [noPesanan, setNoPesanan] = useState<string>('')
+  // NEW STATE UNTUK POPUP BARU
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false)
+  const [actionType, setActionType] = useState('') // 'qris' | 'va'
+  const [actionData, setActionData] = useState('')
+  const [isSimulationSuccess, setIsSimulationSuccess] = useState(false)
 
   // === State pelanggan & modal ===
   const [customerNameState, setCustomerNameState] = useState(customerName)
@@ -122,7 +164,13 @@ export default function DetailPesanan({
 
   // pastikan array yang kita gunakan berisi nominal (Rupiah)
   const promoNominalList: PromoItem[] = (promoBreakdown || [])
-    .filter((p) => p.type !== 'bxgy') // bxgy akan di-handle langsung di keranjang
+    .filter(
+      (p) =>
+        p.type !== 'bxgy' &&
+        // Ubah bagian ini agar tidak kaku jika status undefined
+        ((p as any).status === 'Aktif' || (p as any).status === undefined) &&
+        isPromoTimeValid(p),
+    )
     .map((p) => ({ ...p, value: toNominal(p, subtotal) }))
 
   // =================== FETCH NOMOR PESANAN ===================
@@ -146,8 +194,18 @@ export default function DetailPesanan({
     const newCart: typeof keranjang = []
 
     keranjang.forEach((it) => {
-      const promo = promoBreakdown.find(
-        (p) => p.type === 'bxgy' && it.nama.toLowerCase().includes(p.label.trim().toLowerCase()),
+      const promo = promoBreakdown.find((p) =>
+        // p.type === 'bxgy' && it.nama.toLowerCase().includes(p.label.trim().toLowerCase()),
+        {
+          const isMatch = it.nama.toLowerCase().includes(p.label.trim().toLowerCase())
+          const isBxGy = p.type === 'bxgy'
+
+          // TAMBAHKAN PENGECEKAN STATUS DI SINI
+          // Promo harus Match Nama, Tipe BXGY, Status Aktif, DAN Waktu Valid
+          const isStatusActive = (p as any).status === 'Aktif'
+
+          return isMatch && isBxGy && isStatusActive && isPromoTimeValid(p)
+        },
       )
 
       if (promo && promo.X && promo.Y) {
@@ -170,30 +228,57 @@ export default function DetailPesanan({
   }, [keranjang, promoBreakdown])
 
   // =================== FETCH SETTING TOKO ===================
-  const [storeSettings, setStoreSettings] = useState<{
-    serviceCharge: boolean
-    serviceChargePercentage: number
-    pajak: boolean
-    pajakPercentage: number
-  } | null>(null)
+  // const [storeSettings, setStoreSettings] = useState<{
+  //   serviceCharge: boolean
+  //   serviceChargePercentage: number
+  //   pajak: boolean
+  //   pajakPercentage: number
+  // } | null>(null)
+  const [storeSettings, setStoreSettings] = useState<any>(null)
 
   useEffect(() => {
-    const fetchStoreSettings = async () => {
+    const fetchAllSettings = async () => {
       try {
-        const res = await fetch('/api/frontend/store-settings')
-        const data = await res.json()
+        // Ambil 3 data dari 3 endpoint berbeda secara bersamaan
+        const [resPajak, resStruk, resDapur] = await Promise.all([
+          fetch('/api/frontend/store-settings'),
+          fetch('/api/frontend/store-settings/struk'),
+          fetch('/api/frontend/store-settings/cetak'),
+        ])
+
+        const pajakData = await resPajak.json()
+        const strukData = await resStruk.json()
+        const dapurData = await resDapur.json()
+
+        // Gabungkan semua ke dalam satu state storeSettings
         setStoreSettings({
-          serviceCharge: data.serviceCharge ?? true,
-          serviceChargePercentage: data.serviceChargePercentage ?? 10,
-          pajak: data.pajak ?? true,
-          pajakPercentage: data.pajakPercentage ?? 10,
+          // Data Pajak & Service (dari endpoint utama)
+          serviceCharge: pajakData.serviceCharge ?? true,
+          serviceChargePercentage: pajakData.serviceChargePercentage ?? 10,
+          pajak: pajakData.pajak ?? true,
+          pajakPercentage: pajakData.pajakPercentage ?? 10,
+
+          // Data Struk (dari endpoint /struk)
+          struk: {
+            header: strukData.header,
+            footer: strukData.footer,
+            paperSize: strukData.paperSize,
+            logo: strukData.logo,
+            options: strukData.options,
+          },
+
+          // Data Dapur (dari endpoint /cetak)
+          dapur: {
+            paperSize: dapurData.paperSize,
+            options: dapurData.options,
+          },
         })
       } catch (err) {
-        console.error('Gagal ambil store settings', err)
+        console.error('Gagal menggabungkan data settings:', err)
       }
     }
 
-    fetchStoreSettings()
+    fetchAllSettings()
   }, [])
 
   // =================== WAKTU ===================
@@ -257,18 +342,78 @@ export default function DetailPesanan({
   }, [selectedMethod, totalAmount])
 
   // =================== HANDLER PEMBAYARAN ===================
-  const handleCheckout = () => setIsPaying(true)
+  const [modalStep, setModalStep] = useState('select') // 'select' | 'input_cash' | 'instruction' | 'success'
 
+  const handleCheckout = () => {
+    setModalStep('select') // Reset ke pilih metode
+    setIsActionModalOpen(true)
+  }
+
+  // 1. Definisikan dulu simulasinya
+  const startPaymentSimulation = () => {
+    setIsSimulationSuccess(false)
+    setTimeout(() => {
+      setIsSimulationSuccess(true)
+      setIsPaid(true)
+      setModalStep('success') // Agar modal otomatis berubah jadi centang hijau
+      setFrozenTime(new Date().toLocaleTimeString('id-ID'))
+    }, 5000) // 5 detik
+  }
+
+  // 2. Baru definisikan handler confirm yang memanggil fungsi di atas
   const handleConfirmPayment = async () => {
     if (!selectedMethod) return alert('Pilih metode pembayaran')
 
-    // validasi cash
-    if (selectedMethod.type === 'cash' && amountPaid < totalAmount) {
-      return alert('Jumlah bayar kurang')
+    // --- LOGIKA TUNAI (CASH) ---
+    if (selectedMethod.code === 'cash' || selectedMethod.type === 'cash') {
+      if (modalStep === 'select') {
+        setModalStep('input_cash') // Pindah ke layar input uang
+        return
+      }
+
+      if (modalStep === 'input_cash') {
+        if (amountPaid < totalAmount) return alert('Uang kurang!')
+
+        try {
+          const trxRes = await fetch('/api/frontend/transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              noPesanan,
+              tenant: 1,
+              namaKasir: 'Kasir 1',
+              namaPelanggan: customerNameState,
+              paymentMethodId: selectedMethod.id,
+              items: displayCart.map(({ id, ...rest }) => ({ productId: id, ...rest })),
+              subtotal: sub,
+              pajak: tax,
+              total: totalAmount,
+              bayar: amountPaid,
+              kembalian: amountPaid - totalAmount,
+              status: 'selesai',
+              waktu: new Date().toISOString(),
+            }),
+          })
+
+          if (trxRes.ok) {
+            setIsPaid(true)
+            setModalStep('success') // Langsung ke layar sukses
+            setFrozenTime(currentTime)
+          }
+        } catch (err) {
+          alert('Gagal simpan transaksi cash')
+        }
+      }
+      return
     }
 
+    // --- LOGIKA DIGITAL (QRIS / E-WALLET / VA) ---
     try {
-      // =================== CREATE TRANSACTION ===================
+      // 1. Identifikasi tipe metode agar E-Wallet juga masuk ke Barcode
+      const isEWallet = selectedMethod.category === 'E-Wallet'
+      const isQRIS = selectedMethod.code === '16' || selectedMethod.type === 'qris'
+
+      // 2. Buat transaksi status "proses"
       const trxRes = await fetch('/api/frontend/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -278,54 +423,58 @@ export default function DetailPesanan({
           namaKasir: 'Kasir 1',
           namaPelanggan: customerNameState,
           paymentMethodId: selectedMethod.id,
-          items: displayCart.map(({ id, ...rest }) => ({
-            productId: id,
-            ...rest,
-          })),
+          items: displayCart.map(({ id, ...rest }) => ({ productId: id, ...rest })),
           subtotal: sub,
           pajak: tax,
-          serviceCharge: service,
-          discount,
           total: totalAmount,
-
-          bayar: selectedMethod.type === 'cash' ? amountPaid : 0,
-          kembalian: selectedMethod.type === 'cash' ? amountPaid - totalAmount : 0,
-          status: selectedMethod.type === 'cash' ? 'selesai' : 'proses',
+          status: 'proses',
           waktu: new Date().toISOString(),
         }),
       })
 
-      const trx = await trxRes.json()
-      if (!trxRes.ok) return alert(trx.error)
+      if (!trxRes.ok) return alert('Gagal membuat transaksi')
 
-      // =================== CASH ===================
-      if (selectedMethod.type === 'cash') {
-        setIsPaid(true)
-        setFrozenTime(currentTime)
-        alert('Pembayaran cash berhasil')
-        return
-      }
-
-      // =================== NON CASH ===================
-      const endpoint =
-        selectedMethod.type === 'qris' ? '/api/payments/qris' : '/api/payments/transfer'
-
-      const payRes = await fetch(endpoint, {
+      // 3. Panggil API Mock Payment
+      const payRes = await fetch('/api/mock-payment/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId: noPesanan,
+          // Jika E-Wallet, kita paksa kirim kode '16' agar mock memberikan string QRIS
+          payment_method: isEWallet ? '16' : selectedMethod.code,
           amount: totalAmount,
-          paymentMethodId: selectedMethod.id,
         }),
       })
 
-      const pay = await payRes.json()
-      if (!payRes.ok) return alert(pay.error)
+      const payResult = await payRes.json()
 
-      alert('Silakan selesaikan pembayaran')
+      if (payResult.status) {
+        // 4. SET LOGIKA POP-UP DI SINI
+        // Jika metodenya adalah QRIS ATAU E-Wallet, set tipe ke 'qris' (Tampil Barcode)
+        // Selain itu (seperti Bank Transfer), set tipe ke 'va' (Tampil Nomor)
+        const modalType = isQRIS || isEWallet ? 'qris' : 'va'
+
+        setActionType(modalType)
+
+        // Data yang diambil juga menyesuaikan tipe modal
+        setActionData(modalType === 'qris' ? payResult.data.qr_string : payResult.data.va_number)
+
+        setModalStep('instruction')
+
+        // 5. Simulasi otomatis lunas (10 detik untuk testing)
+        const timer = setTimeout(async () => {
+          try {
+            await fetch(`/api/frontend/transactions/${noPesanan}/complete`, { method: 'PATCH' })
+            setIsPaid(true)
+            setModalStep('success')
+          } catch (err) {
+            console.error('Gagal update otomatis', err)
+          }
+        }, 10000)
+
+        return () => clearTimeout(timer)
+      }
     } catch (err: any) {
-      alert('Terjadi kesalahan: ' + err.message)
+      alert('Sistem Error: ' + err.message)
     }
   }
 
@@ -406,30 +555,37 @@ export default function DetailPesanan({
   const handleDownloadPDF = async () => {
     if (!storeSettings) return alert('Store settings belum siap')
 
-    const transaksiObj: Transaksi = {
-      meja: noPesanan,
-      modePenjualan: 'Dine In',
-      pax: 1,
-      kasir: 'Kasir 1',
-      catatan: '',
-      waiter: 'Waiter 1',
-      pajak: tax,
-      service: service,
-      pembulatan: 0,
-      items: displayCart.map((i) => ({
-        name: i.nama,
-        qty: i.qty,
-        price: i.harga,
-        total: i.qty * i.harga,
-      })),
+    try {
+      // 2. Susun Data Transaksi Asli dari State
+      const dataTransaksiAsli = {
+        noPesanan: noPesanan,
+        waktu: currentTime,
+        meja: customerNameState || '-',
+        modePenjualan: 'Dine In',
+        kasir: 'Kasir 1',
+        pajak: tax,
+        service: service,
+        total: totalAmount,
+        items: displayCart.map((item) => ({
+          name: item.nama,
+          qty: item.qty,
+          price: item.harga,
+          note: item.note || '',
+        })),
+      }
+
+      // 3. Jalankan Generator
+      const pdf = await generateKasirStrukPDF({
+        storeSettings: storeSettings, // dari state useEffect fetch settings
+        transaksiAsli: dataTransaksiAsli,
+      })
+
+      // 4. Simpan/Download
+      pdf.save(`Struk_${noPesanan}.pdf`)
+    } catch (err) {
+      console.error('Gagal cetak PDF:', err)
+      alert('Terjadi kesalahan saat membuat struk.')
     }
-
-    const pdf = await cetakTransaksiPDF({
-      transaksi: transaksiObj,
-      storeSettings: storeSettings as StoreSettings,
-    })
-
-    pdf.save(`Transaksi_${noPesanan}.pdf`)
   }
 
   return (
@@ -442,6 +598,22 @@ export default function DetailPesanan({
           onSave={handleSaveCustomer}
         />
       )}
+
+      <PaymentActionModal
+        isOpen={isActionModalOpen}
+        onClose={() => setIsActionModalOpen(false)}
+        step={modalStep}
+        paymentMethods={paymentMethods}
+        selectedMethod={selectedMethod}
+        onSelectMethod={setSelectedMethod}
+        totalAmount={totalAmount}
+        amountPaid={amountPaid}
+        setAmountPaid={setAmountPaid}
+        change={change}
+        onConfirm={handleConfirmPayment}
+        data={actionData}
+        type={actionType}
+      />
 
       {/* =================== SCROLL AREA =================== */}
       <div className="flex-1 overflow-y-auto pr-1">

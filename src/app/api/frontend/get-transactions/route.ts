@@ -9,6 +9,7 @@ export async function GET() {
     const data = await payload.find({
       collection: 'transactions',
       sort: '-createdAt',
+      depth: 2,
     })
 
     return NextResponse.json(data.docs)

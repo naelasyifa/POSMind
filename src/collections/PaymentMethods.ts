@@ -5,51 +5,28 @@ const PaymentMethods: CollectionConfig = {
   slug: 'payment-methods',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'type', 'code', 'isActive'],
+    defaultColumns: ['name', 'category', 'code', 'isActive'],
+    // Sembunyikan tombol 'Add New' karena data datang dari API
+    hideAPIURL: false,
   },
   access: {
-    read: () => true, // Sesuaikan dengan kebutuhan akses project kamu
+    read: () => true,
+    create: () => false, // Admin tidak boleh buat manual
+    delete: () => false, // Admin tidak boleh hapus
+    update: () => true, // Admin hanya boleh update 'isActive'
   },
   fields: [
-    {
-      name: 'name',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'type',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Tunai', value: 'cash' },
-        { label: 'Virtual Account', value: 'bank_transfer' },
-        { label: 'QRIS', value: 'qris' },
-        { label: 'E-Wallet', value: 'ewallet' },
-      ],
-    },
+    { name: 'name', type: 'text', admin: { readOnly: true } },
+    { name: 'category', type: 'text', admin: { readOnly: true } },
+    { name: 'code', type: 'text', admin: { readOnly: true } },
     {
       name: 'externalId',
       type: 'number',
-      admin: {
-        description: 'ID asli dari API Sandbox (untuk sinkronisasi)',
-        position: 'sidebar',
-      },
+      unique: true, // Sangat penting agar tidak duplikat
+      admin: { position: 'sidebar' },
     },
-    {
-      name: 'code',
-      type: 'text',
-      admin: {
-        description: 'Kode bank/provider (contoh: 07 untuk BNI, 16 untuk QRIS)',
-      },
-    },
-    {
-      name: 'isActive',
-      type: 'checkbox',
-      defaultValue: true,
-      admin: {
-        description: 'Aktifkan untuk menampilkan di kasir',
-      },
-    },
+    { name: 'isActive', type: 'checkbox', defaultValue: true },
+    { name: 'fee', type: 'number', admin: { readOnly: true } },
   ],
 }
 

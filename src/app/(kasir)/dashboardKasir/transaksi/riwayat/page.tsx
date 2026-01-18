@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, CheckCircle2 } from 'lucide-react'
 import SidebarKasir from '@/components/SidebarKasir'
 import HeaderKasir from '@/components/HeaderKasir'
+import { QRCodeSVG } from 'qrcode.react'
 
 interface ItemPesanan {
   nama: string
@@ -49,6 +50,13 @@ export default function RiwayatPage() {
   const [change, setChange] = useState<number>(0)
   const [isPaid, setIsPaid] = useState(false)
 
+  // Tambahkan di dalam fungsi RiwayatPage
+  const [paymentStep, setPaymentStep] = useState<'detail' | 'input' | 'instruction' | 'success'>(
+    'detail',
+  )
+  const [qrData, setQrData] = useState('')
+  const [payType, setPayType] = useState<'qris' | 'va'>('qris')
+
   const [isClosing, setIsClosing] = useState(false)
   const closeDetail = () => {
     setIsClosing(true)
@@ -70,7 +78,7 @@ export default function RiwayatPage() {
       p.noPesanan.toLowerCase().includes(keyword) ||
       p.nama.toLowerCase().includes(keyword) ||
       p.status.toLowerCase().includes(keyword) ||
-      p.metode.toLowerCase().includes(keyword)
+      (p.metode || '').toLowerCase().includes(keyword)
     )
   })
 
@@ -117,7 +125,7 @@ export default function RiwayatPage() {
         discount: p.discount || 0,
         total: p.total || 0,
         status: p.status || 'proses',
-        metode: p.metode || 'Cash',
+        metode: p.caraBayar === 'cash' ? 'Tunai (Cash)' : p.paymentMethod?.name || 'Digital',
         bayar: p.bayar,
         kembalian: p.kembalian,
       }))
@@ -128,45 +136,32 @@ export default function RiwayatPage() {
     load()
   }, [])
 
-  // konfirmasi pembayaran: update pesananList -> status selesai, simpan bayar & kembalian
-  const handleConfirmPayment = () => {
-    if (!selectedOrder) return
-    if (!paymentMethod) {
-      alert('Pilih metode pembayaran!')
-      return
+  const handleConfirmPayment = async () => {
+    if (!selectedOrder || !paymentMethod) return
+
+    try {
+      const res = await fetch(`/api/frontend/transactions/${selectedOrder.noPesanan}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bayar: paymentMethod === 'cash' ? amountPaid : selectedOrder.total,
+          kembalian: paymentMethod === 'cash' ? change : 0,
+          paymentMethodId: paymentMethod,
+          status: 'selesai',
+        }),
+      })
+
+      if (res.ok) {
+        setPaymentStep('success')
+        // Refresh list
+        const updatedList = pesananList.map((p) =>
+          p.noPesanan === selectedOrder.noPesanan ? { ...p, status: 'selesai' } : p,
+        )
+        setPesananList(updatedList as any)
+      }
+    } catch (err) {
+      alert('Gagal memproses pembayaran')
     }
-    if (paymentMethod === 'cash' && amountPaid < selectedOrder.total) {
-      alert('Jumlah bayar kurang!')
-      return
-    }
-
-    // update pesananList
-    setPesananList((prev) =>
-      prev.map((p) =>
-        p.id === selectedOrder.id
-          ? {
-              ...p,
-              status: 'selesai',
-              bayar: paymentMethod === 'cash' ? amountPaid : p.total,
-              kembalian: paymentMethod === 'cash' ? change : 0,
-              metode: paymentMethod === 'cash' ? 'Cash' : 'E-Wallet',
-            }
-          : p,
-      ),
-    )
-
-    setIsPaid(true)
-
-    // beri sedikit delay supaya user lihat konfirmasi, lalu tutup modals
-    setTimeout(() => {
-      setIsPaying(false)
-      setDetailOpen(false)
-      setSelectedOrder(null)
-      setPaymentMethod('')
-      setAmountPaid(0)
-      setChange(0)
-      setIsPaid(false)
-    }, 800)
   }
 
   return (
@@ -415,87 +410,82 @@ export default function RiwayatPage() {
           />
 
           {/* payment box */}
-          <div className="fixed z-70 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-5 bg-white rounded-xl shadow-xl animate-zoomIn">
-            <h3 className="text-lg font-semibold mb-2">Pembayaran — {selectedOrder.noPesanan}</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              {selectedOrder.nama} • {selectedOrder.waktu}
-            </p>
-
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span>Total Tagihan</span>
-                <span className="font-bold">Rp{selectedOrder.total.toLocaleString()}</span>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPaymentMethod('cash')}
-                  className={`flex-1 py-2 rounded border ${
-                    paymentMethod === 'cash' ? 'bg-[#52bfbe] text-white' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  Cash
-                </button>
-                <button
-                  onClick={() => setPaymentMethod('qris')}
-                  className={`flex-1 py-2 rounded border ${
-                    paymentMethod === 'qris' ? 'bg-[#52bfbe] text-white' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  QRIS
-                </button>
-              </div>
-
-              {paymentMethod === 'cash' && (
-                <div>
-                  <label className="text-sm text-gray-600">Jumlah Bayar (Rp)</label>
-                  <input
-                    type="number"
-                    value={amountPaid}
-                    onChange={(e) => setAmountPaid(Number(e.target.value))}
-                    className="w-full border rounded p-2 mt-1"
-                    placeholder="Masukkan jumlah bayar"
-                  />
+          {/* Ganti bagian Payment Box di RiwayatPage */}
+          <div className="fixed z-70 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 bg-white rounded-2xl shadow-2xl animate-zoomIn">
+            {paymentStep === 'input' && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold">Selesaikan Pembayaran</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`flex-1 py-3 rounded-xl border-2 transition-all ${paymentMethod === 'cash' ? 'border-[#52bfbe] bg-cyan-50' : ''}`}
+                  >
+                    Cash
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPaymentMethod('qris')
+                      // Di sini idealnya panggil API lagi untuk generate QR baru jika perlu
+                      setQrData('MOCK_QR_DATA_DARI_DB')
+                      setPaymentStep('instruction')
+                    }}
+                    className={`flex-1 py-3 rounded-xl border-2 transition-all ${paymentMethod === 'qris' ? 'border-[#52bfbe] bg-cyan-50' : ''}`}
+                  >
+                    Digital
+                  </button>
                 </div>
-              )}
 
-              <div className="flex justify-between text-sm">
-                <span>Jumlah yang dibayar</span>
-                <span>
-                  {paymentMethod === 'cash'
-                    ? `Rp${amountPaid.toLocaleString()}`
-                    : `Rp${selectedOrder.total.toLocaleString()}`}
-                </span>
-              </div>
-
-              <div className="flex justify-between text-sm">
-                <span>Kembali</span>
-                <span className="font-medium">Rp{change.toLocaleString()}</span>
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => {
-                    // cancel payment modal
-                    setIsPaying(false)
-                    setPaymentMethod('')
-                    setAmountPaid(0)
-                    setChange(0)
-                    setIsPaid(false)
-                  }}
-                  className="flex-1 py-2 rounded border hover:bg-gray-50"
-                >
-                  Batal
-                </button>
+                {paymentMethod === 'cash' && (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    onChange={(e) => setAmountPaid(Number(e.target.value.replace(/\D/g, '')))}
+                    className="w-full text-2xl font-bold text-center border-b-2 border-[#52bfbe] py-2 outline-none"
+                    placeholder="Jumlah Cash"
+                  />
+                )}
 
                 <button
                   onClick={handleConfirmPayment}
-                  className="flex-1 py-2 rounded bg-[#52bfbe] text-white hover:bg-[#44a9a9]"
+                  className="w-full py-4 bg-[#52bfbe] text-white rounded-xl font-bold"
                 >
-                  Bayar Sekarang
+                  Konfirmasi Lunas
                 </button>
               </div>
-            </div>
+            )}
+
+            {paymentStep === 'instruction' && (
+              <div className="text-center space-y-4">
+                <h3 className="font-bold">Scan QRIS</h3>
+                <div className="flex justify-center p-4 border-2 border-[#52bfbe] rounded-xl">
+                  <QRCodeSVG value={qrData} size={200} />
+                </div>
+                <p className="text-orange-500 animate-pulse font-medium">
+                  Menunggu Verifikasi (Otomatis Lunas)...
+                </p>
+                <button onClick={() => setPaymentStep('input')} className="text-sm text-gray-500">
+                  Kembali
+                </button>
+              </div>
+            )}
+
+            {paymentStep === 'success' && (
+              <div className="text-center py-6 space-y-4">
+                <CheckCircle2 size={60} className="text-green-500 mx-auto" />
+                <h3 className="text-2xl font-bold">Lunas!</h3>
+                <button
+                  onClick={() => {
+                    // Panggil fungsi PDF Generator Anda di sini
+                    // cetakTransaksiPDF({...})
+                    setIsPaying(false)
+                    setDetailOpen(false)
+                  }}
+                  className="w-full py-4 bg-[#52bfbe] text-white rounded-xl font-bold"
+                >
+                  Cetak Struk (PDF)
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}

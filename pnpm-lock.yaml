@@ -18,8 +18,8 @@ importers:
         specifier: 3.62.1
         version: 3.62.1(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
       '@payloadcms/email-nodemailer':
-        specifier: ^3.65.0
-        version: 3.65.0(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
+        specifier: 3.62.1
+        version: 3.62.1(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
       '@payloadcms/next':
         specifier: 3.62.1
         version: 3.62.1(@types/react@19.1.8)(graphql@16.12.0)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)
@@ -30,8 +30,8 @@ importers:
         specifier: 3.62.1
         version: 3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)
       '@payloadcms/plugin-multi-tenant':
-        specifier: ^3.69.0
-        version: 3.69.0(@payloadcms/ui@3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
+        specifier: 3.62.1
+        version: 3.62.1(@payloadcms/ui@3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))
       '@payloadcms/richtext-lexical':
         specifier: 3.62.1
         version: 3.62.1(@faceless-ui/modal@3.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@faceless-ui/scroll-info@2.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@payloadcms/next@3.62.1(@types/react@19.1.8)(graphql@16.12.0)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)(yjs@13.6.27)
@@ -80,6 +80,9 @@ importers:
       payload:
         specifier: 3.62.1
         version: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
+      qrcode.react:
+        specifier: ^4.2.0
+        version: 4.2.0(react@19.1.0)
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -1494,12 +1497,6 @@ packages:
     peerDependencies:
       payload: 3.62.1
 
-  '@payloadcms/email-nodemailer@3.65.0':
-    resolution: {integrity: sha512-VJUWNWj1yUPss1eDt1J+rfZDJKmDOYMx5cbgoib87XWFoJ02g6jfGYucomJGGfp76X8anxRYIzrX753KxivCbQ==}
-    engines: {node: ^18.20.2 || >=20.9.0}
-    peerDependencies:
-      payload: 3.65.0
-
   '@payloadcms/graphql@3.62.1':
     resolution: {integrity: sha512-3M2yUwfgELPDKb/15rXe2Q1q/LZg8qQYSHFekg++vH/Gj2gMfM/9Tn5xK25ecoArmlznaxOwpxaYVXn9qQoKSw==}
     hasBin: true
@@ -1527,11 +1524,12 @@ packages:
       react: ^19.0.0 || ^19.0.0-rc-65a56d0e-20241020
       react-dom: ^19.0.0 || ^19.0.0-rc-65a56d0e-20241020
 
-  '@payloadcms/plugin-multi-tenant@3.69.0':
-    resolution: {integrity: sha512-0uoOmmfMfr9xOMn94Xh1osmSeaYaLzmkUbtx2uNxT+IZqSX4xi9YMq8Qrag5j738294H6MlDYW3LjHFmYDSFXw==}
+  '@payloadcms/plugin-multi-tenant@3.62.1':
+    resolution: {integrity: sha512-hPXE/JFJHJeDkS5cnOpgJj5ewySNKb1DwkRVDDIh0bN/YIIk5q4SquGRjuWKUDJQSTXRB5NO1DMFpJYqZK8bmg==}
     peerDependencies:
-      '@payloadcms/ui': 3.69.0
-      payload: 3.69.0
+      '@payloadcms/ui': 3.62.1
+      next: ^15.2.3
+      payload: 3.62.1
 
   '@payloadcms/richtext-lexical@3.62.1':
     resolution: {integrity: sha512-k5Sy/6aNLWAN+jygAOF91jxPqnfQ9o9SNKB1QSyKVaSUGYkku6O5SZb1wJNnMzVXz2uDxVD5RzJu9DDH4Rk87Q==}
@@ -4458,6 +4456,11 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
+  qrcode.react@4.2.0:
+    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   qs-esm@7.0.2:
     resolution: {integrity: sha512-D8NAthKSD7SGn748v+GLaaO6k08Mvpoqroa35PqIQC4gtUa8/Pb/k+r0m0NnGBVbHDP1gKZ2nVywqfMisRhV5A==}
     engines: {node: '>=18'}
@@ -7218,11 +7221,6 @@ snapshots:
       nodemailer: 7.0.9
       payload: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
 
-  '@payloadcms/email-nodemailer@3.65.0(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))':
-    dependencies:
-      nodemailer: 7.0.9
-      payload: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
-
   '@payloadcms/graphql@3.62.1(graphql@16.12.0)(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(typescript@5.7.3)':
     dependencies:
       graphql: 16.12.0
@@ -7290,9 +7288,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@payloadcms/plugin-multi-tenant@3.69.0(@payloadcms/ui@3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))':
+  '@payloadcms/plugin-multi-tenant@3.62.1(@payloadcms/ui@3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))':
     dependencies:
       '@payloadcms/ui': 3.62.1(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)
+      next: 15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4)
       payload: 3.62.1(graphql@16.12.0)(typescript@5.7.3)
 
   '@payloadcms/richtext-lexical@3.62.1(@faceless-ui/modal@3.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@faceless-ui/scroll-info@2.0.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@payloadcms/next@3.62.1(@types/react@19.1.8)(graphql@16.12.0)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3))(@types/react@19.1.8)(monaco-editor@0.54.0)(next@15.4.4(@babel/core@7.28.5)(@playwright/test@1.54.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.77.4))(payload@3.62.1(graphql@16.12.0)(typescript@5.7.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.7.3)(yjs@13.6.27)':
@@ -10717,6 +10716,10 @@ snapshots:
       once: 1.4.0
 
   punycode@2.3.1: {}
+
+  qrcode.react@4.2.0(react@19.1.0):
+    dependencies:
+      react: 19.1.0
 
   qs-esm@7.0.2: {}
 

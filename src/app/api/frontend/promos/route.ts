@@ -69,16 +69,38 @@ function applyBxGyPromo(qtyBeli: number, X: number, Y: number, isMultiple: boole
 }
 
 // Fungsi untuk menentukan status promo berdasarkan tanggal mulai dan akhir
-function autoStatus(mulai: string, akhir: string) {
+function autoStatus(mulai: string, akhir: string, startTime?: string, endTime?: string) {
   const now = new Date()
   const tMulai = mulai ? new Date(mulai) : null
   const tAkhir = akhir ? new Date(akhir) : null
 
-  if (tAkhir && tAkhir < now) return 'Nonaktif'
-  if (tMulai && tMulai > now) return 'Belum Dimulai'
-  if (tMulai && tAkhir && tMulai <= now && tAkhir >= now) return 'Aktif'
+  // 1. Cek Tanggal Akhir
+  if (tAkhir) {
+    // Set jam ke 23:59 agar promo berlaku sampai akhir hari tersebut
+    const endOfDay = new Date(tAkhir)
+    endOfDay.setHours(23, 59, 59, 999)
+    if (endOfDay < now) return 'Nonaktif'
+  }
 
-  return 'Nonaktif'
+  // 2. Cek Tanggal Mulai
+  if (tMulai && tMulai > now) return 'Belum Dimulai'
+
+  // 3. Cek Jam (Jika ada)
+  if (startTime && endTime) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    const [sh, sm] = startTime.split(':').map(Number)
+    const [eh, em] = endTime.split(':').map(Number)
+    const startMinutes = sh * 60 + sm
+    const endMinutes = eh * 60 + em
+
+    // Jika waktu sekarang di luar jam operasional promo
+    if (currentMinutes < startMinutes || currentMinutes > endMinutes) {
+      // Kita biarkan status tetap 'Aktif' di DB agar tidak gonta-ganti status tiap jam,
+      // tapi nanti divalidasi di Kasir (DetailPesanan)
+    }
+  }
+
+  return 'Aktif'
 }
 
 // Fungsi opsional untuk adjust kuota promo
@@ -167,26 +189,31 @@ export async function PATCH(req: Request) {
   try {
     const payload = await getPayloadClient()
     const { id, data } = await req.json()
-    if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
-    // Ambil promo lama
-    const oldPromo = await payload.findByID({
-      collection: 'promos',
-      id,
-    })
+    // PROTEKSI BANNER:
+    // Jika data.banner adalah object (dari GET sebelumnya), ambil .id-nya saja.
+    if (data.banner && typeof data.banner === 'object') {
+      data.banner = data.banner.id
+    }
 
-    // Ambil tanggal baru / lama
+    // Pastikan field 'bannerImage' (yang hanya untuk preview frontend) dihapus
+    // agar tidak ikut dikirim ke Payload.update
+    if ('bannerImage' in data) {
+      delete data.bannerImage
+    }
+
+    const oldPromo = await payload.findByID({ collection: 'promos', id })
     const mulai = data.mulai ?? oldPromo.mulai
     const akhir = data.akhir ?? oldPromo.akhir
+    const sTime = data.startTime ?? oldPromo.startTime
+    const eTime = data.endTime ?? oldPromo.endTime
 
-    // AUTO STATUS
-    data.status = autoStatus(mulai, akhir)
+    data.status = autoStatus(mulai, akhir, sTime, eTime)
 
     const promo = await payload.update({ collection: 'promos', id, data })
-
     return NextResponse.json(promo)
   } catch (err: any) {
-    console.error('ERROR UPDATE PROMO:', err.stack || err)
+    console.error('ERROR UPDATE PROMO:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

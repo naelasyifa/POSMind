@@ -329,20 +329,12 @@ export interface Transaction {
  */
 export interface PaymentMethod {
   id: number;
-  name: string;
-  type: 'cash' | 'bank_transfer' | 'qris' | 'ewallet';
-  /**
-   * ID asli dari API Sandbox (untuk sinkronisasi)
-   */
-  externalId?: number | null;
-  /**
-   * Kode bank/provider (contoh: 07 untuk BNI, 16 untuk QRIS)
-   */
+  name?: string | null;
+  category?: string | null;
   code?: string | null;
-  /**
-   * Aktifkan untuk menampilkan di kasir
-   */
+  externalId?: number | null;
   isActive?: boolean | null;
+  fee?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -373,6 +365,7 @@ export interface Notification {
     | 'out_of_stock'
     | 'promo_low_quota'
     | 'promo_out_quota'
+    | 'promo_expired'
     | 'trx_success'
     | 'trx_cancel'
     | 'reservation_new'
@@ -964,10 +957,11 @@ export interface TablesSelect<T extends boolean = true> {
  */
 export interface PaymentMethodsSelect<T extends boolean = true> {
   name?: T;
-  type?: T;
-  externalId?: T;
+  category?: T;
   code?: T;
+  externalId?: T;
   isActive?: T;
+  fee?: T;
   updatedAt?: T;
   createdAt?: T;
 }

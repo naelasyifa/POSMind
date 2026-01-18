@@ -111,3 +111,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const payload = await getPayloadClient()
+    const { id, status } = await req.json() // id transaksi & status baru (e.g., 'selesai')
+
+    if (!id || !status) {
+      return NextResponse.json({ error: 'ID and Status are required' }, { status: 400 })
+    }
+
+    // 1. Ambil data transaksi lama untuk mendapatkan daftar items
+    const oldTrx = await payload.findByID({
+      collection: 'transactions',
+      id: id,
+    })
+
+    if (!oldTrx) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+
+    // 2. Update status transaksi
+    const updatedTrx = await payload.update({
+      collection: 'transactions',
+      id: id,
+      data: { status },
+    })
+
+    // 3. LOGIKA STOK: Jika berubah jadi 'selesai', kurangi stok
+    if (status === 'selesai' && Array.isArray(oldTrx.items)) {
+      for (const item of oldTrx.items) {
+        if (item.productId) {
+          await adjustStock(payload, item.productId, item.qty, false)
+        }
+      }
+    }
+
+    return NextResponse.json(updatedTrx)
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}

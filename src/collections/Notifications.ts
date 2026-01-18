@@ -49,6 +49,7 @@ const Notifications: CollectionConfig = {
         { label: 'Stok Habis', value: 'out_of_stock' },
         { label: 'Promo Hampir Habis', value: 'promo_low_quota' },
         { label: 'Promo Habis', value: 'promo_out_quota' },
+        { label: 'Promo Berakhir (Expired)', value: 'promo_expired' },
         { label: 'Transaksi Berhasil', value: 'trx_success' },
         { label: 'Transaksi Dibatalkan', value: 'trx_cancel' },
         { label: 'Reservasi Baru', value: 'reservation_new' },

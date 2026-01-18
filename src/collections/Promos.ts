@@ -218,37 +218,60 @@ const Promos: CollectionConfig = {
 
   hooks: {
     afterChange: [
-      async (args) => {
-        const { req, doc, previousDoc } = args
+      async ({ req, doc, previousDoc }) => {
         const payload = req.payload
 
-        if (doc.useQuota) {
-          const sisa = doc.kuota - doc.kuotaUsed
+        // --- 1. NOTIFIKASI EXPIRED (KADALUWARSA) ---
+        // Dipicu ketika status berubah menjadi Nonaktif (biasanya via API auto-deactivate)
+        if (doc.status === 'Nonaktif' && previousDoc?.status === 'Aktif') {
+          await payload.create({
+            collection: 'notifications',
+            data: {
+              type: 'promo',
+              icon: 'warning',
+              tipe: 'promo_expired',
+              isRead: false,
+              title: 'Promo Berakhir',
+              message: `Masa berlaku promo "${doc.nama}" telah habis.`,
+              createdAt: new Date().toISOString(),
+            },
+          })
+        }
 
-          // 🔔 Kuota hampir habis
-          if (sisa <= 10 && previousDoc?.kuota - previousDoc?.kuotaUsed > 10) {
+        // --- 2. NOTIFIKASI KUOTA ---
+        if (doc.useQuota) {
+          const sisa = doc.kuota - (doc.kuotaUsed || 0)
+          // Jika previousDoc tidak ada (data baru), kita kasih default tinggi supaya trigger sisa <= 10 jalan
+          const sisaLama = previousDoc ? previousDoc.kuota - (previousDoc.kuotaUsed || 0) : 999
+
+          // 🔔 Kuota hampir habis (Trigger hanya saat melewati angka 10)
+          if (sisa <= 10 && sisa > 0 && sisaLama > 10) {
             await payload.create({
               collection: 'notifications',
               data: {
                 type: 'promo',
                 icon: 'warning',
                 tipe: 'promo_low_quota',
+                isRead: false,
                 title: 'Kuota Promo Hampir Habis',
                 message: `Promo "${doc.nama}" tersisa ${sisa} kuota.`,
+                createdAt: new Date().toISOString(),
               },
             })
           }
 
-          // 🔔 Kuota habis
-          if (sisa <= 0 && previousDoc?.kuota - previousDoc?.kuotaUsed > 0) {
+          // 🔔 Kuota habis (Trigger hanya saat melewati angka 0)
+          if (sisa <= 0 && sisaLama > 0) {
             await payload.create({
               collection: 'notifications',
               data: {
                 type: 'promo',
                 icon: 'warning',
                 tipe: 'promo_out_quota',
+                isRead: false,
                 title: 'Kuota Promo Habis',
                 message: `Promo "${doc.nama}" telah habis kuota.`,
+                createdAt: new Date().toISOString(),
               },
             })
           }
